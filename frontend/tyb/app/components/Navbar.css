@@ -1,0 +1,161 @@
+/* ============================
+   TRACK YOUR BEST – NAVBAR
+   ============================ */
+
+.tyb-navbar {
+  position: fixed;
+  z-index: 1200;
+  top: 12px;
+  left: 50%;
+  padding-left: 40px;
+  transform: translateX(-50%);
+  width: min(960px, calc(100% - 32px));
+  pointer-events: none;
+}
+
+/* Dinamik ada gövdesi */
+.tyb-navbar-inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  min-height: 60px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.20),
+    0 0 0 1px rgba(148, 163, 184, 0.10);
+  backdrop-filter: blur(14px);
+}
+
+/* Sol taraf: logo + marka */
+.tyb-navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tyb-navbar-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 30% 30%, #f97316, #c52222);
+  box-shadow:
+    0 0 12px rgba(248, 113, 22, 0.65),
+    0 0 0 1px rgba(15, 23, 42, 0.12);
+  color: #f9fafb;
+}
+
+.tyb-navbar-brand-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+/* Mobile'da marka ismini gizle */
+@media (max-width: 640px) {
+  .tyb-navbar-brand-text {
+    display: none;
+  }
+}
+
+/* Sağ taraf: nav butonları */
+.tyb-navbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Genel nav buton yapısı */
+.tyb-nav-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.12s ease;
+}
+
+/* Link ve button ortak görünüm */
+.tyb-nav-button:hover {
+  background: rgba(15, 23, 42, 0.04);
+  transform: translateY(-1px);
+}
+
+/* Aktif sayfa */
+.tyb-nav-button.is-active {
+  background: rgba(15, 23, 42, 0.08);
+  color: #111827;
+}
+
+/* Logout'a hafif farklı ton */
+.tyb-nav-button-logout {
+  color: #b91c1c;
+}
+
+.tyb-nav-button-logout:hover {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+/* Icon alanı */
+.tyb-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Label: defaultta gizli, hover'da açılan text */
+.tyb-nav-label {
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  white-space: nowrap;
+  transition:
+    max-width 0.2s ease,
+    opacity 0.18s ease,
+    margin-left 0.18s ease;
+}
+
+/* Hover veya aktifken label'ı göster */
+.tyb-nav-button:hover .tyb-nav-label,
+.tyb-nav-button.is-active .tyb-nav-label {
+  max-width: 80px;
+  opacity: 1;
+  margin-left: 4px;
+}
+
+/* Mobile'da biraz daha kompakt */
+@media (max-width: 640px) {
+  .tyb-navbar-inner {
+    padding-inline: 16px;
+  }
+
+  .tyb-nav-button {
+    padding-inline: 8px;
+  }
+
+  .tyb-nav-button:hover .tyb-nav-label,
+  .tyb-nav-button.is-active .tyb-nav-label {
+    max-width: 60px;
+  }
+}
