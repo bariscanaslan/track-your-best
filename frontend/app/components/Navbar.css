@@ -1,0 +1,136 @@
+/* ============================
+   TRACK YOUR BEST – NAVBAR
+   ============================ */
+
+.tyb-navbar {
+  position: fixed;
+  z-index: 1200;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(960px, calc(100% - 32px));
+  pointer-events: none;
+}
+
+.tyb-navbar-inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  min-height: 60px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.20),
+    0 0 0 1px rgba(148, 163, 184, 0.10);
+  backdrop-filter: blur(14px);
+}
+
+.tyb-navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tyb-navbar-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;  
+}
+
+.tyb-navbar-brand-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .tyb-navbar-brand-text {
+    display: none;
+  }
+}
+
+.tyb-navbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tyb-nav-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.12s ease;
+}
+
+.tyb-nav-button:hover {
+  background: rgba(15, 23, 42, 0.04);
+  transform: translateY(-1px);
+}
+
+.tyb-nav-button.is-active {
+  background: rgba(15, 23, 42, 0.08);
+  color: #111827;
+}
+
+.tyb-nav-button-logout {
+  color: #b91c1c;
+}
+
+.tyb-nav-button-logout:hover {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.tyb-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tyb-nav-label {
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  white-space: nowrap;
+  transition:
+    max-width 0.2s ease,
+    opacity 0.18s ease,
+    margin-left 0.18s ease;
+}
+
+.tyb-nav-button:hover .tyb-nav-label,
+.tyb-nav-button.is-active .tyb-nav-label {
+  max-width: 80px;
+  opacity: 1;
+  margin-left: 4px;
+}
+
+@media (max-width: 640px) {
+  .tyb-nav-button {
+    padding-inline: 8px;
+  }
+
+  .tyb-nav-button:hover .tyb-nav-label,
+  .tyb-nav-button.is-active .tyb-nav-label {
+    max-width: 60px;
+  }
+}

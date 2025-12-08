@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tyb-backend
+    env_file:
+      - ./backend/.env
+    ports:
+      # İstersen dışarı expose etme, o zaman bu satırı silebilirsin
+      - "8008:8008"
+    restart: unless-stopped
+    networks:
+      - tyb-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tyb-frontend
+    environment:
+      # Frontend'in backend'e erişmesi için base URL
+      # Eğer backend'i 8008 portuyla dış dünyaya açıyorsan:
+      # NEXT_PUBLIC_API_BASE_URL: "https://api.tyb.bariscanaslan.com"
+      #
+      # Eğer Cloudflare üzerinden tyb.bariscanaslan.com/api ile proxy yaparsan:
+      # NEXT_PUBLIC_API_BASE_URL: "https://tyb.bariscanaslan.com/api"
+      #
+      # Geliştirme için direkt sunucu IP'si de verebilirsin:
+      # NEXT_PUBLIC_API_BASE_URL: "http://SUNUCU_IP_ADRESIN:8008"
+      NEXT_PUBLIC_API_BASE_URL: "http://tyb-backend:8008"
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - tyb-net
+
+networks:
+  tyb-net:
+    driver: bridge

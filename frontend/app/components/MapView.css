@@ -1,0 +1,41 @@
+.popup-container {
+  font-family: "Science Gothic", sans-serif !important;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #222;
+  padding: 4px 6px;
+}
+
+.popup-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #111;
+}
+
+.popup-row {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.popup-label {
+  font-weight: 600;
+  color: #444;
+}
+
+.popup-value {
+  font-weight: 300;
+  color: #000;
+  margin-left: 4px;
+}
+
+.popup-time {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #666;
+}
+
+.popup-loading {
+  color: #888;
+  font-style: italic;
+}

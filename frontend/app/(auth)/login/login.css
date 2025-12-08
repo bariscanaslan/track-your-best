@@ -1,0 +1,212 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #101827, #020617);
+  color: #e5e7eb;
+}
+
+.login-page {
+    background-color: white;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: rgba(15, 23, 42, 0.92);
+  border-radius: 1.25rem;
+  padding: 2.25rem 2.5rem;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(148, 163, 184, 0.16);
+  backdrop-filter: blur(18px);
+
+  overflow: hidden;
+  position: relative; 
+}
+
+.login-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  margin-bottom: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 30% 0, #1b86ce, #1b86ce65);
+  box-shadow: 0 12px 30px #1b86ce65;
+  overflow: hidden;
+}
+
+.login-logo {
+  background: white url("/tyb-logo.png") center/90% no-repeat;
+}
+
+.login-logo span {
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #ecfdf3;
+}
+
+.login-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.login-subtitle {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-bottom: 1.7rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.login-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.login-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.login-input {
+  height: 44px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  background: rgba(15, 23, 42, 0.85);
+  padding: 0 0.85rem;
+  font-size: 0.9rem;
+  color: #e5e7eb;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+.login-input::placeholder {
+  color: #6b7280;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #1b86ce;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
+  background: rgba(15, 23, 42, 0.98);
+}
+
+.login-error {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.login-button {
+  margin-top: 0.3rem;
+  height: 44px;
+  border-radius: 0.85rem;
+  border: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, #1b86ce, #1b86ce65);
+  color: #f9fafb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    filter 120ms ease,
+    background-position 120ms ease;
+  box-shadow: 0 14px 30px #1b86ce65;
+  background-size: 140% 140%;
+}
+
+.login-button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+  box-shadow: 0 16px 40px #1b86ce65;
+}
+
+.login-button:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px #1b86ce65;
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: default;
+  box-shadow: none;
+}
+
+.login-loading {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.75rem 1.6rem;
+    border-radius: 1rem;
+  }
+}
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input {
+  padding-right: 42px !important;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.65;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.password-toggle:hover {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.08);
+}
+
+.recaptcha-div {
+    margin-top: 60px;
+    align-items: center;
+}
