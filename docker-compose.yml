@@ -24,14 +24,6 @@ services:
       dockerfile: Dockerfile
     container_name: tyb-frontend
     restart: always
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: "https://api.trackyourbest.net"
-
-      NEXT_PUBLIC_AUTH_ME: "/auth/me"
-      NEXT_PUBLIC_AUTH_LOGOUT: "/auth/logout"
-      NEXT_PUBLIC_DEFAULT_DEVICE: "tyb01"
-
-      NEXT_PUBLIC_RECAPTCHA_SITE_KEY: "6Lf3_CQsAAAAAP04BUhHJGsDLpAhWUh0ryKV0us7"
     ports:
       - "3003:3003"
     depends_on:

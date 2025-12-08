@@ -140,6 +140,7 @@ export default function LoginPage() {
         <ReCAPTCHA
           ref={recaptchaRef}
           sitekey={RECAPTCHA_SITE_KEY}
+          size="invisible"
         />
       </div>
       

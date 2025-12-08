@@ -10,6 +10,7 @@ COPY package.json package-lock.json* ./
 RUN npm install --include=dev
 
 # Proje dosyalarını kopyala
+COPY .env.production ./
 COPY . .
 
 # Production build

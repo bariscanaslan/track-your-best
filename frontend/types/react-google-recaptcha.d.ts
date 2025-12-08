@@ -6,11 +6,13 @@ declare module "react-google-recaptcha" {
     onChange?: (token: string | null) => void;
     onExpired?: () => void;
     onErrored?: () => void;
-    theme?: "light" | "dark";
-    size?: "compact" | "normal";
+
+    size?: "invisible" | "normal" | "compact";
   }
 
   export default class ReCAPTCHA extends React.Component<ReCAPTCHAProps> {
+    execute(): void;
+    executeAsync(): Promise<string | null>;
     reset(): void;
     getValue(): string | null;
   }
