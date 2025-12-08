@@ -118,13 +118,25 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+ALLOWED_ORIGINS = {
+    "https://app.trackyourbest.net",
+    "http://app.trackyourbest.net",
+    "http://localhost:3003",
+    "https://localhost:3003",
+}
+
+def custom_cors(origin: str) -> bool:
+    return origin in ALLOWED_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3003"],
+    allow_origin_func=custom_cors,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 
 app.include_router(auth_router)
 app.include_router(gps_router)

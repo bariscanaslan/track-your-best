@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const recaptchaRef = useRef<any>(null);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
   const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!;
@@ -37,7 +37,6 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 📌 reCAPTCHA token alıyoruz
       const token = await recaptchaRef.current?.executeAsync();
       recaptchaRef.current?.reset();
 
@@ -46,7 +45,6 @@ export default function LoginPage() {
         return;
       }
 
-      // 📌 Backend’e login isteği gönder
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,7 +52,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           username: form.username,
           password: form.password,
-          recaptcha_token: token, // 🚀 backend doğrulaması için gönderiyoruz
+          recaptcha_token: token, 
         }),
       });
 
@@ -142,7 +140,6 @@ export default function LoginPage() {
         <ReCAPTCHA
           ref={recaptchaRef}
           sitekey={RECAPTCHA_SITE_KEY}
-          size="invisible"
         />
       </div>
       
