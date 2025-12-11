@@ -28,7 +28,7 @@ class GPSData(BaseModel):
     latitude: float = Field(..., ge=-90, le=90)
     longitude: float = Field(..., ge=-180, le=180)
     device_id: int  # Devices tablosundaki FK ID
-    device_name: str
+    device_name: Optional[str] = None
     timestamp: Optional[datetime] = None
 
     @validator("timestamp", pre=True, always=True)

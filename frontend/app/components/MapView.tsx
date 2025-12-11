@@ -23,6 +23,24 @@ function MapCenterUpdater({ position }: { position: [number, number] }) {
   return null;
 }
 
+function formatToGMT3(timestamp: string) {
+  const dateUTC = new Date(timestamp);
+
+  // UTC +3 offset
+  const gmt3 = new Date(dateUTC.getTime() + 6 * 60 * 60 * 1000);
+
+  const year = gmt3.getUTCFullYear();
+  const month = String(gmt3.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(gmt3.getUTCDate()).padStart(2, "0");
+
+  const hours = String(gmt3.getUTCHours()).padStart(2, "0");
+  const minutes = String(gmt3.getUTCMinutes()).padStart(2, "0");
+  const seconds = String(gmt3.getUTCSeconds()).padStart(2, "0");
+
+  return `${day}.${month}.${year} ${hours}:${minutes}:${seconds} (GMT+3)`;
+}
+
+
 type GPSData = {
   latitude: number;
   longitude: number;
@@ -114,19 +132,19 @@ export default function MapView() {
 
                   <div className="popup-row">
                     <span className="popup-label">Latitude: </span>
-                    <span className="popup-value">{" " + gpsData.latitude.toFixed(6)}</span>
+                    <span className="popup-value">{" " + gpsData.latitude.toFixed(5)}</span>
                   </div>
 
                   <div className="popup-row">
                     <span className="popup-label">Longtitude: </span>
-                    <span className="popup-value">{" " + gpsData.longitude.toFixed(6)}</span>
+                    <span className="popup-value">{" " + gpsData.longitude.toFixed(5)}</span>
                   </div>
 
                   <div className="popup-row">
                     <span className="popup-label">Last Record Time: </span>
                   </div>
                   <div className="popup-time">
-                    {new Date(gpsData.timestamp).toLocaleString("tr-TR")}
+                    {formatToGMT3(gpsData.timestamp)}
                   </div>
                 </>
               ) : (
