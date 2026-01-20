@@ -119,9 +119,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="GPS Tracking API",
+    title="Track Your Best",
     version="0.3.0",
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
 )
 
 app.add_middleware(
@@ -131,8 +134,8 @@ app.add_middleware(
         "http://app.trackyourbest.net",
         "http://localhost:3003",
         "https://localhost:3003",
-        "http://100.64.0.4:3003",
-        "https://100.64.0.4:3003",
+        "http://100.64.0.5:3003",
+        "https://100.64.0.5:3003",
     ],
     allow_credentials=True,
     allow_methods=["*"],

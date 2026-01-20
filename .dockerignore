@@ -7,7 +7,6 @@ backend/.venv
 backend/.env
 backend/__pycache__/
 backend/*.py[cod]
-backend/tyb.db
 backend/tests/
 
 # Frontend
