@@ -84,7 +84,6 @@ export default function Navbar() {
             );
           })}
 
-          {/* Logout ayrı button */}
           <button
             type="button"
             className="tyb-nav-button tyb-nav-button-logout"

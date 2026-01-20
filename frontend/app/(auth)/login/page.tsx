@@ -22,7 +22,6 @@ export default function LoginPage() {
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
   const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!;
 
-  // Eğer giriş yapılmışsa dashboard'a git
   useEffect(() => {
     if (isAuthenticated) router.replace("/dashboard");
   }, [isAuthenticated]);
@@ -31,7 +30,6 @@ export default function LoginPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🔐 LOGIN SUBMIT
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -76,7 +74,6 @@ export default function LoginPage() {
   return (
     <div className="login-card">
 
-      {/* Logo Alanı */}
       <div className="login-logo"></div>
 
       <h2 className="login-title">Login</h2>
@@ -84,7 +81,6 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="login-form">
 
-        {/* USERNAME */}
         <div className="login-input-group">
           <label className="login-label">Username</label>
           <input
@@ -97,7 +93,6 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* PASSWORD + SHOW/HIDE */}
         <div className="login-input-group">
           <label className="login-label">Password</label>
 
@@ -111,7 +106,6 @@ export default function LoginPage() {
               required
             />
 
-            {/* 👁 React-icons eye toggle */}
             <button
               type="button"
               className="password-toggle"
@@ -126,17 +120,14 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* ERROR MESSAGE */}
         {error && <p className="login-error">{error}</p>}
 
-        {/* SUBMIT */}
         <button type="submit" className="login-button">
           Login
         </button>
 
       </form>
       <div className="recaptcha-div">
-        {/* Invisible reCAPTCHA */}
         <ReCAPTCHA
           ref={recaptchaRef}
           sitekey={RECAPTCHA_SITE_KEY}

@@ -26,7 +26,7 @@ class GPSDatabase:
 
         conn.commit()
         conn.close()
-        print("✅ GPS Data tablosu hazır")
+        print("GPS Data tablosu hazır")
 
     def add_gps(self, gps: GPSData) -> bool:
         try:
@@ -43,7 +43,7 @@ class GPSDatabase:
             return True
 
         except Exception as e:
-            print("❌ GPS insert error:", e)
+            print("GPS insert error:", e)
             return False
 
     def get_last_gps(self, device_id: int):

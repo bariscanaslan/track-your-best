@@ -24,7 +24,7 @@ class DeviceDatabase:
 
         conn.commit()
         conn.close()
-        print("✅ Devices tablosu hazır")
+        print("Devices tablosu hazır")
 
     def register_device(self, device_name: str, mqtt_username: str, mqtt_password: str, secret_key: str):
         conn = get_connection()

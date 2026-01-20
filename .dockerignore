@@ -1,0 +1,23 @@
+# Git
+.git
+.gitignore
+
+# Backend
+backend/.venv
+backend/.env
+backend/__pycache__/
+backend/*.py[cod]
+backend/tyb.db
+backend/tests/
+
+# Frontend
+frontend/node_modules
+frontend/.next
+frontend/.env
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store

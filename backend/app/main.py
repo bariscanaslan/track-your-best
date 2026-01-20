@@ -32,32 +32,32 @@ GPS_TOPIC = os.getenv("GPS_TOPIC")  # gps/tyb01/location
 
 def message_handler(topic: str, message: str):
     try:
-        # 1️⃣ JSON parse
+        # JSON parse
         data = json.loads(message)
 
         signature = data.pop("signature", None)
         if not signature:
-            print("❌ Signature eksik")
+            print("Signature eksik")
             return
 
-        # 2️⃣ device_id (payload + topic kontrolü)
+        # device_id (payload + topic kontrolü)
         device_name = data.get("device_id")
         if not device_name:
-            print("❌ device_id yok")
+            print("device_id yok")
             return
 
         topic_device = topic.split("/")[1]
         if topic_device != device_name:
-            print("❌ Topic ile device_id uyuşmuyor")
+            print("Topic ile device_id uyuşmuyor")
             return
 
-        # 3️⃣ DB’den secret al
+        # DB’den secret al
         secret = device_db.get_secret_key(device_name)
         if not secret:
-            print("❌ DB’de secret bulunamadı")
+            print("DB’de secret bulunamadı")
             return
 
-        # 4️⃣ ESP32 ile AYNI RAW STRING
+        # ESP32 ile AYNI RAW STRING
         raw_payload = json.dumps(data, separators=(",", ":"))
 
         expected_sig = hmac.new(
@@ -67,23 +67,23 @@ def message_handler(topic: str, message: str):
         ).hexdigest()
 
         if expected_sig != signature:
-            print("❌ HMAC uyumsuz")
+            print("HMAC uyumsuz")
             return
 
-        # 5️⃣ GPS validasyon
+        # GPS validasyon
         lat = float(data["latitude"])
         lon = float(data["longitude"])
 
         if not (-90 <= lat <= 90 and -180 <= lon <= 180):
-            print("❌ GPS sınır hatası")
+            print("GPS sınır hatası")
             return
 
         device_fk = device_db.get_device_id(device_name)
         if not device_fk:
-            print("❌ Device FK bulunamadı")
+            print("Device FK bulunamadı")
             return
 
-        # 6️⃣ DB’ye yaz
+        # DB’ye yaz
         gps_db.add_gps(GPSData(
             latitude=lat,
             longitude=lon,
@@ -91,10 +91,10 @@ def message_handler(topic: str, message: str):
             timestamp=data.get("timestamp")
         ))
 
-        print(f"✔ GPS kaydedildi → {device_name}: {lat}, {lon}")
+        print(f"GPS kaydedildi → {device_name}: {lat}, {lon}")
 
     except Exception as e:
-        print("❌ Message Handler Error:", e)
+        print("Message Handler Error:", e)
 
 
 @asynccontextmanager
@@ -131,6 +131,8 @@ app.add_middleware(
         "http://app.trackyourbest.net",
         "http://localhost:3003",
         "https://localhost:3003",
+        "http://100.64.0.4:3003",
+        "https://100.64.0.4:3003",
     ],
     allow_credentials=True,
     allow_methods=["*"],

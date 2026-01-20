@@ -31,7 +31,7 @@ class UserDatabase:
 
         conn.commit()
         conn.close()
-        print("✅ Users tablosu hazır")
+        print("Users tablosu hazır")
 
     def create_user(self, username: str, password: str, full_name: Optional[str] = None) -> bool:
         try:
@@ -50,7 +50,7 @@ class UserDatabase:
             return True
 
         except Exception as e:
-            print("❌ User insert error:", e)
+            print("User insert error:", e)
             return False
 
     def authenticate_user(self, username: str, password: str) -> Optional[User]:

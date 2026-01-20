@@ -107,7 +107,6 @@ export default function MapView() {
         zoomControl={false}
         style={{ height: "100%", width: "100%" }}
       >
-        {/* Map center updater */}
         <MapCenterUpdater position={position} />
 
         <ZoomControl position="bottomleft" />
