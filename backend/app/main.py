@@ -5,7 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 import os
-import hmac, hashlib
+import hmac
+import hashlib
 import json
 
 from app.mqtt_client import MQTTClient
@@ -18,43 +19,47 @@ from app.routers.api_device import router as device_router
 
 from app.database_device import device_db
 from app.database_gps import gps_db
-
 from app.models import GPSData
 
 load_dotenv()
 
 MQTT_BROKER = os.getenv("MQTT_BROKER")
-MQTT_PORT = int(os.getenv("MQTT_PORT", "443"))
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
 MQTT_USERNAME = os.getenv("MQTT_USERNAME")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
-GPS_TOPIC = os.getenv("GPS_TOPIC")
+GPS_TOPIC = os.getenv("GPS_TOPIC")  # gps/tyb01/location
+
 
 def message_handler(topic: str, message: str):
     try:
+        # 1️⃣ JSON parse
         data = json.loads(message)
 
-        if "signature" not in data:
-            print("❌ Signature eksik → reddedildi")
+        signature = data.pop("signature", None)
+        if not signature:
+            print("❌ Signature eksik")
             return
 
-        signature = data.pop("signature")
+        # 2️⃣ device_id (payload + topic kontrolü)
         device_name = data.get("device_id")
-
         if not device_name:
-            print("❌ device_id yok → reddedildi")
+            print("❌ device_id yok")
             return
 
         topic_device = topic.split("/")[1]
         if topic_device != device_name:
-            print("❌ Topic ile device_id uyuşmuyor → sahte mesaj!")
+            print("❌ Topic ile device_id uyuşmuyor")
             return
 
+        # 3️⃣ DB’den secret al
         secret = device_db.get_secret_key(device_name)
         if not secret:
-            print("❌ Bilinmeyen cihaz → reddedildi")
+            print("❌ DB’de secret bulunamadı")
             return
 
-        raw_payload = json.dumps(data, separators=(',', ':'))
+        # 4️⃣ ESP32 ile AYNI RAW STRING
+        raw_payload = json.dumps(data, separators=(",", ":"))
+
         expected_sig = hmac.new(
             secret.encode(),
             raw_payload.encode(),
@@ -62,14 +67,15 @@ def message_handler(topic: str, message: str):
         ).hexdigest()
 
         if expected_sig != signature:
-            print("❌ HMAC uyumsuz → sahte veri!")
+            print("❌ HMAC uyumsuz")
             return
 
+        # 5️⃣ GPS validasyon
         lat = float(data["latitude"])
         lon = float(data["longitude"])
 
         if not (-90 <= lat <= 90 and -180 <= lon <= 180):
-            print("❌ GPS sınır hatası → reddedildi")
+            print("❌ GPS sınır hatası")
             return
 
         device_fk = device_db.get_device_id(device_name)
@@ -77,22 +83,22 @@ def message_handler(topic: str, message: str):
             print("❌ Device FK bulunamadı")
             return
 
-        gps_data = GPSData(
+        # 6️⃣ DB’ye yaz
+        gps_db.add_gps(GPSData(
             latitude=lat,
             longitude=lon,
             device_id=device_fk,
             timestamp=data.get("timestamp")
-        )
+        ))
 
-        gps_db.add_gps(gps_data)
-        print(f"✔ GPS kaydedildi: {lat}, {lon}")
+        print(f"✔ GPS kaydedildi → {device_name}: {lat}, {lon}")
 
     except Exception as e:
-        print("Message Handler Error:", e)
+        print("❌ Message Handler Error:", e)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     if MQTT_BROKER:
         mqtt_state.mqtt_client = MQTTClient(
             MQTT_BROKER,
@@ -105,12 +111,12 @@ async def lifespan(app: FastAPI):
 
         if mqtt_state.mqtt_client.connect():
             mqtt_state.mqtt_client.subscribe(GPS_TOPIC)
-            print(f"Subscribed → {GPS_TOPIC}")
 
     yield
 
     if mqtt_state.mqtt_client:
         mqtt_state.mqtt_client.disconnect()
+
 
 app = FastAPI(
     title="GPS Tracking API",
@@ -124,20 +130,18 @@ app.add_middleware(
         "https://app.trackyourbest.net",
         "http://app.trackyourbest.net",
         "http://localhost:3003",
-        "https://localhost:3003"
+        "https://localhost:3003",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-
-
 app.include_router(auth_router)
 app.include_router(gps_router)
 app.include_router(mqtt_router)
 app.include_router(device_router)
+
 
 @app.get("/")
 async def root():
