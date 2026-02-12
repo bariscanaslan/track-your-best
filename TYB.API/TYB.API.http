@@ -1,0 +1,6 @@
+@TYB.API_HostAddress = http://localhost:5016
+
+GET {{TYB.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
