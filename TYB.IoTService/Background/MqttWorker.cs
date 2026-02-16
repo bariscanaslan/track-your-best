@@ -1,10 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TYB.IoTService.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using TYB.IoTService.MQTT;
 using TYB.IoTService.Routing;
 
@@ -13,24 +7,26 @@ namespace TYB.IoTService.Background
 	public class MqttWorker : BackgroundService
 	{
 		private readonly IMqttService _mqttService;
-		private readonly TopicRouter _router;
 		private readonly MqttTopicManager _topicManager;
+		private readonly IServiceScopeFactory _scopeFactory;
 
 		public MqttWorker(
 			IMqttService mqttService,
-			TopicRouter router,
-			MqttTopicManager topicManager)
+			MqttTopicManager topicManager,
+			IServiceScopeFactory scopeFactory)
 		{
 			_mqttService = mqttService;
-			_router = router;
 			_topicManager = topicManager;
+			_scopeFactory = scopeFactory;
 		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
 			_mqttService.MessageReceived += async (topic, payload) =>
 			{
-				await _router.RouteAsync(topic, payload);
+				using var scope = _scopeFactory.CreateScope();
+				var router = scope.ServiceProvider.GetRequiredService<TopicRouter>();
+				await router.RouteAsync(topic, payload);
 			};
 
 			await _mqttService.ConnectAsync(stoppingToken);
@@ -44,6 +40,4 @@ namespace TYB.IoTService.Background
 			}
 		}
 	}
-
-
 }

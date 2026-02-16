@@ -5,7 +5,9 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
+        "DOTNET_ENVIRONMENT": "Development",
+        "TYB_IOT_CONNECTION_STRING": "Host=51.20.118.85;Port=5432;Database=trackyourbest;Username=bariscanaslan;Password=Tyb.1905;Ssl Mode=Disable;",
+        "ConnectionStrings__IoT": "Host=51.20.118.85;Port=5432;Database=trackyourbest;Username=bariscanaslan;Password=Tyb.1905;Ssl Mode=Disable;"
       }
     }
   }

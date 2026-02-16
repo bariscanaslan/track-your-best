@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace TYB.IoTService.Infrastructure.Entities.Core
 {
-	internal class Device
+	public class Device
 	{
+		public Guid Id { get; set; }
+		public Guid OrganizationId { get; set; }
+		public string DeviceIdentifier { get; set; } = string.Empty;
+		public string? SecretKey { get; set; }
+		public string? Imei { get; set; }
+		public string? IpAddress { get; set; }
+		public int? SignalStrength { get; set; }
+		public DateTime? LastSeenAt { get; set; }
+		public DateTime? UpdatedAt { get; set; }
 	}
 }

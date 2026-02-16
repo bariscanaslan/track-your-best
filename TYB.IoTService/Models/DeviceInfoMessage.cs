@@ -1,12 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace TYB.IoTService.Models
 {
-	internal class DeviceInfoMessage
+	public class DeviceInfoMessage
 	{
+		[JsonPropertyName("device_id")]
+		public string? DeviceId { get; set; }
+
+		[JsonPropertyName("imei")]
+		public string? Imei { get; set; }
+
+		[JsonPropertyName("ip")]
+		public string? Ip { get; set; }
+
+		[JsonPropertyName("rssi")]
+		public int? Rssi { get; set; }
 	}
 }

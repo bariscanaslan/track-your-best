@@ -1,12 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using NetTopologySuite.Geometries;
 
-namespace TYB.IoTService.Infrastructure.Entities.Core
+namespace TYB.IoTService.Infrastructure.Entities.Spatial
 {
-	internal class GpsData
+	public class GpsData
 	{
+		public Guid Id { get; set; }
+		public Guid OrganizationId { get; set; }
+		public Guid DeviceId { get; set; }
+		public double Latitude { get; set; }
+		public double Longitude { get; set; }
+		public Point? Location { get; set; }
+		public DateTime GpsTimestamp { get; set; }
+		public DateTime ReceivedTimestamp { get; set; }
 	}
 }

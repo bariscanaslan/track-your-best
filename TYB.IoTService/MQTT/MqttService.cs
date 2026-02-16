@@ -61,12 +61,16 @@ public class MqttService : IMqttService
 
 	public async Task ConnectAsync(CancellationToken cancellationToken)
 	{
+		var clientId = string.IsNullOrWhiteSpace(_settings.ClientId)
+			? $"tyb-iot-{Guid.NewGuid():N}"
+			: $"{_settings.ClientId}-{Guid.NewGuid():N}";
+
 		_options = new MqttClientOptionsBuilder()
-			.WithClientId(_settings.ClientId)
+			.WithClientId(clientId)
 			.WithTcpServer(_settings.Host, _settings.Port)
 			.WithCredentials(_settings.Username, _settings.Password)
 			.WithKeepAlivePeriod(TimeSpan.FromSeconds(30))
-			.WithCleanSession(false)
+			.WithCleanSession(true)
 			.Build();
 
 		await _client.ConnectAsync(_options, cancellationToken);

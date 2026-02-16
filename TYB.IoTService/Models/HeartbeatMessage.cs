@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace TYB.IoTService.Models
 {
-	internal class HeartbeatMessage
+	public class HeartbeatMessage
 	{
+		[JsonPropertyName("status")]
+		public string? Status { get; set; }
+
+		[JsonPropertyName("device_id")]
+		public string? DeviceId { get; set; }
 	}
 }

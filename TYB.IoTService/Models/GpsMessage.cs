@@ -1,12 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace TYB.IoTService.Models
 {
-	internal class GpsMessage
+	public class GpsMessage
 	{
+		[JsonPropertyName("device_id")]
+		public string? DeviceId { get; set; }
+
+		[JsonPropertyName("latitude")]
+		public double Latitude { get; set; }
+
+		[JsonPropertyName("longitude")]
+		public double Longitude { get; set; }
+
+		[JsonPropertyName("timestamp")]
+		public long? Timestamp { get; set; }
+
+		[JsonPropertyName("signature")]
+		public string? Signature { get; set; }
 	}
 }

@@ -12,4 +12,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Infrastructure\Entities\Core\" />
+    <Folder Include="Infrastructure\Entities\Analytics\" />
+    <Folder Include="Infrastructure\Entities\Audit\" />
+    <Folder Include="Infrastructure\Entities\Spatial\" />
+  </ItemGroup>
+
 </Project>
