@@ -4,7 +4,6 @@ using TYB.IoTService.Configuration;
 using TYB.IoTService.Handlers;
 using TYB.IoTService.MQTT;
 using TYB.IoTService.Routing;
-using TYB.IoTService.Test;
 
 Env.Load();
 
@@ -24,7 +23,6 @@ builder.Services.AddSingleton<IMessageHandler, GpsMessageHandler>();
 builder.Services.AddSingleton<IMessageHandler, HeartbeatMessageHandler>();
 builder.Services.AddSingleton<IMessageHandler, DeviceInfoMessageHandler>();
 
-builder.Services.AddHostedService<TestPublisher>();
 builder.Services.AddHostedService<MqttWorker>();
 
 var host = builder.Build();

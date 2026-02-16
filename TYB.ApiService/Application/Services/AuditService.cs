@@ -1,0 +1,6 @@
+﻿namespace TYB.ApiService.Application.Services
+{
+	public class AuditService
+	{
+	}
+}
