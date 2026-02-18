@@ -1,0 +1,32 @@
+export const drivers = [
+  {
+    license_number: "D-1001",
+    license_type: "B",
+    license_expiry: "2027-05-10",
+    date_of_birth: "1990-04-22",
+    hire_date: "2023-01-15",
+    emergency_contact_name: "John Doe",
+    emergency_contact_phone: "+1-555-0100",
+    is_active: true,
+  },
+  {
+    license_number: "D-1002",
+    license_type: "C",
+    license_expiry: "2026-11-01",
+    date_of_birth: "1986-08-03",
+    hire_date: "2022-09-10",
+    emergency_contact_name: "Jane Smith",
+    emergency_contact_phone: "+1-555-0112",
+    is_active: false,
+  },
+  {
+    license_number: "D-1003",
+    license_type: "B",
+    license_expiry: "2028-02-18",
+    date_of_birth: "1995-12-14",
+    hire_date: "2024-04-05",
+    emergency_contact_name: "Mark Lee",
+    emergency_contact_phone: "+1-555-0125",
+    is_active: true,
+  },
+];

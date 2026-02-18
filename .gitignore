@@ -1,19 +1,11 @@
-# Visual Studio
+# IDE / Editor
 .vs/
+.idea/
+.vscode/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-
-# Build outputs
-bin/
-obj/
-
-# Rider
-.idea/
-
-# VS Code
-.vscode/
 
 # OS
 Thumbs.db
@@ -21,3 +13,15 @@ Thumbs.db
 
 # Logs
 *.log
+
+# .NET build outputs
+**/bin/
+**/obj/
+
+# Frontend / Node
+frontend/node_modules/
+frontend/.next/
+
+# Environment files
+**/.env
+**/.env.local

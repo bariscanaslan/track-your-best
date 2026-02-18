@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fee2e2"/>
+      <stop offset="100%" stop-color="#fecaca"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#dbeafe"/>
+      <stop offset="100%" stop-color="#bfdbfe"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="28" cy="44" rx="16" ry="5" fill="#e5e7eb"/>
+  <path d="M12 34c0-4 3-7 7-7h18c4 0 7 3 7 7v6H12v-6z" fill="url(#body)"/>
+  <path d="M18 24l5-6h10l5 6" fill="url(#roof)"/>
+  <path d="M22 24l3-4h6l3 4" fill="url(#glass)"/>
+  <circle cx="20" cy="40" r="3.5" fill="#111827"/>
+  <circle cx="36" cy="40" r="3.5" fill="#111827"/>
+  <circle cx="20" cy="40" r="1.5" fill="#9ca3af"/>
+  <circle cx="36" cy="40" r="1.5" fill="#9ca3af"/>
+</svg>
