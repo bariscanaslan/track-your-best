@@ -10,8 +10,14 @@ namespace TYB.IoTService.Models
 		[JsonPropertyName("imei")]
 		public string? Imei { get; set; }
 
+		[JsonPropertyName("ip_address")]
+		public string? IpAddress { get; set; }
+
 		[JsonPropertyName("ip")]
 		public string? Ip { get; set; }
+
+		[JsonPropertyName("signal_strength")]
+		public int? SignalStrength { get; set; }
 
 		[JsonPropertyName("rssi")]
 		public int? Rssi { get; set; }

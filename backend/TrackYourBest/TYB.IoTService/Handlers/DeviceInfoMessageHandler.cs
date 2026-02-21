@@ -23,16 +23,11 @@ namespace TYB.IoTService.Handlers
 		}
 
 		public bool CanHandle(string topic)
-			=> topic.StartsWith("device-info/");
+			=> topic.StartsWith("device-info/", StringComparison.OrdinalIgnoreCase)
+				|| topic.Equals("device-info", StringComparison.OrdinalIgnoreCase);
 
 		public async Task HandleAsync(string topic, string payload)
 		{
-			if (!TopicParser.TryGetDeviceId(topic, "device-info", out var deviceId))
-			{
-				_logger.LogWarning("Invalid device-info topic: {Topic}", topic);
-				return;
-			}
-
 			DeviceInfoMessage? message;
 			try
 			{
@@ -40,18 +35,44 @@ namespace TYB.IoTService.Handlers
 			}
 			catch (JsonException ex)
 			{
-				_logger.LogWarning(ex, "Invalid device-info payload for device {DeviceId}", deviceId);
+				_logger.LogWarning(ex, "Invalid device-info payload. Topic={Topic}", topic);
 				return;
 			}
 
 			if (message == null)
 			{
-				_logger.LogWarning("Empty device-info payload for device {DeviceId}", deviceId);
+				_logger.LogWarning("Empty device-info payload. Topic={Topic}", topic);
 				return;
 			}
 
-			if (!string.IsNullOrWhiteSpace(message.DeviceId)
-				&& !message.DeviceId.Equals(deviceId, StringComparison.OrdinalIgnoreCase))
+			var hasTopicDeviceId = TopicParser.TryGetDeviceId(topic, "device-info", out var topicDeviceId);
+			var payloadDeviceId = message.DeviceId?.Trim();
+			var payloadImei = message.Imei?.Trim();
+
+			string? deviceId = null;
+			if (hasTopicDeviceId)
+			{
+				deviceId = topicDeviceId;
+			}
+			else if (topic.Equals("device-info", StringComparison.OrdinalIgnoreCase))
+			{
+				deviceId = payloadImei ?? payloadDeviceId;
+			}
+			else
+			{
+				_logger.LogWarning("Invalid device-info topic: {Topic}", topic);
+				return;
+			}
+
+			if (string.IsNullOrWhiteSpace(deviceId))
+			{
+				_logger.LogWarning("Cannot resolve device id for device-info message. Topic={Topic}", topic);
+				return;
+			}
+
+			if (hasTopicDeviceId
+				&& !string.IsNullOrWhiteSpace(payloadDeviceId)
+				&& !payloadDeviceId.Equals(deviceId, StringComparison.OrdinalIgnoreCase))
 			{
 				_logger.LogWarning(
 					"Device-info device id mismatch. Topic={TopicDeviceId}, Payload={PayloadDeviceId}",
@@ -64,6 +85,12 @@ namespace TYB.IoTService.Handlers
 			var device = await _dbContext.Devices
 				.FirstOrDefaultAsync(d => d.DeviceIdentifier == deviceId);
 
+			if (device == null && !string.IsNullOrWhiteSpace(payloadImei))
+			{
+				device = await _dbContext.Devices
+					.FirstOrDefaultAsync(d => d.DeviceIdentifier == payloadImei || d.Imei == payloadImei);
+			}
+
 			if (device == null)
 			{
 				_logger.LogWarning("Device-info device not found: {DeviceId}", deviceId);
@@ -71,8 +98,8 @@ namespace TYB.IoTService.Handlers
 			}
 
 			device.Imei = message.Imei ?? device.Imei;
-			device.IpAddress = message.Ip ?? device.IpAddress;
-			device.SignalStrength = message.Rssi ?? device.SignalStrength;
+			device.IpAddress = message.IpAddress ?? message.Ip ?? device.IpAddress;
+			device.SignalStrength = message.SignalStrength ?? message.Rssi ?? device.SignalStrength;
 			device.UpdatedAt = DateTime.UtcNow;
 
 			await _dbContext.SaveChangesAsync();

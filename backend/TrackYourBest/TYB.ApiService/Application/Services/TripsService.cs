@@ -1,0 +1,237 @@
+using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
+using TYB.ApiService.Application.Models.Spatial;
+using TYB.ApiService.Infrastructure.Data;
+using TYB.ApiService.Infrastructure.Entities.Spatial;
+
+namespace TYB.ApiService.Application.Services
+{
+	public class TripsService
+	{
+		private readonly TybDbContext _dbContext;
+		private readonly OsrmService _osrmService;
+		private readonly GeometryFactory _geometryFactory;
+
+		public TripsService(TybDbContext dbContext, OsrmService osrmService)
+		{
+			_dbContext = dbContext;
+			_osrmService = osrmService;
+			_geometryFactory = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+		}
+
+		public async Task<TripPlanResponse> PlanTripAsync(
+			TripPlanRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			var route = await _osrmService.GetRouteAsync(
+				request.StartLat,
+				request.StartLng,
+				request.EndLat,
+				request.EndLng,
+				cancellationToken
+			);
+
+			return new TripPlanResponse
+			{
+				TripId = Guid.Empty,
+				DistanceKm = route.DistanceMeters / 1000.0,
+				DurationSeconds = (int)Math.Round(route.DurationSeconds),
+				Geometry = route.Coordinates
+			};
+		}
+
+		public async Task<TripPlanResponse> ApproveTripAsync(
+			TripPlanRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			var route = await _osrmService.GetRouteAsync(
+				request.StartLat,
+				request.StartLng,
+				request.EndLat,
+				request.EndLng,
+				cancellationToken
+			);
+
+			var lineString = _geometryFactory.CreateLineString(
+				route.Coordinates
+					.Select(coord => new Coordinate(coord[1], coord[0]))
+					.ToArray()
+			);
+
+			var trip = new Trip
+			{
+				VehicleId = request.VehicleId,
+				DriverId = request.DriverId,
+				TripName = request.TripName,
+				Status = TripStatus.DriverApprove,
+				StartLocation = _geometryFactory.CreatePoint(new Coordinate(request.StartLng, request.StartLat)),
+				EndLocation = _geometryFactory.CreatePoint(new Coordinate(request.EndLng, request.EndLat)),
+				StartTime = DateTime.UtcNow,
+				PlannedEndTime = request.PlannedEndTime,
+				DurationSeconds = (int)Math.Round(route.DurationSeconds),
+				TotalDistanceKm = (decimal)(route.DistanceMeters / 1000.0),
+				RouteGeometry = lineString,
+				Purpose = request.Purpose,
+				Notes = request.Notes,
+				CreatedAt = DateTime.UtcNow,
+				UpdatedAt = DateTime.UtcNow
+			};
+
+			_dbContext.Trips.Add(trip);
+			await _dbContext.SaveChangesAsync(cancellationToken);
+
+			return new TripPlanResponse
+			{
+				TripId = trip.Id,
+				DistanceKm = route.DistanceMeters / 1000.0,
+				DurationSeconds = (int)Math.Round(route.DurationSeconds),
+				Geometry = route.Coordinates
+			};
+		}
+
+		public async Task<IReadOnlyList<TripSummaryDto>> GetTripsForDriverAsync(
+			Guid driverId,
+			CancellationToken cancellationToken
+		)
+		{
+			var trips = await _dbContext.Trips
+				.AsNoTracking()
+				.Where(trip => trip.DriverId == driverId)
+				.OrderByDescending(trip => trip.CreatedAt)
+				.ToListAsync(cancellationToken);
+
+			return trips.Select(trip => new TripSummaryDto
+			{
+				Id = trip.Id,
+				VehicleId = trip.VehicleId,
+				DriverId = trip.DriverId,
+				TripName = trip.TripName,
+				Status = trip.Status?.ToString(),
+				StartTime = trip.StartTime,
+				PlannedEndTime = trip.PlannedEndTime,
+				EndTime = trip.EndTime,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				DurationSeconds = trip.DurationSeconds,
+				Geometry = trip.RouteGeometry is null
+					? null
+					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
+			}).ToList();
+		}
+
+		public async Task<TripSummaryDto?> GetActiveTripForVehicleAsync(
+			Guid vehicleId,
+			CancellationToken cancellationToken
+		)
+		{
+			var trip = await _dbContext.Trips
+				.AsNoTracking()
+				.Where(t =>
+					t.VehicleId == vehicleId &&
+					t.Status != TripStatus.Cancelled &&
+					t.Status != TripStatus.Completed
+				)
+				.OrderByDescending(t => t.CreatedAt)
+				.FirstOrDefaultAsync(cancellationToken);
+
+			if (trip is null)
+			{
+				return null;
+			}
+
+			return new TripSummaryDto
+			{
+				Id = trip.Id,
+				VehicleId = trip.VehicleId,
+				DriverId = trip.DriverId,
+				TripName = trip.TripName,
+				Status = trip.Status?.ToString(),
+				StartTime = trip.StartTime,
+				PlannedEndTime = trip.PlannedEndTime,
+				EndTime = trip.EndTime,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				DurationSeconds = trip.DurationSeconds,
+				Geometry = trip.RouteGeometry is null
+					? null
+					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
+			};
+		}
+
+		public async Task<TripSummaryDto?> CancelActiveTripForVehicleAsync(
+			Guid vehicleId,
+			CancellationToken cancellationToken
+		)
+		{
+			var trip = await _dbContext.Trips
+				.Where(t =>
+					t.VehicleId == vehicleId &&
+					t.Status != TripStatus.Cancelled &&
+					t.Status != TripStatus.Completed
+				)
+				.OrderByDescending(t => t.CreatedAt)
+				.FirstOrDefaultAsync(cancellationToken);
+
+			if (trip is null)
+			{
+				return null;
+			}
+
+			trip.Status = TripStatus.Cancelled;
+			trip.EndTime = DateTime.UtcNow;
+			trip.UpdatedAt = DateTime.UtcNow;
+
+			await _dbContext.SaveChangesAsync(cancellationToken);
+
+			return new TripSummaryDto
+			{
+				Id = trip.Id,
+				VehicleId = trip.VehicleId,
+				DriverId = trip.DriverId,
+				TripName = trip.TripName,
+				Status = trip.Status?.ToString(),
+				StartTime = trip.StartTime,
+				PlannedEndTime = trip.PlannedEndTime,
+				EndTime = trip.EndTime,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				DurationSeconds = trip.DurationSeconds,
+				Geometry = trip.RouteGeometry is null
+					? null
+					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
+			};
+		}
+
+		public async Task<IReadOnlyList<TripSummaryDto>> GetPastTripsForVehicleAsync(
+			Guid vehicleId,
+			CancellationToken cancellationToken
+		)
+		{
+			var trips = await _dbContext.Trips
+				.AsNoTracking()
+				.Where(t =>
+					t.VehicleId == vehicleId &&
+					(t.Status == TripStatus.Completed || t.Status == TripStatus.Cancelled)
+				)
+				.OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt)
+				.Take(20)
+				.ToListAsync(cancellationToken);
+
+			return trips.Select(trip => new TripSummaryDto
+			{
+				Id = trip.Id,
+				VehicleId = trip.VehicleId,
+				DriverId = trip.DriverId,
+				TripName = trip.TripName,
+				Status = trip.Status?.ToString(),
+				StartTime = trip.StartTime,
+				PlannedEndTime = trip.PlannedEndTime,
+				EndTime = trip.EndTime,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				DurationSeconds = trip.DurationSeconds,
+				Geometry = trip.RouteGeometry is null
+					? null
+					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
+			}).ToList();
+		}
+	}
+}
