@@ -33,7 +33,7 @@ builder.Services.AddDbContext<TybDbContext>(options =>
 	options.UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.UseNetTopologySuite())
 );
 
-builder.Services.AddScoped<SpatialService>();
+builder.Services.AddScoped<CoreService>();
 builder.Services.AddScoped<TripsService>();
 builder.Services.AddHttpClient<OsrmService>(client =>
 {

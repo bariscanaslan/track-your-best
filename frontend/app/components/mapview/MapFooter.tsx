@@ -2,16 +2,20 @@
 
 "use client";
 
-import { FiActivity, FiBarChart2, FiTruck } from "react-icons/fi";
+import { FiActivity, FiBarChart2, FiFilter, FiTruck } from "react-icons/fi";
 
 type MapFooterProps = {
-  activePanel: "routes" | "statistics" | "vehicle" | null;
-  onTogglePanel: (panel: "routes" | "statistics" | "vehicle") => void;
+  activePanel: "trips" | "statistics" | "vehicle" | "filter" | null;
+  hasSelection: boolean;
+  onTogglePanel: (panel: "trips" | "statistics" | "vehicle" | "filter") => void;
+  onClearSelection: () => void;
 };
 
 export default function MapFooter({
   activePanel,
+  hasSelection,
   onTogglePanel,
+  onClearSelection,
 }: MapFooterProps) {
   return (
     <footer className="map-footer">
@@ -23,11 +27,11 @@ export default function MapFooter({
 
         <div className="map-footer-actions">
           <button
-            className={`map-footer-action ${activePanel === "routes" ? "is-active" : ""}`}
-            onClick={() => onTogglePanel("routes")}
+            className={`map-footer-action ${activePanel === "trips" ? "is-active" : ""}`}
+            onClick={() => onTogglePanel("trips")}
           >
             <FiActivity size={18} />
-            Routes
+            Trips
           </button>
           <button
             className={`map-footer-action ${activePanel === "statistics" ? "is-active" : ""}`}
@@ -42,6 +46,20 @@ export default function MapFooter({
           >
             <FiTruck size={18} />
             Vehicle Information
+          </button>
+          <button
+            className={`map-footer-action ${activePanel === "filter" ? "is-active" : ""}`}
+            onClick={() => onTogglePanel("filter")}
+          >
+            <FiFilter size={18} />
+            Filter Route
+          </button>
+          <button
+            className="map-footer-action-red is-secondary"
+            onClick={onClearSelection}
+            disabled={!hasSelection}
+          >
+            Clear Selection
           </button>
         </div>
       </div>

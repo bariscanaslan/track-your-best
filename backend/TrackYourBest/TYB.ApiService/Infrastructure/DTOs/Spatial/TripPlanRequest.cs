@@ -1,4 +1,4 @@
-namespace TYB.ApiService.Application.Models.Spatial
+namespace TYB.ApiService.Infrastructure.DTOs.Spatial
 {
 	public class TripPlanRequest
 	{

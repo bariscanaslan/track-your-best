@@ -1,27 +1,21 @@
 using NetTopologySuite.Geometries;
 
-namespace TYB.ApiService.Infrastructure.Entities.Spatial
+namespace TYB.ApiService.Infrastructure.DTOs.Spatial
 {
-	public class GpsData
+	public class DeviceLastLocationRow
 	{
-		public Guid Id { get; set; }
 		public Guid DeviceId { get; set; }
+		public Guid? VehicleId { get; set; }
+		public string? DeviceName { get; set; }
 		public Guid? TripId { get; set; }
 		public Point? Location { get; set; }
 		public double Latitude { get; set; }
 		public double Longitude { get; set; }
-		public decimal? Altitude { get; set; }
 		public decimal? Accuracy { get; set; }
 		public decimal? Speed { get; set; }
-		public decimal? Heading { get; set; }
 		public bool? IsMoving { get; set; }
 		public bool? IsStopped { get; set; }
-		public decimal? Acceleration { get; set; }
 		public DateTime? GpsTimestamp { get; set; }
 		public DateTime? ReceivedTimestamp { get; set; }
-		public int? BatteryLevel { get; set; }
-		public int? SignalQuality { get; set; }
-		public string? Metadata { get; set; }
-		public Guid? OrganizationId { get; set; }
 	}
 }

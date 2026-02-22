@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
-using TYB.ApiService.Application.Models.Spatial;
+using NetTopologySuite.IO;
+using TYB.ApiService.Infrastructure.DTOs.Spatial;
 using TYB.ApiService.Infrastructure.Data;
 using TYB.ApiService.Infrastructure.Entities.Spatial;
 
@@ -60,6 +61,9 @@ namespace TYB.ApiService.Application.Services
 					.ToArray()
 			);
 
+			var plannedEndTime = request.PlannedEndTime
+				?? DateTime.UtcNow.AddSeconds(route.DurationSeconds);
+
 			var trip = new Trip
 			{
 				VehicleId = request.VehicleId,
@@ -69,7 +73,7 @@ namespace TYB.ApiService.Application.Services
 				StartLocation = _geometryFactory.CreatePoint(new Coordinate(request.StartLng, request.StartLat)),
 				EndLocation = _geometryFactory.CreatePoint(new Coordinate(request.EndLng, request.EndLat)),
 				StartTime = DateTime.UtcNow,
-				PlannedEndTime = request.PlannedEndTime,
+				PlannedEndTime = plannedEndTime,
 				DurationSeconds = (int)Math.Round(route.DurationSeconds),
 				TotalDistanceKm = (decimal)(route.DistanceMeters / 1000.0),
 				RouteGeometry = lineString,
@@ -96,6 +100,7 @@ namespace TYB.ApiService.Application.Services
 			CancellationToken cancellationToken
 		)
 		{
+			var wktWriter = new WKTWriter();
 			var trips = await _dbContext.Trips
 				.AsNoTracking()
 				.Where(trip => trip.DriverId == driverId)
@@ -106,14 +111,22 @@ namespace TYB.ApiService.Application.Services
 			{
 				Id = trip.Id,
 				VehicleId = trip.VehicleId,
-				DriverId = trip.DriverId,
 				TripName = trip.TripName,
 				Status = trip.Status?.ToString(),
+				StartLocation = trip.StartLocation is null ? null : wktWriter.Write(trip.StartLocation),
+				EndLocation = trip.EndLocation is null ? null : wktWriter.Write(trip.EndLocation),
+				StartAddress = trip.StartAddress,
+				EndAddress = trip.EndAddress,
 				StartTime = trip.StartTime,
-				PlannedEndTime = trip.PlannedEndTime,
 				EndTime = trip.EndTime,
-				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				PlannedEndTime = trip.PlannedEndTime,
 				DurationSeconds = trip.DurationSeconds,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				MaxSpeed = (double?)trip.MaxSpeed,
+				AvgSpeed = (double?)trip.AvgSpeed,
+				StopCount = trip.StopCount,
+				Notes = trip.Notes,
+				CreatedAt = trip.CreatedAt,
 				Geometry = trip.RouteGeometry is null
 					? null
 					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
@@ -125,6 +138,7 @@ namespace TYB.ApiService.Application.Services
 			CancellationToken cancellationToken
 		)
 		{
+			var wktWriter = new WKTWriter();
 			var trip = await _dbContext.Trips
 				.AsNoTracking()
 				.Where(t =>
@@ -144,14 +158,22 @@ namespace TYB.ApiService.Application.Services
 			{
 				Id = trip.Id,
 				VehicleId = trip.VehicleId,
-				DriverId = trip.DriverId,
 				TripName = trip.TripName,
 				Status = trip.Status?.ToString(),
+				StartLocation = trip.StartLocation is null ? null : wktWriter.Write(trip.StartLocation),
+				EndLocation = trip.EndLocation is null ? null : wktWriter.Write(trip.EndLocation),
+				StartAddress = trip.StartAddress,
+				EndAddress = trip.EndAddress,
 				StartTime = trip.StartTime,
-				PlannedEndTime = trip.PlannedEndTime,
 				EndTime = trip.EndTime,
-				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				PlannedEndTime = trip.PlannedEndTime,
 				DurationSeconds = trip.DurationSeconds,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				MaxSpeed = (double?)trip.MaxSpeed,
+				AvgSpeed = (double?)trip.AvgSpeed,
+				StopCount = trip.StopCount,
+				Notes = trip.Notes,
+				CreatedAt = trip.CreatedAt,
 				Geometry = trip.RouteGeometry is null
 					? null
 					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
@@ -163,6 +185,7 @@ namespace TYB.ApiService.Application.Services
 			CancellationToken cancellationToken
 		)
 		{
+			var wktWriter = new WKTWriter();
 			var trip = await _dbContext.Trips
 				.Where(t =>
 					t.VehicleId == vehicleId &&
@@ -187,14 +210,22 @@ namespace TYB.ApiService.Application.Services
 			{
 				Id = trip.Id,
 				VehicleId = trip.VehicleId,
-				DriverId = trip.DriverId,
 				TripName = trip.TripName,
 				Status = trip.Status?.ToString(),
+				StartLocation = trip.StartLocation is null ? null : wktWriter.Write(trip.StartLocation),
+				EndLocation = trip.EndLocation is null ? null : wktWriter.Write(trip.EndLocation),
+				StartAddress = trip.StartAddress,
+				EndAddress = trip.EndAddress,
 				StartTime = trip.StartTime,
-				PlannedEndTime = trip.PlannedEndTime,
 				EndTime = trip.EndTime,
-				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				PlannedEndTime = trip.PlannedEndTime,
 				DurationSeconds = trip.DurationSeconds,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				MaxSpeed = (double?)trip.MaxSpeed,
+				AvgSpeed = (double?)trip.AvgSpeed,
+				StopCount = trip.StopCount,
+				Notes = trip.Notes,
+				CreatedAt = trip.CreatedAt,
 				Geometry = trip.RouteGeometry is null
 					? null
 					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
@@ -206,6 +237,7 @@ namespace TYB.ApiService.Application.Services
 			CancellationToken cancellationToken
 		)
 		{
+			var wktWriter = new WKTWriter();
 			var trips = await _dbContext.Trips
 				.AsNoTracking()
 				.Where(t =>
@@ -220,14 +252,22 @@ namespace TYB.ApiService.Application.Services
 			{
 				Id = trip.Id,
 				VehicleId = trip.VehicleId,
-				DriverId = trip.DriverId,
 				TripName = trip.TripName,
 				Status = trip.Status?.ToString(),
+				StartLocation = trip.StartLocation is null ? null : wktWriter.Write(trip.StartLocation),
+				EndLocation = trip.EndLocation is null ? null : wktWriter.Write(trip.EndLocation),
+				StartAddress = trip.StartAddress,
+				EndAddress = trip.EndAddress,
 				StartTime = trip.StartTime,
-				PlannedEndTime = trip.PlannedEndTime,
 				EndTime = trip.EndTime,
-				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				PlannedEndTime = trip.PlannedEndTime,
 				DurationSeconds = trip.DurationSeconds,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				MaxSpeed = (double?)trip.MaxSpeed,
+				AvgSpeed = (double?)trip.AvgSpeed,
+				StopCount = trip.StopCount,
+				Notes = trip.Notes,
+				CreatedAt = trip.CreatedAt,
 				Geometry = trip.RouteGeometry is null
 					? null
 					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
