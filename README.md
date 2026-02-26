@@ -306,14 +306,3 @@ curl -X POST http://localhost:5200/api/eta/predict \
 - **React Frontend:** `track-your-best-product/frontend/`
 
 ---
-
-## 🎓 Team
-
-Created by **Barış Can Aslan, Yiğit Avar, Toprak Kamburoğlu**  
-Yaratıcı Endüstriler Platformu - December 2025
-
----
-
-## 📄 License
-
-MIT License - See LICENSE file for details
