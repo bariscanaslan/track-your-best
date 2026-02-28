@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TYB.ApiService.Application.Services;
+using TYB.ApiService.Infrastructure.DTOs.Core;
 
 namespace TYB.ApiService.Controllers.Core
 {
@@ -12,6 +13,48 @@ namespace TYB.ApiService.Controllers.Core
 		public DevicesController(CoreService coreService)
 		{
 			_coreService = coreService;
+		}
+
+		[HttpGet]
+		public async Task<IActionResult> GetDevices(
+			[FromQuery] Guid? organizationId,
+			[FromQuery] bool? onlyActive,
+			CancellationToken cancellationToken
+		)
+		{
+			var data = await _coreService.GetDevicesAsync(organizationId, onlyActive, cancellationToken);
+			return Ok(data);
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> CreateDevice(
+			[FromBody] DeviceUpsertRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			var created = await _coreService.CreateDeviceAsync(request, cancellationToken);
+			return CreatedAtAction(nameof(GetDeviceInformation), new { deviceId = created?.Id }, created);
+		}
+
+		[HttpPut("{deviceId:guid}")]
+		public async Task<IActionResult> UpdateDevice(
+			[FromRoute] Guid deviceId,
+			[FromBody] DeviceUpsertRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			var updated = await _coreService.UpdateDeviceAsync(deviceId, request, cancellationToken);
+			return updated is null ? NotFound() : Ok(updated);
+		}
+
+		[HttpDelete("{deviceId:guid}")]
+		public async Task<IActionResult> DeleteDevice(
+			[FromRoute] Guid deviceId,
+			CancellationToken cancellationToken
+		)
+		{
+			var removed = await _coreService.DeleteDeviceAsync(deviceId, cancellationToken);
+			return removed ? NoContent() : NotFound();
 		}
 
 		[HttpGet("{deviceId:guid}/information")]

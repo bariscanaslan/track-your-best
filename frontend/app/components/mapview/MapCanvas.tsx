@@ -86,6 +86,7 @@ type MapCanvasProps = {
   destinationPoints: Array<[number, number]>;
   filteredStartPoint: [number, number] | null;
   filteredEndPoint: [number, number] | null;
+  tileStyle: "satellite" | "light" | "colorful";
   routeMode: boolean;
   onMarkerClick: (location: MapDeviceLocation) => void;
   onClosePanel: () => void;
@@ -100,13 +101,32 @@ export default function MapCanvas({
   destinationPoints,
   filteredStartPoint,
   filteredEndPoint,
+  tileStyle,
   routeMode,
   onMarkerClick,
   onClosePanel,
   onMapClick,
   onMapBackgroundClick,
 }: MapCanvasProps) {
-  const routeColors = ["#1b86ce", "#0ea5e9", "#22c55e", "#f97316", "#8b5cf6", "#ef4444"];
+  const routeColors = ["#ef4444", "#22c55e", "#3b82f6", "#f59e0b", "#a855f7"];
+  const tileLayers = {
+    colorful: {
+      url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    },
+    light: {
+      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    },
+    satellite: {
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      attribution:
+        'Tiles &copy; <a href="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer">Esri</a> — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+    },
+  } as const;
+  const activeTile = tileLayers[tileStyle];
 
   return (
     <MapContainer
@@ -133,7 +153,7 @@ export default function MapCanvas({
 
       <ZoomControl position="bottomleft" />
 
-      <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+      <TileLayer url={activeTile.url} attribution={activeTile.attribution} />
 
       {routePaths.map((path, index) => (
         <Polyline

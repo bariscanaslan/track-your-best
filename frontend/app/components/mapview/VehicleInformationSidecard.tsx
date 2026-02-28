@@ -109,6 +109,12 @@ export default function MapSidecard({
           <div className="map-sidecard-section">
             <div className="map-sidecard-section-title">Connected Device</div>
             <div className="map-sidecard-row">
+              <span className="map-sidecard-label">Device Id</span>
+              <span className="map-sidecard-value">
+                {selectedLocation.deviceId}
+              </span>
+            </div>
+            <div className="map-sidecard-row">
               <span className="map-sidecard-label">Device Identifier</span>
               <span className="map-sidecard-value">
                 {deviceInformation?.deviceIdentifier ?? selectedLocation.deviceId}

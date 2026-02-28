@@ -1,10 +1,10 @@
-namespace TYB.ApiService.Infrastructure.Entities.Core
+namespace TYB.ApiService.Infrastructure.DTOs.Core
 {
-	public class Vehicle
+	public class VehicleUpsertRequest
 	{
-		public Guid Id { get; set; }
 		public Guid? OrganizationId { get; set; }
 		public Guid? DeviceId { get; set; }
+		public bool? ConfirmDeviceReassignment { get; set; }
 		public string VehicleName { get; set; } = string.Empty;
 		public string PlateNumber { get; set; } = string.Empty;
 		public string? Brand { get; set; }
@@ -14,10 +14,6 @@ namespace TYB.ApiService.Infrastructure.Entities.Core
 		public string? FuelType { get; set; }
 		public int? Capacity { get; set; }
 		public DateTime? InsuranceExpiry { get; set; }
-		public DateTime? InspectionExpiry { get; set; }
 		public bool? IsActive { get; set; }
-		public DateTime? CreatedAt { get; set; }
-		public DateTime? UpdatedAt { get; set; }
-		public Guid? CreatedBy { get; set; }
 	}
 }

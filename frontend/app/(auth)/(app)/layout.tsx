@@ -1,10 +1,10 @@
-// app/(auth)/dashboard/layout.tsx
+// app/(auth)/(app)/layout.tsx
 
 "use client";
 
 import Navbar from "../../components/Navbar";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Auth guard temporarily disabled.
   return (
     <div>

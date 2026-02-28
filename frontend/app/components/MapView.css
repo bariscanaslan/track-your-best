@@ -91,37 +91,51 @@
 /* ── Markers ───────────────────────────────────────────────── */
 .pulsing-marker {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   transform: translate(-12px, -12px);
-  color: #c52222 !important;
+  color: #ffffff !important;
+  filter: drop-shadow(0 6px 14px rgba(6, 16, 38, 0.45));
 }
 
 .pulsing-marker::before {
   content: "";
   position: absolute;
-  inset: 6px;
+  inset: 7px;
   border-radius: 9999px;
-  background: radial-gradient(circle at 30% 30%, #f9fafb, #1b86ce);
-  box-shadow: 0 0 12px #c52222e6;
+  background: radial-gradient(circle at 40% 40%, #ffffff 0%, #ffffff 35%, #0ea5e9 60%, #0b4f85 100%);
+  box-shadow:
+    0 0 0 2px rgba(11, 79, 133, 0.9),
+    0 0 18px rgba(14, 165, 233, 0.85),
+    0 8px 18px rgba(3, 7, 18, 0.35);
 }
 
 .pulsing-marker::after {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -2px;
   border-radius: 9999px;
-  border: 2px solid #c522228c;
-  animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+  border: 2px solid rgba(14, 165, 233, 0.8);
+  box-shadow:
+    0 0 16px rgba(14, 165, 233, 0.9),
+    0 0 28px rgba(14, 165, 233, 0.5);
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
 .pulsing-marker.is-selected::before {
-  background: radial-gradient(circle at 30% 30%, #ffffff, #b60c0c);
+  background: radial-gradient(circle at 40% 40%, #ffffff 0%, #ffffff 35%, #f97316 60%, #b45309 100%);
+  box-shadow:
+    0 0 0 2px rgba(180, 83, 9, 0.95),
+    0 0 18px rgba(249, 115, 22, 0.9),
+    0 8px 18px rgba(3, 7, 18, 0.35);
 }
 
 .pulsing-marker.is-selected::after {
-  border-color: rgba(245, 11, 11, 0.7);
-  animation-duration: 1s;
+  border-color: rgba(249, 115, 22, 0.85);
+  box-shadow:
+    0 0 16px rgba(249, 115, 22, 0.9),
+    0 0 28px rgba(249, 115, 22, 0.5);
+  animation-duration: 1.4s;
 }
 
 @keyframes ping {
@@ -287,40 +301,54 @@
 }
 
 .route-line {
-  stroke: #2563eb;
-  stroke-width: 5;
+  stroke-width: 6;
   stroke-linecap: round;
-  stroke-dasharray: 6 14;
-  animation: route-dash 1.2s linear infinite;
-  filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.45));
+  stroke-dasharray: 10 14;
+  animation: route-dash 1.4s linear infinite;
+  filter:
+    drop-shadow(0 0 0.8px rgba(15, 23, 42, 0.95))
+    drop-shadow(0 0 6px rgba(239, 68, 68, 0.75))
+    drop-shadow(0 8px 16px rgba(3, 7, 18, 0.35));
 }
 
 .route-destination-marker {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
-  background: radial-gradient(circle, #ffffff 35%, #22c55e 36%, #16a34a 100%);
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25), 0 6px 14px rgba(15, 23, 42, 0.35);
-  border: 2px solid #15803d;
+  background: radial-gradient(circle at 40% 40%, #ffffff 0%, #ffffff 35%, #22c55e 60%, #15803d 100%);
+  border: 2px solid rgba(15, 23, 42, 0.95);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 18px rgba(34, 197, 94, 0.75),
+    0 8px 18px rgba(3, 7, 18, 0.35);
 }
 
 .filtered-route-marker {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  border: 2px solid #0f172a;
-  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.18), 0 6px 16px rgba(15, 23, 42, 0.35);
-  background: #ffffff;
+  background: radial-gradient(circle at 40% 40%, #ffffff 0%, #ffffff 35%, #64748b 60%, #334155 100%);
+  border: 2px solid rgba(15, 23, 42, 0.75);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 14px rgba(100, 116, 139, 0.65),
+    0 8px 18px rgba(3, 7, 18, 0.35);
 }
 
 .filtered-route-marker.is-start {
-  background: radial-gradient(circle, #ffffff 35%, #38bdf8 36%, #0284c7 100%);
-  border-color: #0284c7;
+  background: radial-gradient(circle at 40% 40%, #ffffff 0%, #ffffff 35%, #ef4444 60%, #7f1d1d 100%);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 16px rgba(239, 68, 68, 0.75),
+    0 8px 18px rgba(3, 7, 18, 0.35);
 }
 
 .filtered-route-marker.is-end {
-  background: radial-gradient(circle, #ffffff 35%, #f97316 36%, #c2410c 100%);
-  border-color: #c2410c;
+  background: radial-gradient(circle at 40% 40%, #ffffff 0%, #ffffff 35%, #ef4444 60%, #7f1d1d 100%);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 16px rgba(239, 68, 68, 0.75),
+    0 8px 18px rgba(3, 7, 18, 0.35);
 }
 
 @keyframes route-dash {
@@ -349,6 +377,16 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #e2e8f0 transparent;
+}
+
+.map-sidecard.is-left {
+  left: 0;
+  right: auto;
+  border-radius: 0 20px 20px 0;
+  border-left: none;
+  border-right: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 2px 0 0 rgba(226, 232, 240, 0.8), 16px 0 48px rgba(15, 23, 42, 0.1);
+  transform: translateX(-100%);
 }
 
 .map-sidecard::-webkit-scrollbar { width: 4px; }
@@ -407,6 +445,17 @@
   background: #fafbfc;
 }
 
+.map-sidecard-field {
+  display: grid;
+  gap: 6px;
+}
+
+.map-sidecard-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .map-sidecard-section-title {
   font-size: 11px;
   font-weight: 700;
@@ -462,6 +511,10 @@
   transition: border-color 0.14s ease;
 }
 
+.map-sidecard-row.is-tight {
+  padding: 8px 10px;
+}
+
 .map-sidecard-row:hover {
   border-color: #e2e8f0;
 }
@@ -472,6 +525,9 @@
   color: #94a3b8;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .map-sidecard-input {
@@ -512,6 +568,30 @@
   color: #1e293b;
 }
 
+.map-sidecard-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.map-sidecard-stat {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid #f1f5f9;
+  border-radius: 11px;
+  background: #ffffff;
+}
+
+.map-sidecard-trip {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
 .map-sidecard-empty {
   font-size: 13px;
   color: #94a3b8;
@@ -529,6 +609,19 @@
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
 }
 
+.map-sidecard-spinner {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid rgba(148, 163, 184, 0.35);
+  border-top-color: #2563eb;
+  animation: map-spinner 0.9s linear infinite;
+}
+
+@keyframes map-spinner {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .map-sidecard {
@@ -541,6 +634,12 @@
     max-width: none;
     border-radius: 16px;
     box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+  }
+
+  .map-sidecard.is-left {
+    left: 12px;
+    right: auto;
+    transform: translateX(-110%);
   }
 
   .map-footer-inner {

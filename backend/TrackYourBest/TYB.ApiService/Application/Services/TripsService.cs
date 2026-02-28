@@ -11,12 +11,18 @@ namespace TYB.ApiService.Application.Services
 	{
 		private readonly TybDbContext _dbContext;
 		private readonly OsrmService _osrmService;
+		private readonly NominatimService _nominatimService;
 		private readonly GeometryFactory _geometryFactory;
 
-		public TripsService(TybDbContext dbContext, OsrmService osrmService)
+		public TripsService(
+			TybDbContext dbContext,
+			OsrmService osrmService,
+			NominatimService nominatimService
+		)
 		{
 			_dbContext = dbContext;
 			_osrmService = osrmService;
+			_nominatimService = nominatimService;
 			_geometryFactory = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
 		}
 
@@ -47,6 +53,11 @@ namespace TYB.ApiService.Application.Services
 			CancellationToken cancellationToken
 		)
 		{
+			if (await HasActiveTripForVehicleAsync(request.VehicleId, cancellationToken))
+			{
+				throw new InvalidOperationException("Vehicle already has an active trip.");
+			}
+
 			var route = await _osrmService.GetRouteAsync(
 				request.StartLat,
 				request.StartLng,
@@ -61,6 +72,19 @@ namespace TYB.ApiService.Application.Services
 					.ToArray()
 			);
 
+			var startAddress = await ResolveAddressAsync(
+				request.StartLat,
+				request.StartLng,
+				request.StartAddress,
+				cancellationToken
+			);
+			var endAddress = await ResolveAddressAsync(
+				request.EndLat,
+				request.EndLng,
+				request.EndAddress,
+				cancellationToken
+			);
+
 			var plannedEndTime = request.PlannedEndTime
 				?? DateTime.UtcNow.AddSeconds(route.DurationSeconds);
 
@@ -72,6 +96,8 @@ namespace TYB.ApiService.Application.Services
 				Status = TripStatus.DriverApprove,
 				StartLocation = _geometryFactory.CreatePoint(new Coordinate(request.StartLng, request.StartLat)),
 				EndLocation = _geometryFactory.CreatePoint(new Coordinate(request.EndLng, request.EndLat)),
+				StartAddress = startAddress,
+				EndAddress = endAddress,
 				StartTime = DateTime.UtcNow,
 				PlannedEndTime = plannedEndTime,
 				DurationSeconds = (int)Math.Round(route.DurationSeconds),
@@ -272,6 +298,43 @@ namespace TYB.ApiService.Application.Services
 					? null
 					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
 			}).ToList();
+		}
+
+		private async Task<string?> ResolveAddressAsync(
+			double latitude,
+			double longitude,
+			string? providedAddress,
+			CancellationToken cancellationToken
+		)
+		{
+			if (!string.IsNullOrWhiteSpace(providedAddress))
+			{
+				return providedAddress.Trim();
+			}
+
+			try
+			{
+				return await _nominatimService.ReverseGeocodeAsync(latitude, longitude, cancellationToken);
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		public async Task<bool> HasActiveTripForVehicleAsync(
+			Guid vehicleId,
+			CancellationToken cancellationToken
+		)
+		{
+			return await _dbContext.Trips
+				.AsNoTracking()
+				.AnyAsync(t =>
+					t.VehicleId == vehicleId
+					&& t.Status != TripStatus.Cancelled
+					&& t.Status != TripStatus.Completed,
+					cancellationToken
+				);
 		}
 	}
 }

@@ -6,6 +6,8 @@ export type TripPlanPayload = {
   startLng: number;
   endLat: number;
   endLng: number;
+  startAddress?: string | null;
+  endAddress?: string | null;
   plannedEndTime?: string | null;
   purpose?: string | null;
   notes?: string | null;

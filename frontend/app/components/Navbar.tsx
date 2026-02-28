@@ -3,9 +3,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { FiMap, FiCpu, FiGitBranch, FiActivity } from "react-icons/fi";
+import { FaMapMarkedAlt } from "react-icons/fa";
 
 import "./Navbar.css";
 
@@ -26,38 +28,90 @@ const navItems: NavItem[] = [
 
 const navItemsByRole: Record<string, NavItem[]> = {
   admin: [
-    { href: "/dashboard/admin", label: "Map", icon: FiMap },
-    { href: "/dashboard/admin/vehicles", label: "Vehicles", icon: FiCpu },
-    { href: "/dashboard/admin/reports", label: "Reports", icon: FiActivity },
+    { href: "/admin", label: "Map", icon: FiMap },
+    { href: "/admin/vehicles", label: "Vehicles", icon: FiCpu },
+    { href: "/admin/reports", label: "Reports", icon: FiActivity },
   ],
   "fleet-manager": [
-    { href: "/dashboard/fleet-manager", label: "Map", icon: FiMap },
-    { href: "/dashboard/fleet-manager/devices", label: "Devices", icon: FiCpu },
-    { href: "/dashboard/fleet-manager/drivers", label: "Drivers", icon: FiGitBranch },
-    { href: "/dashboard/fleet-manager/vehicles", label: "Vehicles", icon: FiActivity },
+    { href: "/fleet-manager", label: "Map", icon: FiMap },
+    { href: "/fleet-manager/devices", label: "Devices", icon: FiCpu },
+    { href: "/fleet-manager/vehicles", label: "Vehicles", icon: FiActivity },
+    { href: "/fleet-manager/drivers", label: "Drivers", icon: FiGitBranch },
   ],
   driver: [
-    { href: "/dashboard/driver", label: "Map", icon: FiMap },
-    { href: "/dashboard/driver/trips", label: "Trips", icon: FiGitBranch },
-    { href: "/dashboard/driver/logs", label: "Logs", icon: FiActivity },
+    { href: "/driver", label: "Map", icon: FiMap },
+    { href: "/driver/trips", label: "Trips", icon: FiGitBranch },
+    { href: "/driver/logs", label: "Logs", icon: FiActivity },
   ],
 };
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [mapStyle, setMapStyle] = useState<"satellite" | "light" | "colorful">("colorful");
+  const mapStyleKey = "tyb.mapStyle";
 
   const role =
-    pathname.includes("/dashboard/admin")
+    pathname.startsWith("/admin")
       ? "admin"
-      : pathname.includes("/dashboard/fleet-manager")
+      : pathname.startsWith("/fleet-manager")
         ? "fleet-manager"
-        : pathname.includes("/dashboard/driver")
+        : pathname.startsWith("/driver")
           ? "driver"
           : "admin";
 
   const navItems = navItemsByRole[role] ?? navItemsByRole.admin;
 
   const isActive = (href: string) => pathname === href;
+  const isMapRoute = navItems.some((item) => item.href === pathname && item.label === "Map");
+
+  const resolveStoredStyle = (value: string | null) => {
+    if (value === "satellite" || value === "light" || value === "colorful") {
+      return value;
+    }
+    return "colorful";
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const stored = resolveStoredStyle(window.localStorage.getItem(mapStyleKey));
+    setMapStyle(stored);
+
+    const handleStyleEvent = (event: Event) => {
+      const next = resolveStoredStyle((event as CustomEvent).detail as string | null);
+      setMapStyle(next);
+      window.localStorage.setItem(mapStyleKey, next);
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== mapStyleKey) return;
+      setMapStyle(resolveStoredStyle(event.newValue));
+    };
+
+    window.addEventListener("tyb:map-style", handleStyleEvent as EventListener);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("tyb:map-style", handleStyleEvent as EventListener);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  const labelByStyle = {
+    satellite: "Satellite",
+    light: "Light-all",
+    colorful: "Colorful Streets",
+  } as const;
+
+  const handleToggleStyle = () => {
+    const next =
+      mapStyle === "satellite" ? "light" : mapStyle === "light" ? "colorful" : "satellite";
+    setMapStyle(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(mapStyleKey, next);
+      window.dispatchEvent(new CustomEvent("tyb:map-style", { detail: next }));
+    }
+  };
 
   return (
     <nav className="tyb-navbar">
@@ -89,6 +143,18 @@ export default function Navbar() {
               </Link>
             );
           })}
+
+          {isMapRoute && (
+            <button
+              type="button"
+              className="tyb-map-style-button"
+              onClick={handleToggleStyle}
+              aria-label={`Map style: ${labelByStyle[mapStyle]}`}
+              title={`Map style: ${labelByStyle[mapStyle]}`}
+            >
+              <FaMapMarkedAlt size={16} />
+            </button>
+          )}
 
           {/* Logout button disabled while auth is off. */}
         </div>

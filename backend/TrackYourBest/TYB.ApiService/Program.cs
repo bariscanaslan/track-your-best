@@ -4,6 +4,7 @@ using Npgsql;
 using TYB.ApiService.Application.Services;
 using TYB.ApiService.Infrastructure.Data;
 using TYB.ApiService.Infrastructure.Entities.Spatial;
+using TYB.ApiService.Infrastructure.Entities.Core;
 
 LoadEnv(new[]
 {
@@ -28,6 +29,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
 }
 
 NpgsqlConnection.GlobalTypeMapper.MapEnum<TripStatus>("trip_status");
+NpgsqlConnection.GlobalTypeMapper.MapEnum<UserRole>("user_role");
 
 builder.Services.AddDbContext<TybDbContext>(options =>
 	options.UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.UseNetTopologySuite())
@@ -35,12 +37,25 @@ builder.Services.AddDbContext<TybDbContext>(options =>
 
 builder.Services.AddScoped<CoreService>();
 builder.Services.AddScoped<TripsService>();
+builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<OsrmService>(client =>
 {
 	var baseUrl =
 		builder.Configuration["TYB_OSRM_BASE_URL"]
 		?? "http://localhost:5000";
 	client.BaseAddress = new Uri(baseUrl);
+});
+builder.Services.AddHttpClient<NominatimService>(client =>
+{
+	var baseUrl =
+		builder.Configuration["TYB_NOMINATIM_BASE_URL"]
+		?? "https://nominatim.openstreetmap.org";
+	client.BaseAddress = new Uri(baseUrl);
+	var userAgent =
+		builder.Configuration["TYB_NOMINATIM_USER_AGENT"]
+		?? "TYB.ApiService/1.0 (contact: ops@tyb.local)";
+	client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
+	client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
 });
 
 builder.Services.AddCors(options =>

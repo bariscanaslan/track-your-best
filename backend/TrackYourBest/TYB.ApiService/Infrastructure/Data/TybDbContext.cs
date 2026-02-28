@@ -26,6 +26,7 @@ namespace TYB.ApiService.Infrastructure.Data
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			modelBuilder.HasPostgresEnum<TripStatus>("trip_status");
+			modelBuilder.HasPostgresEnum<UserRole>("user_role");
 
 			modelBuilder.Entity<Device>(entity =>
 			{
@@ -36,11 +37,9 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(d => d.DeviceName).HasColumnName("device_name");
 				entity.Property(d => d.DeviceIdentifier).HasColumnName("device_identifier");
 				entity.Property(d => d.DeviceModel).HasColumnName("device_model");
-				entity.Property(d => d.FirmwareVersion).HasColumnName("firmware_version");
 				entity.Property(d => d.MqttUsername).HasColumnName("mqtt_username");
 				entity.Property(d => d.MqttPassword).HasColumnName("mqtt_password");
 				entity.Property(d => d.SecretKey).HasColumnName("secret_key");
-				entity.Property(d => d.Status).HasColumnName("status").HasColumnType("device_status");
 				entity.Property(d => d.InstallationDate).HasColumnName("installation_date");
 				entity.Property(d => d.LastMaintenanceDate).HasColumnName("last_maintenance_date");
 				entity.Property(d => d.NextMaintenanceDate).HasColumnName("next_maintenance_date");
@@ -48,7 +47,6 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(d => d.Imei).HasColumnName("imei");
 				entity.Property(d => d.IpAddress).HasColumnName("ip_address");
 				entity.Property(d => d.SignalStrength).HasColumnName("signal_strength");
-				entity.Property(d => d.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
 				entity.Property(d => d.IsActive).HasColumnName("is_active");
 				entity.Property(d => d.CreatedAt).HasColumnName("created_at");
 				entity.Property(d => d.LastSeenAt).HasColumnName("last_seen_at");
@@ -70,12 +68,8 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(u => u.Phone).HasColumnName("phone");
 				entity.Property(u => u.Role).HasColumnName("role").HasColumnType("user_role");
 				entity.Property(u => u.IsActive).HasColumnName("is_active");
-				entity.Property(u => u.IsVerified).HasColumnName("is_verified");
 				entity.Property(u => u.LastLogin).HasColumnName("last_login");
-				entity.Property(u => u.FailedLoginAttempts).HasColumnName("failed_login_attempts");
-				entity.Property(u => u.AccountLockedUntil).HasColumnName("account_locked_until");
 				entity.Property(u => u.AvatarUrl).HasColumnName("avatar_url");
-				entity.Property(u => u.Preferences).HasColumnName("preferences").HasColumnType("jsonb");
 				entity.Property(u => u.CreatedAt).HasColumnName("created_at");
 				entity.Property(u => u.UpdatedAt).HasColumnName("updated_at");
 				entity.Property(u => u.CreatedBy).HasColumnName("created_by");
@@ -97,7 +91,6 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(d => d.EmergencyContactName).HasColumnName("emergency_contact_name");
 				entity.Property(d => d.EmergencyContactPhone).HasColumnName("emergency_contact_phone");
 				entity.Property(d => d.IsActive).HasColumnName("is_active");
-				entity.Property(d => d.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
 				entity.Property(d => d.CreatedAt).HasColumnName("created_at");
 				entity.Property(d => d.UpdatedAt).HasColumnName("updated_at");
 			});
@@ -114,15 +107,12 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(v => v.Brand).HasColumnName("brand");
 				entity.Property(v => v.Model).HasColumnName("model");
 				entity.Property(v => v.Year).HasColumnName("year");
-				entity.Property(v => v.Vin).HasColumnName("vin");
 				entity.Property(v => v.Color).HasColumnName("color");
 				entity.Property(v => v.FuelType).HasColumnName("fuel_type");
 				entity.Property(v => v.Capacity).HasColumnName("capacity");
-				entity.Property(v => v.OdometerReading).HasColumnName("odometer_reading");
 				entity.Property(v => v.InsuranceExpiry).HasColumnName("insurance_expiry");
 				entity.Property(v => v.InspectionExpiry).HasColumnName("inspection_expiry");
 				entity.Property(v => v.IsActive).HasColumnName("is_active");
-				entity.Property(v => v.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
 				entity.Property(v => v.CreatedAt).HasColumnName("created_at");
 				entity.Property(v => v.UpdatedAt).HasColumnName("updated_at");
 				entity.Property(v => v.CreatedBy).HasColumnName("created_by");

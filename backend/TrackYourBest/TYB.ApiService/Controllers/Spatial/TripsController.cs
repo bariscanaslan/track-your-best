@@ -31,6 +31,11 @@ namespace TYB.ApiService.Controllers.Spatial
 			CancellationToken cancellationToken
 		)
 		{
+			if (await _tripsService.HasActiveTripForVehicleAsync(request.VehicleId, cancellationToken))
+			{
+				return Conflict("Vehicle already has an active trip.");
+			}
+
 			var response = await _tripsService.ApproveTripAsync(request, cancellationToken);
 			return Ok(response);
 		}

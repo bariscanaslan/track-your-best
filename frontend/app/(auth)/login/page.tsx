@@ -17,5 +17,5 @@ export default function LoginPage() {
   - useAuth + useRouter redirect
   - reCAPTCHA check
   - POST /auth/login
-  - login() + router.replace("/dashboard")
+  - login() + router.replace("/admin")
 */

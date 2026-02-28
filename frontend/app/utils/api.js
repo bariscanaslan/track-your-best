@@ -5,6 +5,11 @@ export function getApiBaseUrl() {
 export const devicesApi = {
   information: (deviceId, baseUrl = getApiBaseUrl()) =>
     `${baseUrl}/api/devices/${deviceId}/information`,
+  list: (organizationId, baseUrl = getApiBaseUrl(), onlyActive = false) =>
+    `${baseUrl}/api/devices?organizationId=${encodeURIComponent(organizationId)}&onlyActive=${encodeURIComponent(String(onlyActive))}`,
+  create: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/devices`,
+  update: (deviceId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/devices/${deviceId}`,
+  remove: (deviceId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/devices/${deviceId}`,
 };
 
 export const gpsApi = {
@@ -17,11 +22,29 @@ export const gpsApi = {
 export const driversApi = {
   infoByVehicle: (vehicleId, baseUrl = getApiBaseUrl()) =>
     `${baseUrl}/api/drivers/vehicle/${vehicleId}`,
+  list: (organizationId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/drivers?organizationId=${encodeURIComponent(organizationId)}`,
+  create: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/drivers`,
+  getById: (driverId, organizationId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/drivers/${driverId}?organizationId=${encodeURIComponent(organizationId)}`,
+  update: (driverId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/drivers/${driverId}`,
+  remove: (driverId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/drivers/${driverId}`,
 };
 
 export const vehiclesApi = {
   information: (vehicleId, baseUrl = getApiBaseUrl()) =>
     `${baseUrl}/api/vehicles/${vehicleId}/information`,
+  list: (organizationId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/vehicles?organizationId=${encodeURIComponent(organizationId)}`,
+  getById: (vehicleId, organizationId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/vehicles/${vehicleId}?organizationId=${encodeURIComponent(organizationId)}`,
+  create: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/vehicles`,
+  update: (vehicleId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/vehicles/${vehicleId}`,
+  remove: (vehicleId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/vehicles/${vehicleId}`,
+};
+
+export const usersApi = {
+  update: (userId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/users/${userId}`,
 };
 
 export const tripsApi = {
@@ -35,10 +58,19 @@ export const tripsApi = {
     `${baseUrl}/api/trips/cancel/vehicle/${vehicleId}`,
 };
 
+export const geocodingApi = {
+  forward: (query, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/geocoding/forward?query=${encodeURIComponent(query)}`,
+  reverse: (lat, lon, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/geocoding/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`,
+};
+
 export const api = {
   devices: devicesApi,
   drivers: driversApi,
   gps: gpsApi,
+  users: usersApi,
   vehicles: vehiclesApi,
   trips: tripsApi,
+  geocoding: geocodingApi,
 };

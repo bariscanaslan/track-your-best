@@ -2,12 +2,12 @@
 
 "use client";
 
-import { FiActivity, FiBarChart2, FiFilter, FiTruck } from "react-icons/fi";
+import { FiActivity, FiBarChart2, FiClock, FiTruck } from "react-icons/fi";
 
 type MapFooterProps = {
-  activePanel: "trips" | "statistics" | "vehicle" | "filter" | null;
+  activePanel: "trips" | "statistics" | "vehicle" | "history" | null;
   hasSelection: boolean;
-  onTogglePanel: (panel: "trips" | "statistics" | "vehicle" | "filter") => void;
+  onTogglePanel: (panel: "trips" | "statistics" | "vehicle" | "history") => void;
   onClearSelection: () => void;
 };
 
@@ -48,11 +48,11 @@ export default function MapFooter({
             Vehicle Information
           </button>
           <button
-            className={`map-footer-action ${activePanel === "filter" ? "is-active" : ""}`}
-            onClick={() => onTogglePanel("filter")}
+            className={`map-footer-action ${activePanel === "history" ? "is-active" : ""}`}
+            onClick={() => onTogglePanel("history")}
           >
-            <FiFilter size={18} />
-            Filter Route
+            <FiClock size={18} />
+            History
           </button>
           <button
             className="map-footer-action-red is-secondary"

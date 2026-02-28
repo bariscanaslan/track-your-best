@@ -7,17 +7,14 @@ namespace TYB.ApiService.Infrastructure.Entities.Core
 		public string DeviceName { get; set; } = string.Empty;
 		public string DeviceIdentifier { get; set; } = string.Empty;
 		public string? DeviceModel { get; set; }
-		public string? FirmwareVersion { get; set; }
 		public string MqttUsername { get; set; } = string.Empty;
 		public string MqttPassword { get; set; } = string.Empty;
 		public string SecretKey { get; set; } = string.Empty;
-		public string? Status { get; set; }
 		public DateTime? InstallationDate { get; set; }
 		public DateTime? LastMaintenanceDate { get; set; }
 		public DateTime? NextMaintenanceDate { get; set; }
 		public int? BatteryLevel { get; set; }
 		public int? SignalStrength { get; set; }
-		public string? Metadata { get; set; }
 		public bool? IsActive { get; set; }
 		public DateTime? CreatedAt { get; set; }
 		public DateTime? UpdatedAt { get; set; }
