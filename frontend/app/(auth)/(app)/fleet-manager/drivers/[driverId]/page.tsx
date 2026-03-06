@@ -328,7 +328,7 @@ export default function FleetManagerDriverEditPage() {
             <div className="fm-section-sub">Driver-specific credentials and assignments.</div>
             <div className="fm-form">
               <label className="fm-field">
-                <div className="fm-field-label">Vehicle ID</div>
+                <div className="fm-field-label">Vehicle</div>
                 <select
                   className="fm-select"
                   value={driverForm.vehicleId}

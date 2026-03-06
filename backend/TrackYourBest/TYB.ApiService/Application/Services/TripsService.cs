@@ -103,8 +103,8 @@ namespace TYB.ApiService.Application.Services
 				DurationSeconds = (int)Math.Round(route.DurationSeconds),
 				TotalDistanceKm = (decimal)(route.DistanceMeters / 1000.0),
 				RouteGeometry = lineString,
-				Purpose = request.Purpose,
-				Notes = request.Notes,
+                Notes = request.Notes,
+                PauseCount = 0,
 				CreatedAt = DateTime.UtcNow,
 				UpdatedAt = DateTime.UtcNow
 			};
@@ -151,7 +151,8 @@ namespace TYB.ApiService.Application.Services
 				MaxSpeed = (double?)trip.MaxSpeed,
 				AvgSpeed = (double?)trip.AvgSpeed,
 				StopCount = trip.StopCount,
-				Notes = trip.Notes,
+                PauseCount = trip.PauseCount,
+                Notes = trip.Notes,
 				CreatedAt = trip.CreatedAt,
 				Geometry = trip.RouteGeometry is null
 					? null
@@ -169,7 +170,8 @@ namespace TYB.ApiService.Application.Services
 				.AsNoTracking()
 				.Where(t =>
 					t.VehicleId == vehicleId &&
-					t.Status != TripStatus.Cancelled &&
+					t.Status != TripStatus.CancelledFm &&
+					t.Status != TripStatus.CancelledDriver &&
 					t.Status != TripStatus.Completed
 				)
 				.OrderByDescending(t => t.CreatedAt)
@@ -198,7 +200,8 @@ namespace TYB.ApiService.Application.Services
 				MaxSpeed = (double?)trip.MaxSpeed,
 				AvgSpeed = (double?)trip.AvgSpeed,
 				StopCount = trip.StopCount,
-				Notes = trip.Notes,
+                PauseCount = trip.PauseCount,
+                Notes = trip.Notes,
 				CreatedAt = trip.CreatedAt,
 				Geometry = trip.RouteGeometry is null
 					? null
@@ -215,7 +218,8 @@ namespace TYB.ApiService.Application.Services
 			var trip = await _dbContext.Trips
 				.Where(t =>
 					t.VehicleId == vehicleId &&
-					t.Status != TripStatus.Cancelled &&
+					t.Status != TripStatus.CancelledFm &&
+					t.Status != TripStatus.CancelledDriver &&
 					t.Status != TripStatus.Completed
 				)
 				.OrderByDescending(t => t.CreatedAt)
@@ -226,7 +230,7 @@ namespace TYB.ApiService.Application.Services
 				return null;
 			}
 
-			trip.Status = TripStatus.Cancelled;
+			trip.Status = TripStatus.CancelledFm;
 			trip.EndTime = DateTime.UtcNow;
 			trip.UpdatedAt = DateTime.UtcNow;
 
@@ -250,11 +254,207 @@ namespace TYB.ApiService.Application.Services
 				MaxSpeed = (double?)trip.MaxSpeed,
 				AvgSpeed = (double?)trip.AvgSpeed,
 				StopCount = trip.StopCount,
-				Notes = trip.Notes,
+                PauseCount = trip.PauseCount,
+                Notes = trip.Notes,
 				CreatedAt = trip.CreatedAt,
 				Geometry = trip.RouteGeometry is null
 					? null
 					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
+			};
+		}
+
+		public async Task<TripSummaryDto?> DecideTripByDriverAsync(
+			Guid tripId,
+			DriverTripDecisionRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			var decision = (request.Decision ?? string.Empty).Trim().ToLowerInvariant();
+			var isAccepted = decision == "accepted";
+			var isRejected = decision == "rejected";
+
+			if (!isAccepted && !isRejected)
+			{
+				throw new InvalidOperationException("Decision must be 'accepted' or 'rejected'.");
+			}
+
+			if (isRejected && string.IsNullOrWhiteSpace(request.Notes))
+			{
+				throw new InvalidOperationException("Rejection note is required.");
+			}
+
+			var trip = await _dbContext.Trips
+				.FirstOrDefaultAsync(t => t.Id == tripId, cancellationToken);
+
+			if (trip is null)
+			{
+				return null;
+			}
+
+			if (trip.Status != TripStatus.DriverApprove)
+			{
+				throw new InvalidOperationException("Only driver_approve trips can be decided by driver.");
+			}
+
+			trip.Status = isAccepted ? TripStatus.Ongoing : TripStatus.CancelledDriver;
+			trip.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
+			trip.UpdatedAt = DateTime.UtcNow;
+			if (isRejected)
+			{
+				trip.EndTime = DateTime.UtcNow;
+			}
+
+			await _dbContext.SaveChangesAsync(cancellationToken);
+
+			var wktWriter = new WKTWriter();
+			return new TripSummaryDto
+			{
+				Id = trip.Id,
+				VehicleId = trip.VehicleId,
+				TripName = trip.TripName,
+				Status = trip.Status?.ToString(),
+				StartLocation = trip.StartLocation is null ? null : wktWriter.Write(trip.StartLocation),
+				EndLocation = trip.EndLocation is null ? null : wktWriter.Write(trip.EndLocation),
+				StartAddress = trip.StartAddress,
+				EndAddress = trip.EndAddress,
+				StartTime = trip.StartTime,
+				EndTime = trip.EndTime,
+				PlannedEndTime = trip.PlannedEndTime,
+				DurationSeconds = trip.DurationSeconds,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				MaxSpeed = (double?)trip.MaxSpeed,
+				AvgSpeed = (double?)trip.AvgSpeed,
+				StopCount = trip.StopCount,
+                PauseCount = trip.PauseCount,
+                Notes = trip.Notes,
+				CreatedAt = trip.CreatedAt,
+				Geometry = trip.RouteGeometry is null
+					? null
+					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
+			};
+		}
+
+		public async Task<TripSummaryDto?> ApplyDriverTripActionAsync(
+			Guid tripId,
+			DriverTripActionRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			var action = (request.Action ?? string.Empty).Trim().ToLowerInvariant();
+
+			var trip = await _dbContext.Trips
+				.FirstOrDefaultAsync(t => t.Id == tripId, cancellationToken);
+
+			if (trip is null)
+			{
+				return null;
+			}
+
+			switch (action)
+			{
+				case "pause":
+					if (trip.Status != TripStatus.Ongoing)
+					{
+						throw new InvalidOperationException("Only ongoing trips can be paused.");
+					}
+					trip.Status = TripStatus.Paused;
+					trip.PauseCount = (trip.PauseCount ?? 0) + 1;
+					break;
+				case "continue":
+					if (trip.Status != TripStatus.Paused)
+					{
+						throw new InvalidOperationException("Only paused trips can continue.");
+					}
+					trip.Status = TripStatus.Ongoing;
+					break;
+				case "finish":
+					if (trip.Status != TripStatus.Ongoing && trip.Status != TripStatus.Paused)
+					{
+						throw new InvalidOperationException("Only ongoing or paused trips can be finished.");
+					}
+					trip.Status = TripStatus.Completed;
+					trip.EndTime = DateTime.UtcNow;
+					break;
+				case "cancel":
+					if (trip.Status != TripStatus.Ongoing && trip.Status != TripStatus.Paused)
+					{
+						throw new InvalidOperationException("Only ongoing or paused trips can be cancelled by driver.");
+					}
+					if (string.IsNullOrWhiteSpace(request.Notes))
+					{
+						throw new InvalidOperationException("Cancellation note is required.");
+					}
+					trip.Status = TripStatus.CancelledDriver;
+					trip.Notes = request.Notes.Trim();
+					trip.EndTime = DateTime.UtcNow;
+					break;
+				default:
+					throw new InvalidOperationException("Action must be pause, continue, finish, or cancel.");
+			}
+
+			trip.UpdatedAt = DateTime.UtcNow;
+			await _dbContext.SaveChangesAsync(cancellationToken);
+
+			var wktWriter = new WKTWriter();
+			return new TripSummaryDto
+			{
+				Id = trip.Id,
+				VehicleId = trip.VehicleId,
+				TripName = trip.TripName,
+				Status = trip.Status?.ToString(),
+				StartLocation = trip.StartLocation is null ? null : wktWriter.Write(trip.StartLocation),
+				EndLocation = trip.EndLocation is null ? null : wktWriter.Write(trip.EndLocation),
+				StartAddress = trip.StartAddress,
+				EndAddress = trip.EndAddress,
+				StartTime = trip.StartTime,
+				EndTime = trip.EndTime,
+				PlannedEndTime = trip.PlannedEndTime,
+				DurationSeconds = trip.DurationSeconds,
+				TotalDistanceKm = (double?)trip.TotalDistanceKm,
+				MaxSpeed = (double?)trip.MaxSpeed,
+				AvgSpeed = (double?)trip.AvgSpeed,
+				StopCount = trip.StopCount,
+                PauseCount = trip.PauseCount,
+                Notes = trip.Notes,
+				CreatedAt = trip.CreatedAt,
+				Geometry = trip.RouteGeometry is null
+					? null
+					: trip.RouteGeometry.Coordinates.Select(coord => new[] { coord.Y, coord.X }).ToList()
+			};
+		}
+
+		public async Task<DriverTripFinishCheckResponse?> CheckDriverFinishDistanceAsync(
+			Guid tripId,
+			double currentLat,
+			double currentLng,
+			CancellationToken cancellationToken
+		)
+		{
+			var trip = await _dbContext.Trips
+				.AsNoTracking()
+				.FirstOrDefaultAsync(t => t.Id == tripId, cancellationToken);
+
+			if (trip is null || trip.EndLocation is null)
+			{
+				return null;
+			}
+
+			var endLat = trip.EndLocation.Y;
+			var endLng = trip.EndLocation.X;
+
+			var route = await _osrmService.GetRouteAsync(
+				currentLat,
+				currentLng,
+				endLat,
+				endLng,
+				cancellationToken
+			);
+
+			var distanceKm = route.DistanceMeters / 1000.0;
+			return new DriverTripFinishCheckResponse
+			{
+				DistanceKm = distanceKm,
+				ShouldWarn = distanceKm > 3.0
 			};
 		}
 
@@ -268,7 +468,11 @@ namespace TYB.ApiService.Application.Services
 				.AsNoTracking()
 				.Where(t =>
 					t.VehicleId == vehicleId &&
-					(t.Status == TripStatus.Completed || t.Status == TripStatus.Cancelled)
+					(
+						t.Status == TripStatus.Completed ||
+						t.Status == TripStatus.CancelledFm ||
+						t.Status == TripStatus.CancelledDriver
+					)
 				)
 				.OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt)
 				.Take(20)
@@ -292,7 +496,8 @@ namespace TYB.ApiService.Application.Services
 				MaxSpeed = (double?)trip.MaxSpeed,
 				AvgSpeed = (double?)trip.AvgSpeed,
 				StopCount = trip.StopCount,
-				Notes = trip.Notes,
+                PauseCount = trip.PauseCount,
+                Notes = trip.Notes,
 				CreatedAt = trip.CreatedAt,
 				Geometry = trip.RouteGeometry is null
 					? null
@@ -331,10 +536,16 @@ namespace TYB.ApiService.Application.Services
 				.AsNoTracking()
 				.AnyAsync(t =>
 					t.VehicleId == vehicleId
-					&& t.Status != TripStatus.Cancelled
+					&& t.Status != TripStatus.CancelledFm
+					&& t.Status != TripStatus.CancelledDriver
 					&& t.Status != TripStatus.Completed,
 					cancellationToken
 				);
 		}
 	}
 }
+
+
+
+
+

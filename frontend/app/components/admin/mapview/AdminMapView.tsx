@@ -1,69 +1,88 @@
-// app/components/MapView.tsx
+// app/components/admin/mapview/AdminMapView.tsx
 
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 
-import MapCanvas from "./mapview/MapCanvas";
-import MapFooter from "./mapview/MapFooter";
-import VehicleInformationSidecard from "./mapview/VehicleInformationSidecard";
-import TripsSidecard from "./mapview/TripsSidecard";
-import StatisticsSidecard from "./mapview/StatisticsSidecard";
-import HistorySidecard from "./mapview/HistorySidecard";
-import { DeviceInfo } from "./mapview/data/deviceInfoData";
-import { GpsRoutePoint, MapDeviceLocation } from "./mapview/data/gpsDataInfo";
-import { VehicleInfo } from "./mapview/data/vehicleInfoData";
-import { TripPlanPayload, TripSummary } from "./mapview/data/tripInfoData";
-import { DriverInfo } from "./mapview/data/driverInfoData";
-import { driversApi, devicesApi, geocodingApi, gpsApi, tripsApi, vehiclesApi } from "../utils/api";
+import AdminMapFooter from "./AdminMapFooter";
 
-import "./MapView.css";
+import MapCanvas from "../../MapCanvas";
 
-export default function MapView() {
+import VehicleInformationSidecard from "./sidecards/VehicleInformationSidecard";
+import TripsSidecard from "./sidecards/TripsSidecard";
+import HistorySidecard from "./sidecards/HistorySidecard";
+
+import { DeviceInfo } from "./data/deviceInfoData";
+import { GpsRoutePoint, MapDeviceLocation } from "./data/gpsDataInfo";
+import { VehicleInfo } from "./data/vehicleInfoData";
+import { TripPlanPayload, TripSummary } from "./data/tripInfoData";
+import { DriverInfo } from "./data/driverInfoData";
+import { driversApi, devicesApi, geocodingApi, gpsApi, tripsApi, vehiclesApi } from "../../../utils/api.js";
+
+import "../../../components/MapView.css";
+
+export default function DriverMapView() {
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
   const ORG_ID = "0310ed50-86f2-468c-901d-6b3fcb113914";
   const API_URL = `${gpsApi.lastLocationByDeviceId(API_BASE)}?organizationId=${ORG_ID}`;
 
   const [deviceLocations, setDeviceLocations] = useState<MapDeviceLocation[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<MapDeviceLocation | null>(null);
+
   const [error, setError] = useState<string | null>(null);
+
   const [activePanel, setActivePanel] = useState<"trips" | "statistics" | "vehicle" | "history" | null>(null);
+
   const [routeMode, setRouteMode] = useState(false);
   const [routePath, setRoutePath] = useState<Array<[number, number]>>([]);
   const [visibleTripRoutes, setVisibleTripRoutes] = useState<Array<Array<[number, number]>>>([]);
   const [filteredRoutePath, setFilteredRoutePath] = useState<Array<[number, number]>>([]);
+
   const [destinationPoint, setDestinationPoint] = useState<[number, number] | null>(null);
   const [pendingTrip, setPendingTrip] = useState<TripPlanPayload | null>(null);
+
   const [isRouting, setIsRouting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [hasApprovedRoute, setHasApprovedRoute] = useState(false);
+
   const [routeError, setRouteError] = useState<string | null>(null);
+
   const [activeTrip, setActiveTrip] = useState<TripSummary | null>(null);
   const [activeTripError, setActiveTripError] = useState<string | null>(null);
   const [isLoadingActiveTrip, setIsLoadingActiveTrip] = useState(false);
   const [pastTrips, setPastTrips] = useState<TripSummary[]>([]);
   const [pastTripsError, setPastTripsError] = useState<string | null>(null);
   const [isLoadingPastTrips, setIsLoadingPastTrips] = useState(false);
+
   const [tripName, setTripName] = useState("");
   const [startAddressInput, setStartAddressInput] = useState("");
   const [endAddressInput, setEndAddressInput] = useState("");
+
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [isResolvingStart, setIsResolvingStart] = useState(false);
   const [isResolvingEnd, setIsResolvingEnd] = useState(false);
+
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  
   const [deviceInformation, setDeviceInformation] = useState<DeviceInfo | null>(null);
   const [vehicleInformation, setVehicleInformation] = useState<VehicleInfo | null>(null);
   const [driverInformation, setDriverInformation] = useState<DriverInfo | null>(null);
+
   const [informationError, setInformationError] = useState<string | null>(null);
   const [isLoadingInformation, setIsLoadingInformation] = useState(false);
+
   const [driverError, setDriverError] = useState<string | null>(null);
   const [isLoadingDriver, setIsLoadingDriver] = useState(false);
+
   const [filterStart, setFilterStart] = useState<string>("");
   const [filterEnd, setFilterEnd] = useState<string>("");
   const [isFiltering, setIsFiltering] = useState(false);
   const [filterError, setFilterError] = useState<string | null>(null);
+
   const [mapStyle, setMapStyle] = useState<"satellite" | "light" | "colorful">("colorful");
+
   const selectedLocationRef = useRef<MapDeviceLocation | null>(null);
+
   const routeKey = (path: Array<[number, number]>) =>
     `${path.length}-${path[0]?.[0]}-${path[0]?.[1]}-${path[path.length - 1]?.[0]}-${path[path.length - 1]?.[1]}`;
   const mapStyleKey = "tyb.mapStyle";
@@ -700,8 +719,11 @@ export default function MapView() {
       return arr.findIndex((p) => `${p[0]}-${p[1]}` === key) === index;
     });
 
+  const FooterComponent = AdminMapFooter;
+
   return (
     <main className="map-page" style={{ height: "100vh", width: "100%" }}>
+
       <MapCanvas
         deviceLocations={deviceLocations}
         selectedVehicleId={selectedLocation?.vehicleId ?? selectedLocation?.deviceId ?? null}
@@ -711,6 +733,8 @@ export default function MapView() {
         filteredEndPoint={filteredEndPoint}
         tileStyle={mapStyle}
         routeMode={routeMode}
+        markerTransitionMs={4200}
+        shouldFollowSelected={false}
         onMarkerClick={(location) => {
           setSelectedLocation(location);
           setActivePanel("vehicle");
@@ -754,14 +778,6 @@ export default function MapView() {
         onClose={() => setActivePanel(null)}
       />
 
-      <StatisticsSidecard
-        isOpen={activePanel === "statistics"}
-        routePointCount={renderedRoutePaths.reduce((sum, path) => sum + path.length, 0)}
-        hasApprovedRoute={hasApprovedRoute}
-        activeTripStatus={activeTrip?.status ?? null}
-        onClose={() => setActivePanel(null)}
-      />
-
       <HistorySidecard
         isOpen={activePanel === "history"}
         selectedVehicleId={selectedLocation?.vehicleId ?? null}
@@ -799,7 +815,7 @@ export default function MapView() {
         onClose={() => setActivePanel(null)}
       />
 
-      <MapFooter
+      <FooterComponent
         activePanel={activePanel}
         hasSelection={selectedLocation !== null}
         onTogglePanel={handleTogglePanel}

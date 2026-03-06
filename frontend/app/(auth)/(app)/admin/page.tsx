@@ -4,10 +4,10 @@
 
 import dynamic from "next/dynamic";
 
-const MapView = dynamic(() => import("../../../components/MapView"), {
+const AdminMapView = dynamic(() => import("../../../components/admin/mapview/AdminMapView"), {
   ssr: false,
 });
 
 export default function AdminPage() {
-  return <MapView />;
+  return <AdminMapView />;
 }

@@ -18,6 +18,7 @@ namespace TYB.ApiService.Infrastructure.DTOs.Spatial
 		public double? MaxSpeed { get; set; }
 		public double? AvgSpeed { get; set; }
 		public int? StopCount { get; set; }
+		public int? PauseCount { get; set; }
 		public string? Notes { get; set; }
 		public DateTime? CreatedAt { get; set; }
 		public List<double[]>? Geometry { get; set; }

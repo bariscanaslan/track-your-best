@@ -24,9 +24,8 @@ namespace TYB.ApiService.Infrastructure.Entities.Spatial
 		public int? StopCount { get; set; }
 		public int? HarshAccelerationCount { get; set; }
 		public int? HarshBrakingCount { get; set; }
-		public string? Purpose { get; set; }
 		public string? Notes { get; set; }
-		public string? Metadata { get; set; }
+		public int? PauseCount { get; set; }
 		public DateTime? CreatedAt { get; set; }
 		public DateTime? UpdatedAt { get; set; }
 	}

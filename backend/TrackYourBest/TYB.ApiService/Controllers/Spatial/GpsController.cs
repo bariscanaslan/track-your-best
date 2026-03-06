@@ -16,11 +16,39 @@ namespace TYB.ApiService.Controllers.Spatial
 
 		[HttpGet("last-location/device-id")]
 		public async Task<IActionResult> GetLastLocationsByDeviceId(
-			[FromQuery] Guid organizationId, // Sorgu parametresi olarak alabilirsin
+			[FromQuery] Guid organizationId,
 			CancellationToken cancellationToken
 		)
 		{
 			var data = await _coreService.GetLatestDeviceLocationsAsync(organizationId, cancellationToken);
+			return Ok(data);
+		}
+
+		[HttpGet("last-location/driver/{driverId:guid}")]
+		public async Task<IActionResult> GetLastLocationsByDriverId(
+			[FromRoute] Guid driverId,
+			[FromQuery] Guid organizationId,
+			CancellationToken cancellationToken
+		)
+		{
+			var data = await _coreService.GetLatestDeviceLocationsByDriverAsync(
+				driverId,
+				organizationId,
+				cancellationToken
+			);
+			return Ok(data);
+		}
+
+		[HttpGet("last-location/user/{userId:guid}")]
+		public async Task<IActionResult> GetLastLocationsByUserId(
+			[FromRoute] Guid userId,
+			CancellationToken cancellationToken
+		)
+		{
+			var data = await _coreService.GetLatestDeviceLocationsByUserAsync(
+				userId,
+				cancellationToken
+			);
 			return Ok(data);
 		}
 

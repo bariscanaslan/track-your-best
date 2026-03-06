@@ -12,7 +12,9 @@ namespace TYB.ApiService.Infrastructure.Entities.Spatial
 		Paused,
 		[PgName("completed")]
 		Completed,
-		[PgName("cancelled")]
-		Cancelled
+		[PgName("cancelled_fm")]
+		CancelledFm,
+		[PgName("cancelled_driver")]
+		CancelledDriver
 	}
 }

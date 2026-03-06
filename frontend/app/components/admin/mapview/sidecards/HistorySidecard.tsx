@@ -2,7 +2,7 @@
 
 "use client";
 
-import { TripSummary } from "./data/tripInfoData";
+import { TripSummary } from "../data/tripInfoData";
 
 type HistorySidecardProps = {
   isOpen: boolean;

@@ -56,8 +56,8 @@ namespace TYB.ApiService.Application.Services
 				FROM tyb_spatial.gps_data g
 				INNER JOIN tyb_core.devices d ON d.id = g.device_id
 				LEFT JOIN tyb_core.vehicles v ON v.device_id = g.device_id
-				WHERE d.organization_id = {0} 
-					AND d.is_active = TRUE  -- SADECE AKTÝF CÝHAZLAR
+				WHERE d.organization_id = {0}
+					AND d.is_active = TRUE
 					AND g.latitude IS NOT NULL
 					AND g.longitude IS NOT NULL
 					AND g.latitude BETWEEN -90 AND 90
@@ -92,6 +92,128 @@ namespace TYB.ApiService.Application.Services
 				.ToList();
 		}
 
+		public async Task<IReadOnlyList<DeviceLastLocationDto>> GetLatestDeviceLocationsByDriverAsync(
+			Guid driverId,
+			Guid organizationId,
+			CancellationToken cancellationToken
+		)
+		{
+			const string sql = """
+				SELECT DISTINCT ON (g.device_id)
+					g.device_id,
+					v.id AS vehicle_id,
+					dev.device_name,
+					g.trip_id,
+					g.location,
+					g.latitude,
+					g.longitude,
+					g.accuracy,
+					g.speed,
+					g.is_moving,
+					g.is_stopped,
+					g.gps_timestamp,
+					g.received_timestamp
+				FROM tyb_core.drivers dr
+				INNER JOIN tyb_core.vehicles v ON v.id = dr.vehicle_id
+				INNER JOIN tyb_core.devices dev ON dev.id = v.device_id
+				INNER JOIN tyb_spatial.gps_data g ON g.device_id = dev.id
+				WHERE dr.id = {0}
+					AND dr.organization_id = {1}
+					AND COALESCE(dr.is_active, TRUE) = TRUE
+					AND dev.is_active = TRUE
+					AND g.latitude IS NOT NULL
+					AND g.longitude IS NOT NULL
+					AND g.latitude BETWEEN -90 AND 90
+					AND g.longitude BETWEEN -180 AND 180
+					AND NOT (g.latitude = 0 AND g.longitude = 0)
+				ORDER BY g.device_id, g.gps_timestamp DESC NULLS LAST, g.received_timestamp DESC NULLS LAST
+				""";
+
+			var rows = await _dbContext.DeviceLastLocations
+				.FromSqlRaw(sql, driverId, organizationId)
+				.AsNoTracking()
+				.ToListAsync(cancellationToken);
+
+			var wktWriter = new WKTWriter();
+
+			return rows
+				.Select(row => new DeviceLastLocationDto(
+					row.DeviceId,
+					row.VehicleId,
+					row.DeviceName,
+					row.TripId,
+					row.Location is null ? null : wktWriter.Write(row.Location),
+					row.Latitude,
+					row.Longitude,
+					row.Accuracy,
+					row.Speed,
+					row.IsMoving,
+					row.IsStopped,
+					row.GpsTimestamp,
+					row.ReceivedTimestamp
+				))
+				.ToList();
+		}
+		public async Task<IReadOnlyList<DeviceLastLocationDto>> GetLatestDeviceLocationsByUserAsync(
+			Guid userId,
+			CancellationToken cancellationToken
+		)
+		{
+			const string sql = """
+				SELECT DISTINCT ON (g.device_id)
+					g.device_id,
+					v.id AS vehicle_id,
+					dev.device_name,
+					g.trip_id,
+					g.location,
+					g.latitude,
+					g.longitude,
+					g.accuracy,
+					g.speed,
+					g.is_moving,
+					g.is_stopped,
+					g.gps_timestamp,
+					g.received_timestamp
+				FROM tyb_core.drivers dr
+				INNER JOIN tyb_core.vehicles v ON v.id = dr.vehicle_id
+				INNER JOIN tyb_core.devices dev ON dev.id = v.device_id
+				INNER JOIN tyb_spatial.gps_data g ON g.device_id = dev.id
+				WHERE dr.user_id = {0}
+					AND COALESCE(dr.is_active, TRUE) = TRUE
+					AND dev.is_active = TRUE
+					AND g.latitude IS NOT NULL
+					AND g.longitude IS NOT NULL
+					AND g.latitude BETWEEN -90 AND 90
+					AND g.longitude BETWEEN -180 AND 180
+					AND NOT (g.latitude = 0 AND g.longitude = 0)
+				ORDER BY g.device_id, g.gps_timestamp DESC NULLS LAST, g.received_timestamp DESC NULLS LAST
+				""";
+
+			var rows = await _dbContext.DeviceLastLocations
+				.FromSqlRaw(sql, userId)
+				.AsNoTracking()
+				.ToListAsync(cancellationToken);
+
+			var wktWriter = new WKTWriter();
+
+			return rows
+				.Select(row => new DeviceLastLocationDto(
+					row.DeviceId,
+					row.VehicleId,
+					row.DeviceName,
+					row.TripId,
+					row.Location is null ? null : wktWriter.Write(row.Location),
+					row.Latitude,
+					row.Longitude,
+					row.Accuracy,
+					row.Speed,
+					row.IsMoving,
+					row.IsStopped,
+					row.GpsTimestamp,
+					row.ReceivedTimestamp
+				))
+				.ToList();
+		}
 		public async Task<DeviceInfoDto?> GetDeviceInformationAsync(
 			Guid deviceId,
 			CancellationToken cancellationToken
@@ -913,3 +1035,10 @@ namespace TYB.ApiService.Application.Services
 		}
 	}
 }
+
+
+
+
+
+
+

@@ -2,12 +2,14 @@
 
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, ZoomControl, Polyline, useMap, useMapEvents } from "react-leaflet";
+
 import "leaflet/dist/leaflet.css";
+
 import L, { DivIcon } from "leaflet";
 
-import { MapDeviceLocation } from "./data/gpsDataInfo";
+import { MapDeviceLocation } from "./driver/mapview/data/gpsDataInfo";
 
 const CENTER: [number, number] = [41.02496, 28.958999];
 
@@ -79,6 +81,149 @@ function MapInitialBounds({ points }: { points: Array<[number, number]> }) {
   return null;
 }
 
+function MapFocusFollower({
+  focusPoint,
+  focusZoom,
+}: {
+  focusPoint: [number, number] | null;
+  focusZoom: number;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!focusPoint) return;
+    map.setView(focusPoint, focusZoom, { animate: true });
+  }, [map, focusPoint, focusZoom]);
+
+  return null;
+}
+
+function easeInOut(t: number) {
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+function AnimatedVehicleMarker({
+  location,
+  isSelected,
+  animationDurationMs,
+  onClick,
+  onAnimatedPositionChange,
+}: {
+  location: MapDeviceLocation;
+  isSelected: boolean;
+  animationDurationMs: number;
+  onClick: (location: MapDeviceLocation) => void;
+  onAnimatedPositionChange?: (point: [number, number]) => void;
+}) {
+  const [position, setPosition] = useState<[number, number]>([location.latitude, location.longitude]);
+  const latestPositionRef = useRef<[number, number]>([location.latitude, location.longitude]);
+  const animatedPositionChangeRef = useRef<typeof onAnimatedPositionChange>(onAnimatedPositionChange);
+
+  useEffect(() => {
+    latestPositionRef.current = position;
+  }, [position]);
+
+  useEffect(() => {
+    animatedPositionChangeRef.current = onAnimatedPositionChange;
+  }, [onAnimatedPositionChange]);
+
+  useEffect(() => {
+    const target: [number, number] = [location.latitude, location.longitude];
+    const start = latestPositionRef.current;
+    const latDiff = Math.abs(target[0] - start[0]);
+    const lngDiff = Math.abs(target[1] - start[1]);
+
+    if (latDiff < 0.000001 && lngDiff < 0.000001) {
+      animatedPositionChangeRef.current?.(target);
+      return;
+    }
+
+    const startedAt = performance.now();
+    let frameId = 0;
+
+    const tick = (now: number) => {
+      const elapsed = now - startedAt;
+      const progress = Math.min(elapsed / animationDurationMs, 1);
+      const eased = easeInOut(progress);
+      const next: [number, number] = [
+        start[0] + (target[0] - start[0]) * eased,
+        start[1] + (target[1] - start[1]) * eased,
+      ];
+
+      latestPositionRef.current = next;
+      setPosition(next);
+      animatedPositionChangeRef.current?.(next);
+
+      if (progress < 1) {
+        frameId = window.requestAnimationFrame(tick);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [animationDurationMs, location.latitude, location.longitude]);
+
+  return (
+    <Marker
+      position={position}
+      icon={isSelected ? selectedVehicleIcon : pulsingIcon}
+      eventHandlers={{
+        click: () => onClick(location),
+      }}
+    />
+  );
+}
+
+function SelectedVehicleFollower({
+  selectedVehicleId,
+  trackedPoint,
+  followZoom,
+}: {
+  selectedVehicleId: string | null;
+  trackedPoint: [number, number] | null;
+  followZoom: number;
+}) {
+  const map = useMap();
+  const previousSelectedRef = useRef<string | null>(null);
+  const lastPanAtRef = useRef(0);
+
+  useEffect(() => {
+    if (!selectedVehicleId || !trackedPoint) {
+      previousSelectedRef.current = selectedVehicleId;
+      return;
+    }
+
+    if (previousSelectedRef.current !== selectedVehicleId) {
+      map.flyTo(trackedPoint, followZoom, {
+        animate: true,
+        duration: 0.9,
+      });
+      previousSelectedRef.current = selectedVehicleId;
+      lastPanAtRef.current = Date.now();
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastPanAtRef.current < 450) return;
+
+    const center = map.getCenter();
+    const distanceFromCenterMeters = center.distanceTo(L.latLng(trackedPoint[0], trackedPoint[1]));
+    if (distanceFromCenterMeters < 8) return;
+
+    map.panTo(trackedPoint, {
+      animate: true,
+      duration: 0.8,
+      easeLinearity: 0.25,
+      noMoveStart: true,
+    });
+    lastPanAtRef.current = now;
+  }, [map, selectedVehicleId, trackedPoint, followZoom]);
+
+  return null;
+}
+
 type MapCanvasProps = {
   deviceLocations: MapDeviceLocation[];
   selectedVehicleId: string | null;
@@ -88,6 +233,11 @@ type MapCanvasProps = {
   filteredEndPoint: [number, number] | null;
   tileStyle: "satellite" | "light" | "colorful";
   routeMode: boolean;
+  focusPoint?: [number, number] | null;
+  focusZoom?: number;
+  markerTransitionMs?: number;
+  shouldFollowSelected?: boolean;
+  selectedFollowZoom?: number;
   onMarkerClick: (location: MapDeviceLocation) => void;
   onClosePanel: () => void;
   onMapClick: (point: [number, number]) => void;
@@ -103,11 +253,20 @@ export default function MapCanvas({
   filteredEndPoint,
   tileStyle,
   routeMode,
+  focusPoint = null,
+  focusZoom = 16,
+  markerTransitionMs = 4200,
+  shouldFollowSelected = true,
+  selectedFollowZoom = 18,
   onMarkerClick,
   onClosePanel,
   onMapClick,
   onMapBackgroundClick,
 }: MapCanvasProps) {
+  const [selectedAnimatedPoint, setSelectedAnimatedPoint] = useState<{
+    vehicleId: string;
+    point: [number, number];
+  } | null>(null);
   const routeColors = ["#ef4444", "#22c55e", "#3b82f6", "#f59e0b", "#a855f7"];
   const tileLayers = {
     colorful: {
@@ -127,6 +286,17 @@ export default function MapCanvas({
     },
   } as const;
   const activeTile = tileLayers[tileStyle];
+  const selectedFallbackPoint: [number, number] | null = selectedVehicleId
+    ? (() => {
+        const selectedLocation =
+          deviceLocations.find((item) => (item.vehicleId ?? item.deviceId) === selectedVehicleId) ?? null;
+        return selectedLocation ? [selectedLocation.latitude, selectedLocation.longitude] : null;
+      })()
+    : null;
+  const trackedSelectedPoint =
+    selectedVehicleId && selectedAnimatedPoint?.vehicleId === selectedVehicleId
+      ? selectedAnimatedPoint.point
+      : selectedFallbackPoint;
 
   return (
     <MapContainer
@@ -150,6 +320,14 @@ export default function MapCanvas({
           ...(filteredEndPoint ? [filteredEndPoint] : []),
         ]}
       />
+      <MapFocusFollower focusPoint={focusPoint} focusZoom={focusZoom} />
+      {shouldFollowSelected && (
+        <SelectedVehicleFollower
+          selectedVehicleId={selectedVehicleId}
+          trackedPoint={trackedSelectedPoint}
+          followZoom={selectedFollowZoom}
+        />
+      )}
 
       <ZoomControl position="bottomleft" />
 
@@ -193,13 +371,17 @@ export default function MapCanvas({
       {deviceLocations.map((location) => {
         const locationKey = location.vehicleId ?? location.deviceId;
         return (
-          <Marker
+          <AnimatedVehicleMarker
             key={locationKey}
-            position={[location.latitude, location.longitude]}
-            icon={selectedVehicleId === locationKey ? selectedVehicleIcon : pulsingIcon}
-            eventHandlers={{
-              click: () => onMarkerClick(location),
-            }}
+            location={location}
+            isSelected={selectedVehicleId === locationKey}
+            animationDurationMs={markerTransitionMs}
+            onClick={onMarkerClick}
+            onAnimatedPositionChange={
+              selectedVehicleId === locationKey
+                ? (point) => setSelectedAnimatedPoint({ vehicleId: locationKey, point })
+                : undefined
+            }
           />
         );
       })}

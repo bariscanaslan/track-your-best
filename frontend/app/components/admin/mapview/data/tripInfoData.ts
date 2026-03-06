@@ -9,7 +9,6 @@ export type TripPlanPayload = {
   startAddress?: string | null;
   endAddress?: string | null;
   plannedEndTime?: string | null;
-  purpose?: string | null;
   notes?: string | null;
 };
 
@@ -30,6 +29,7 @@ export type TripSummary = {
   maxSpeed?: number | null;
   avgSpeed?: number | null;
   stopCount?: number | null;
+  pauseCount?: number | null;
   notes?: string | null;
   createdAt?: string | null;
   geometry?: Array<[number, number]> | null;

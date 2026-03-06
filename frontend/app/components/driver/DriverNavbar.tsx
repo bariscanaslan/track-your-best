@@ -1,15 +1,14 @@
-// app/components/Navbar.tsx
+// app/components/DriverNavbar.tsx
 
 "use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { FiMap } from "react-icons/fi";
+import { FaMapMarkedAlt, FaUserTie, FaCar } from "react-icons/fa";
 
-import { FiMap, FiCpu, FiGitBranch, FiActivity } from "react-icons/fi";
-import { FaMapMarkedAlt } from "react-icons/fa";
-
-import "./Navbar.css";
+import "../../components/Navbar.css";
 
 type NavItem = {
   href: string;
@@ -17,65 +16,31 @@ type NavItem = {
   icon: React.ComponentType<{ size?: number }>;
 };
 
-/*
 const navItems: NavItem[] = [
-  { href: "/", label: "Map", icon: FiMap },
-  { href: "/devices", label: "Devices", icon: FiCpu },
-  { href: "/routes", label: "Routes", icon: FiGitBranch },
-  { href: "/logs", label: "Logs", icon: FiActivity },
+  { href: "/driver", label: "Map", icon: FiMap },
+  { href: "/driver/trips", label: "Trips", icon: FaUserTie },
+  { href: "/driver/logs", label: "Logs", icon: FaCar },
 ];
-*/
 
-const navItemsByRole: Record<string, NavItem[]> = {
-  admin: [
-    { href: "/admin", label: "Map", icon: FiMap },
-    { href: "/admin/vehicles", label: "Vehicles", icon: FiCpu },
-    { href: "/admin/reports", label: "Reports", icon: FiActivity },
-  ],
-  "fleet-manager": [
-    { href: "/fleet-manager", label: "Map", icon: FiMap },
-    { href: "/fleet-manager/devices", label: "Devices", icon: FiCpu },
-    { href: "/fleet-manager/vehicles", label: "Vehicles", icon: FiActivity },
-    { href: "/fleet-manager/drivers", label: "Drivers", icon: FiGitBranch },
-  ],
-  driver: [
-    { href: "/driver", label: "Map", icon: FiMap },
-    { href: "/driver/trips", label: "Trips", icon: FiGitBranch },
-    { href: "/driver/logs", label: "Logs", icon: FiActivity },
-  ],
-};
-
-export default function Navbar() {
+export default function DriverNavbar() {
   const pathname = usePathname();
-  const [mapStyle, setMapStyle] = useState<"satellite" | "light" | "colorful">("colorful");
   const mapStyleKey = "tyb.mapStyle";
-
-  const role =
-    pathname.startsWith("/admin")
-      ? "admin"
-      : pathname.startsWith("/fleet-manager")
-        ? "fleet-manager"
-        : pathname.startsWith("/driver")
-          ? "driver"
-          : "admin";
-
-  const navItems = navItemsByRole[role] ?? navItemsByRole.admin;
-
-  const isActive = (href: string) => pathname === href;
-  const isMapRoute = navItems.some((item) => item.href === pathname && item.label === "Map");
-
   const resolveStoredStyle = (value: string | null) => {
     if (value === "satellite" || value === "light" || value === "colorful") {
       return value;
     }
     return "colorful";
   };
+  const [mapStyle, setMapStyle] = useState<"satellite" | "light" | "colorful">(() => {
+    if (typeof window === "undefined") return "colorful";
+    return resolveStoredStyle(window.localStorage.getItem(mapStyleKey));
+  });
+
+  const isActive = (href: string) => pathname === href;
+  const isMapRoute = navItems.some((item) => item.href === pathname && item.label === "Map");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const stored = resolveStoredStyle(window.localStorage.getItem(mapStyleKey));
-    setMapStyle(stored);
 
     const handleStyleEvent = (event: Event) => {
       const next = resolveStoredStyle((event as CustomEvent).detail as string | null);
@@ -117,11 +82,7 @@ export default function Navbar() {
     <nav className="tyb-navbar">
       <div className="tyb-navbar-inner">
         <div className="tyb-navbar-left">
-          <img
-            src="/tyb-logo.png"
-            alt="Track Your Best Logo"
-            className="tyb-navbar-logo"
-          />
+          <img src="/tyb-logo.png" alt="Track Your Best Logo" className="tyb-navbar-logo" />
           <span className="tyb-navbar-brand-text">Track Your Best</span>
         </div>
 
@@ -132,9 +93,7 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`tyb-nav-button ${
-                  isActive(item.href) ? "is-active" : ""
-                }`}
+                className={`tyb-nav-button ${isActive(item.href) ? "is-active" : ""}`}
               >
                 <span className="tyb-nav-icon">
                   <Icon size={18} />
@@ -155,8 +114,6 @@ export default function Navbar() {
               <FaMapMarkedAlt size={16} />
             </button>
           )}
-
-          {/* Logout button disabled while auth is off. */}
         </div>
       </div>
     </nav>
