@@ -15,6 +15,10 @@ export const devicesApi = {
 export const gpsApi = {
   lastLocationByDeviceId: (baseUrl = getApiBaseUrl()) =>
     `${baseUrl}/api/gps/last-location/device-id`,
+  lastLocationByDriverId: (driverId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/gps/last-location/driver/${driverId}`,
+  lastLocationByUserId: (userId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/gps/last-location/user/${userId}`,
   routeByVehicle: (vehicleId, start, end, baseUrl = getApiBaseUrl()) =>
     `${baseUrl}/api/gps/route/vehicle/${vehicleId}?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`,
 };
@@ -50,6 +54,12 @@ export const usersApi = {
 export const tripsApi = {
   plan: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/trips/plan`,
   approve: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/trips/approve`,
+  driverDecision: (tripId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/trips/driver-decision/${tripId}`,
+  driverAction: (tripId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/trips/driver-action/${tripId}`,
+  driverFinishCheck: (tripId, currentLat, currentLng, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/trips/driver-finish-check/${tripId}?currentLat=${encodeURIComponent(currentLat)}&currentLng=${encodeURIComponent(currentLng)}`,
   activeByVehicle: (vehicleId, baseUrl = getApiBaseUrl()) =>
     `${baseUrl}/api/trips/active/vehicle/${vehicleId}`,
   historyByVehicle: (vehicleId, baseUrl = getApiBaseUrl()) =>

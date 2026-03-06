@@ -2,11 +2,11 @@
 
 "use client";
 
-import { DeviceInfo } from "./data/deviceInfoData";
-import { DriverInfo } from "./data/driverInfoData";
-import { MapDeviceLocation } from "./data/gpsDataInfo";
-import { VehicleInfo } from "./data/vehicleInfoData";
-import { formatToGMT3 } from "./dateUtils";
+import { DeviceInfo } from "../data/deviceInfoData";
+import { DriverInfo } from "../data/driverInfoData";
+import { MapDeviceLocation } from "../data/gpsDataInfo";
+import { VehicleInfo } from "../data/vehicleInfoData";
+import { formatToGMT3 } from "../dateUtils";
 
 type MapSidecardProps = {
   selectedLocation: MapDeviceLocation | null;

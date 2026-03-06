@@ -12,7 +12,6 @@ namespace TYB.ApiService.Infrastructure.DTOs.Spatial
 		public string? StartAddress { get; set; }
 		public string? EndAddress { get; set; }
 		public DateTime? PlannedEndTime { get; set; }
-		public string? Purpose { get; set; }
 		public string? Notes { get; set; }
 	}
 }

@@ -234,9 +234,8 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(t => t.StopCount).HasColumnName("stop_count");
 				entity.Property(t => t.HarshAccelerationCount).HasColumnName("harsh_acceleration_count");
 				entity.Property(t => t.HarshBrakingCount).HasColumnName("harsh_braking_count");
-				entity.Property(t => t.Purpose).HasColumnName("purpose");
 				entity.Property(t => t.Notes).HasColumnName("notes");
-				entity.Property(t => t.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
+				entity.Property(t => t.PauseCount).HasColumnName("pause_count");
 				entity.Property(t => t.CreatedAt).HasColumnName("created_at");
 				entity.Property(t => t.UpdatedAt).HasColumnName("updated_at");
 			});
