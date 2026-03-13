@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace TYB.ApiService.Application.Services
+namespace TYB.ApiService.Application.Services.Routing
 {
 	public class OsrmService
 	{

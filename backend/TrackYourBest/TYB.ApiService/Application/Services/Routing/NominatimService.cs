@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace TYB.ApiService.Application.Services
+namespace TYB.ApiService.Application.Services.Routing
 {
 	public class NominatimService
 	{

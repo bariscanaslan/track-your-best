@@ -57,6 +57,16 @@ namespace TYB.ApiService.Controllers.Core
 			return removed ? NoContent() : NotFound();
 		}
 
+		[HttpGet("{deviceId:guid}")]
+		public async Task<IActionResult> GetDevice(
+			[FromRoute] Guid deviceId,
+			CancellationToken cancellationToken
+		)
+		{
+			var data = await _coreService.GetDeviceByIdAsync(deviceId, cancellationToken);
+			return data is null ? NotFound() : Ok(data);
+		}
+
 		[HttpGet("{deviceId:guid}/information")]
 		public async Task<IActionResult> GetDeviceInformation(
 			[FromRoute] Guid deviceId,

@@ -7,11 +7,11 @@ namespace TYB.ApiService.Controllers.Spatial
 	[ApiController]
 	public class GpsController : ControllerBase
 	{
-		private readonly CoreService _coreService;
+		private readonly SpatialService _spatialService;
 
-		public GpsController(CoreService coreService)
+		public GpsController(SpatialService spatialService)
 		{
-			_coreService = coreService;
+			_spatialService = spatialService;
 		}
 
 		[HttpGet("last-location/device-id")]
@@ -20,7 +20,7 @@ namespace TYB.ApiService.Controllers.Spatial
 			CancellationToken cancellationToken
 		)
 		{
-			var data = await _coreService.GetLatestDeviceLocationsAsync(organizationId, cancellationToken);
+			var data = await _spatialService.GetLatestDeviceLocationsAsync(organizationId, cancellationToken);
 			return Ok(data);
 		}
 
@@ -31,7 +31,7 @@ namespace TYB.ApiService.Controllers.Spatial
 			CancellationToken cancellationToken
 		)
 		{
-			var data = await _coreService.GetLatestDeviceLocationsByDriverAsync(
+			var data = await _spatialService.GetLatestDeviceLocationsByDriverAsync(
 				driverId,
 				organizationId,
 				cancellationToken
@@ -45,7 +45,7 @@ namespace TYB.ApiService.Controllers.Spatial
 			CancellationToken cancellationToken
 		)
 		{
-			var data = await _coreService.GetLatestDeviceLocationsByUserAsync(
+			var data = await _spatialService.GetLatestDeviceLocationsByUserAsync(
 				userId,
 				cancellationToken
 			);
@@ -60,7 +60,7 @@ namespace TYB.ApiService.Controllers.Spatial
 			CancellationToken cancellationToken
 		)
 		{
-			var data = await _coreService.GetGpsRouteByVehicleAsync(
+			var data = await _spatialService.GetGpsRouteByVehicleAsync(
 				vehicleId,
 				start,
 				end,
