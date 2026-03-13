@@ -5,9 +5,13 @@ Veritabanı bağlantısı, scheduler ayarları, model yolları
 """
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Base directory
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # =============================================
 # DATABASE SETTINGS
@@ -16,6 +20,16 @@ DATABASE_URL = os.getenv(
     'DATABASE_URL',
     'postgresql://postgres:password@localhost:5432/tyb_production'
 )
+
+# =============================================
+# OSRM SETTINGS (ETA için gerekli!)
+# =============================================
+OSRM_BASE_URL = os.getenv('OSRM_URL', 'http://localhost:5000')
+
+# =============================================
+# TIMEZONE SETTINGS
+# =============================================
+TIMEZONE = 'Europe/Istanbul'
 
 # =============================================
 # SCHEDULER SETTINGS (APScheduler)
@@ -31,20 +45,24 @@ SCHEDULER_CONFIG = {
 # Job Intervals (saniye cinsinden)
 JOB_INTERVALS = {
     'anomaly_detection': 120,      # Her 2 dakika
-    'eta_prediction': 300,         # Her 5 dakika
-    'route_optimization': 600      # Her 10 dakika
+    'driver_scoring': 300,         # Her 5 dakika
+    'eta_prediction': 180,         # Her 3 dakika ← ETA EKLENDİ!
 }
 
 # =============================================
 # MODEL SETTINGS
 # =============================================
-MODELS_DIR = os.path.join(os.path.dirname(__file__), '../models_bin')
+MODELS_DIR = BASE_DIR / 'models_bin'
+DATA_DIR = BASE_DIR / 'data'
 
 MODELS = {
-    'driver_scoring': os.path.join(MODELS_DIR, 'driver_scoring_model.pkl'),
-    'isolation_forest': os.path.join(MODELS_DIR, 'anomaly_model.pkl'),
-    'eta_predictor': os.path.join(MODELS_DIR, 'eta_predictor.pkl')
+    'driver_scoring': MODELS_DIR / 'driver_scoring_model.pkl',
+    'isolation_forest': MODELS_DIR / 'anomaly_model.pkl',
+    'eta_model': MODELS_DIR / 'eta_model_istanbul.pkl',  # ← ETA EKLENDİ!
 }
+
+# ETA specific data files
+ETA_TRAFFIC_PATTERNS = DATA_DIR / 'ibb_traffic_patterns_2024_2025.csv'  # ← ETA EKLENDİ!
 
 # =============================================
 # LOGGING SETTINGS
@@ -68,3 +86,28 @@ GPS_SPIKE_THRESHOLD = 10.0
 JERK_THRESHOLD = 2.0
 OSCILLATION_THRESHOLD = 5.0
 
+# =============================================
+# ETA PREDICTION SETTINGS (YENİ!)
+# =============================================
+ETA_BATCH_SIZE = 10  # Tek seferde işlenecek trip sayısı
+ETA_RUSH_HOURS = [7, 8, 9, 16, 17, 18, 19, 20, 21]  # İstanbul rush saatleri
+
+# =============================================
+# VALIDATION
+# =============================================
+def validate_settings():
+    """Validate that all required files exist"""
+    
+    # Check model files
+    for name, path in MODELS.items():
+        if not path.exists():
+            print(f"⚠️  Warning: Model not found: {path}")
+    
+    # Check ETA traffic patterns
+    if not ETA_TRAFFIC_PATTERNS.exists():
+        print(f"⚠️  Warning: Traffic patterns not found: {ETA_TRAFFIC_PATTERNS}")
+    
+    print("✅ Settings validation complete")
+
+if __name__ == "__main__":
+    validate_settings()

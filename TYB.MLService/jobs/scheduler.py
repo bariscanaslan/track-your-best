@@ -10,6 +10,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from config.settings import JOB_INTERVALS
 from jobs.anomaly_job import anomaly_job_handler
 from jobs.driver_scoring_job import driver_scoring_job_handler
+from jobs.eta_prediction_job import eta_prediction_job_handler  # ← YENİ IMPORT!
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +39,24 @@ class JobScheduler:
         # Driver Scoring Job
         self.scheduler.add_job(
             driver_scoring_job_handler,
-            trigger=IntervalTrigger(seconds=JOB_INTERVALS['eta_prediction']),  # Reuse eta interval
+            trigger=IntervalTrigger(seconds=JOB_INTERVALS['driver_scoring']),
             id='driver_scoring_job',
             name='Driver Scoring',
             coalesce=True,
             max_instances=1
         )
-        logger.info(f"✅ Driver Scoring Job eklendi (interval: {JOB_INTERVALS['eta_prediction']}s)")
+        logger.info(f"✅ Driver Scoring Job eklendi (interval: {JOB_INTERVALS['driver_scoring']}s)")
+
+        # ETA Prediction Job (YENİ!)
+        self.scheduler.add_job(
+            eta_prediction_job_handler,
+            trigger=IntervalTrigger(seconds=JOB_INTERVALS['eta_prediction']),
+            id='eta_prediction_job',
+            name='ETA Prediction',
+            coalesce=True,
+            max_instances=1
+        )
+        logger.info(f"✅ ETA Prediction Job eklendi (interval: {JOB_INTERVALS['eta_prediction']}s)")
 
         # Scheduler'ı başlat
         self.scheduler.start()
@@ -71,4 +83,3 @@ def get_scheduler() -> JobScheduler:
     if _scheduler is None:
         _scheduler = JobScheduler()
     return _scheduler
-

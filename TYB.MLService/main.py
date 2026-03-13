@@ -11,8 +11,8 @@ from utils.logger import setup_logging
 from jobs.scheduler import get_scheduler
 from config.settings import LOG_LEVEL
 
-# Logging'i konfigüre et
-logger = setup_logging(log_level=LOG_LEVEL, use_json=True)
+# Logging'i konfigüre et (human-readable format)
+logger = setup_logging(log_level=LOG_LEVEL, use_json=False)
 
 
 def main():
@@ -55,4 +55,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
