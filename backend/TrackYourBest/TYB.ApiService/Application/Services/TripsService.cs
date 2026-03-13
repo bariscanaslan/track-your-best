@@ -4,6 +4,8 @@ using NetTopologySuite.IO;
 using TYB.ApiService.Infrastructure.DTOs.Spatial;
 using TYB.ApiService.Infrastructure.Data;
 using TYB.ApiService.Infrastructure.Entities.Spatial;
+using TYB.ApiService.Infrastructure.Entities.Core;
+using TYB.ApiService.Application.Services.Routing;
 
 namespace TYB.ApiService.Application.Services
 {
@@ -541,6 +543,72 @@ namespace TYB.ApiService.Application.Services
 					&& t.Status != TripStatus.Completed,
 					cancellationToken
 				);
+		}
+
+		private static string TripStatusToString(TripStatus status) => status switch
+		{
+			TripStatus.DriverApprove => "driver_approve",
+			TripStatus.Ongoing => "ongoing",
+			TripStatus.Paused => "paused",
+			TripStatus.Completed => "completed",
+			TripStatus.CancelledFm => "cancelled_fm",
+			TripStatus.CancelledDriver => "cancelled_driver",
+			_ => status.ToString().ToLower()
+		};
+
+		public async Task<IReadOnlyList<TripAdminSummaryDto>> GetAllTripsAsync(
+			CancellationToken cancellationToken
+		)
+		{
+			var trips = await (
+				from trip in _dbContext.Trips.AsNoTracking()
+				join vehicle in _dbContext.Vehicles.AsNoTracking() on trip.VehicleId equals vehicle.Id into vehicleJoin
+				from vehicle in vehicleJoin.DefaultIfEmpty()
+				join driver in _dbContext.Drivers.AsNoTracking() on trip.DriverId equals driver.Id into driverJoin
+				from driver in driverJoin.DefaultIfEmpty()
+				join user in _dbContext.Users.AsNoTracking() on driver.UserId equals user.Id into userJoin
+				from user in userJoin.DefaultIfEmpty()
+				join org in _dbContext.Organizations.AsNoTracking() on vehicle.OrganizationId equals org.Id into orgJoin
+				from org in orgJoin.DefaultIfEmpty()
+				orderby trip.CreatedAt descending
+				select new
+				{
+					trip.Id,
+					trip.VehicleId,
+					VehicleName = vehicle != null ? vehicle.VehicleName : null,
+					trip.DriverId,
+					DriverName = user != null ? user.FullName : null,
+					OrganizationId = vehicle != null ? vehicle.OrganizationId : null,
+					OrganizationName = org != null ? org.Name : null,
+					trip.TripName,
+					trip.Status,
+					OriginAddress = trip.StartAddress,
+					DestinationAddress = trip.EndAddress,
+					StartedAt = trip.StartTime,
+					EndedAt = trip.EndTime,
+					DistanceKm = trip.TotalDistanceKm.HasValue ? (double?)decimal.ToDouble(trip.TotalDistanceKm.Value) : null,
+					trip.CreatedAt,
+				}
+			).ToListAsync(cancellationToken);
+
+			return trips.Select(t => new TripAdminSummaryDto
+			{
+				Id = t.Id,
+				VehicleId = t.VehicleId,
+				VehicleName = t.VehicleName,
+				DriverId = t.DriverId,
+				DriverName = t.DriverName,
+				OrganizationId = t.OrganizationId,
+				OrganizationName = t.OrganizationName,
+				TripName = t.TripName,
+				Status = t.Status.HasValue ? TripStatusToString(t.Status.Value) : null,
+				OriginAddress = t.OriginAddress,
+				DestinationAddress = t.DestinationAddress,
+				StartedAt = t.StartedAt,
+				EndedAt = t.EndedAt,
+				DistanceKm = t.DistanceKm,
+				CreatedAt = t.CreatedAt,
+			}).ToList();
 		}
 	}
 }

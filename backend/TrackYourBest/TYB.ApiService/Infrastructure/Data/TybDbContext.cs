@@ -16,6 +16,7 @@ namespace TYB.ApiService.Infrastructure.Data
 		public DbSet<Driver> Drivers => Set<Driver>();
 		public DbSet<Vehicle> Vehicles => Set<Vehicle>();
 		public DbSet<User> Users => Set<User>();
+		public DbSet<Organization> Organizations => Set<Organization>();
 		public DbSet<GpsData> GpsData => Set<GpsData>();
 		public DbSet<DeviceLastLocationRow> DeviceLastLocations => Set<DeviceLastLocationRow>();
 		public DbSet<GpsRoutePointRow> GpsRoutePoints => Set<GpsRoutePointRow>();
@@ -27,6 +28,27 @@ namespace TYB.ApiService.Infrastructure.Data
 		{
 			modelBuilder.HasPostgresEnum<TripStatus>("trip_status");
 			modelBuilder.HasPostgresEnum<UserRole>("user_role");
+
+			modelBuilder.Entity<Organization>(entity =>
+			{
+				entity.ToTable("organizations", "tyb_core");
+				entity.HasKey(o => o.Id);
+				entity.Property(o => o.Id).HasColumnName("id");
+				entity.Property(o => o.Name).HasColumnName("name");
+				entity.Property(o => o.LegalName).HasColumnName("legal_name");
+				entity.Property(o => o.TaxNumber).HasColumnName("tax_number");
+				entity.Property(o => o.Email).HasColumnName("email");
+				entity.Property(o => o.Phone).HasColumnName("phone");
+				entity.Property(o => o.Address).HasColumnName("address");
+				entity.Property(o => o.City).HasColumnName("city");
+				entity.Property(o => o.Country).HasColumnName("country");
+				entity.Property(o => o.Website).HasColumnName("website");
+				entity.Property(o => o.LogoUrl).HasColumnName("logo_url");
+				entity.Property(o => o.IsActive).HasColumnName("is_active");
+				entity.Property(o => o.CreatedAt).HasColumnName("created_at");
+				entity.Property(o => o.UpdatedAt).HasColumnName("updated_at");
+				entity.Property(o => o.CreatedBy).HasColumnName("created_by");
+			});
 
 			modelBuilder.Entity<Device>(entity =>
 			{
@@ -130,18 +152,8 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(g => g.Location)
 					.HasColumnName("location")
 					.HasColumnType("geography (point, 4326)");
-				entity.Property(g => g.Altitude).HasColumnName("altitude");
-				entity.Property(g => g.Accuracy).HasColumnName("accuracy");
-				entity.Property(g => g.Speed).HasColumnName("speed");
-				entity.Property(g => g.Heading).HasColumnName("heading");
-				entity.Property(g => g.IsMoving).HasColumnName("is_moving");
-				entity.Property(g => g.IsStopped).HasColumnName("is_stopped");
-				entity.Property(g => g.Acceleration).HasColumnName("acceleration");
 				entity.Property(g => g.GpsTimestamp).HasColumnName("gps_timestamp");
 				entity.Property(g => g.ReceivedTimestamp).HasColumnName("received_timestamp");
-				entity.Property(g => g.BatteryLevel).HasColumnName("battery_level");
-				entity.Property(g => g.SignalQuality).HasColumnName("signal_quality");
-				entity.Property(g => g.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
 				entity.Property(g => g.OrganizationId).HasColumnName("organization_id");
 				entity.HasIndex(g => g.DeviceId);
 			});
@@ -159,10 +171,6 @@ namespace TYB.ApiService.Infrastructure.Data
 					.HasColumnType("geography (point, 4326)");
 				entity.Property(g => g.Latitude).HasColumnName("latitude");
 				entity.Property(g => g.Longitude).HasColumnName("longitude");
-				entity.Property(g => g.Accuracy).HasColumnName("accuracy");
-				entity.Property(g => g.Speed).HasColumnName("speed");
-				entity.Property(g => g.IsMoving).HasColumnName("is_moving");
-				entity.Property(g => g.IsStopped).HasColumnName("is_stopped");
 				entity.Property(g => g.GpsTimestamp).HasColumnName("gps_timestamp");
 				entity.Property(g => g.ReceivedTimestamp).HasColumnName("received_timestamp");
 			});

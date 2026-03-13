@@ -3,10 +3,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { FiMap, FiCpu } from "react-icons/fi";
-import { FaCar, FaMapMarkedAlt } from "react-icons/fa";
+import { FiCpu, FiHome, FiUsers, FiTruck, FiActivity } from "react-icons/fi";
+import { FaBuilding, FaCar, FaUserTie } from "react-icons/fa";
 
 import "../../components/Navbar.css";
 
@@ -17,65 +16,23 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: "/admin", label: "Map", icon: FiMap },
-  { href: "/admin/vehicles", label: "Vehicles", icon: FiCpu },
-  { href: "/admin/reports", label: "Reports", icon: FaCar },
+  { href: "/admin", label: "Dashboard", icon: FiHome },
+  { href: "/admin/devices", label: "Devices", icon: FiCpu },
+  { href: "/admin/users", label: "Users", icon: FiUsers },
+  { href: "/admin/organizations", label: "Organizations", icon: FaBuilding },
+  { href: "/admin/vehicles", label: "Vehicles", icon: FaCar },
+  { href: "/admin/drivers", label: "Drivers", icon: FaUserTie },
+  { href: "/admin/trips", label: "Trips", icon: FiTruck },
+
+  { href: "/admin/system-events", label: "Events", icon: FiActivity },
 ];
 
 export default function AdminNavbar() {
   const pathname = usePathname();
-  const mapStyleKey = "tyb.mapStyle";
-  const resolveStoredStyle = (value: string | null) => {
-    if (value === "satellite" || value === "light" || value === "colorful") {
-      return value;
-    }
-    return "colorful";
-  };
-  const [mapStyle, setMapStyle] = useState<"satellite" | "light" | "colorful">(() => {
-    if (typeof window === "undefined") return "colorful";
-    return resolveStoredStyle(window.localStorage.getItem(mapStyleKey));
-  });
 
-  const isActive = (href: string) => pathname === href;
-  const isMapRoute = navItems.some((item) => item.href === pathname && item.label === "Map");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleStyleEvent = (event: Event) => {
-      const next = resolveStoredStyle((event as CustomEvent).detail as string | null);
-      setMapStyle(next);
-      window.localStorage.setItem(mapStyleKey, next);
-    };
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key !== mapStyleKey) return;
-      setMapStyle(resolveStoredStyle(event.newValue));
-    };
-
-    window.addEventListener("tyb:map-style", handleStyleEvent as EventListener);
-    window.addEventListener("storage", handleStorage);
-
-    return () => {
-      window.removeEventListener("tyb:map-style", handleStyleEvent as EventListener);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
-
-  const labelByStyle = {
-    satellite: "Satellite",
-    light: "Light-all",
-    colorful: "Colorful Streets",
-  } as const;
-
-  const handleToggleStyle = () => {
-    const next =
-      mapStyle === "satellite" ? "light" : mapStyle === "light" ? "colorful" : "satellite";
-    setMapStyle(next);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(mapStyleKey, next);
-      window.dispatchEvent(new CustomEvent("tyb:map-style", { detail: next }));
-    }
+  const isActive = (href: string) => {
+    if (href === "/admin") return pathname === "/admin";
+    return pathname.startsWith(href);
   };
 
   return (
@@ -102,18 +59,6 @@ export default function AdminNavbar() {
               </Link>
             );
           })}
-
-          {isMapRoute && (
-            <button
-              type="button"
-              className="tyb-map-style-button"
-              onClick={handleToggleStyle}
-              aria-label={`Map style: ${labelByStyle[mapStyle]}`}
-              title={`Map style: ${labelByStyle[mapStyle]}`}
-            >
-              <FaMapMarkedAlt size={16} />
-            </button>
-          )}
         </div>
       </div>
     </nav>

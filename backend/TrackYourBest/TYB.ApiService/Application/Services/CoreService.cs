@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.IO;
 using TYB.ApiService.Infrastructure.DTOs.Core;
 using TYB.ApiService.Infrastructure.DTOs.Spatial;
@@ -12,6 +12,7 @@ namespace TYB.ApiService.Application.Services
 	{
 		private readonly TybDbContext _dbContext;
 
+		// Date time UTC conversion
 		private static DateTime? EnsureUtc(DateTime? value)
 		{
 			if (!value.HasValue)
@@ -33,187 +34,6 @@ namespace TYB.ApiService.Application.Services
 			_dbContext = dbContext;
 		}
 
-		public async Task<IReadOnlyList<DeviceLastLocationDto>> GetLatestDeviceLocationsAsync(
-			Guid organizationId,
-			CancellationToken cancellationToken
-		)
-		{
-			const string sql = """
-				SELECT DISTINCT ON (g.device_id)
-					g.device_id,
-					v.id AS vehicle_id,
-					d.device_name,
-					g.trip_id,
-					g.location,
-					g.latitude,
-					g.longitude,
-					g.accuracy,
-					g.speed,
-					g.is_moving,
-					g.is_stopped,
-					g.gps_timestamp,
-					g.received_timestamp
-				FROM tyb_spatial.gps_data g
-				INNER JOIN tyb_core.devices d ON d.id = g.device_id
-				LEFT JOIN tyb_core.vehicles v ON v.device_id = g.device_id
-				WHERE d.organization_id = {0}
-					AND d.is_active = TRUE
-					AND g.latitude IS NOT NULL
-					AND g.longitude IS NOT NULL
-					AND g.latitude BETWEEN -90 AND 90
-					AND g.longitude BETWEEN -180 AND 180
-					AND NOT (g.latitude = 0 AND g.longitude = 0)
-				ORDER BY g.device_id, g.gps_timestamp DESC NULLS LAST, g.received_timestamp DESC NULLS LAST
-				""";
-
-			var rows = await _dbContext.DeviceLastLocations
-				.FromSqlRaw(sql, organizationId)
-				.AsNoTracking()
-				.ToListAsync(cancellationToken);
-
-			var wktWriter = new WKTWriter();
-
-			return rows
-				.Select(row => new DeviceLastLocationDto(
-					row.DeviceId,
-					row.VehicleId,
-					row.DeviceName,
-					row.TripId,
-					row.Location is null ? null : wktWriter.Write(row.Location),
-					row.Latitude,
-					row.Longitude,
-					row.Accuracy,
-					row.Speed,
-					row.IsMoving,
-					row.IsStopped,
-					row.GpsTimestamp,
-					row.ReceivedTimestamp
-				))
-				.ToList();
-		}
-
-		public async Task<IReadOnlyList<DeviceLastLocationDto>> GetLatestDeviceLocationsByDriverAsync(
-			Guid driverId,
-			Guid organizationId,
-			CancellationToken cancellationToken
-		)
-		{
-			const string sql = """
-				SELECT DISTINCT ON (g.device_id)
-					g.device_id,
-					v.id AS vehicle_id,
-					dev.device_name,
-					g.trip_id,
-					g.location,
-					g.latitude,
-					g.longitude,
-					g.accuracy,
-					g.speed,
-					g.is_moving,
-					g.is_stopped,
-					g.gps_timestamp,
-					g.received_timestamp
-				FROM tyb_core.drivers dr
-				INNER JOIN tyb_core.vehicles v ON v.id = dr.vehicle_id
-				INNER JOIN tyb_core.devices dev ON dev.id = v.device_id
-				INNER JOIN tyb_spatial.gps_data g ON g.device_id = dev.id
-				WHERE dr.id = {0}
-					AND dr.organization_id = {1}
-					AND COALESCE(dr.is_active, TRUE) = TRUE
-					AND dev.is_active = TRUE
-					AND g.latitude IS NOT NULL
-					AND g.longitude IS NOT NULL
-					AND g.latitude BETWEEN -90 AND 90
-					AND g.longitude BETWEEN -180 AND 180
-					AND NOT (g.latitude = 0 AND g.longitude = 0)
-				ORDER BY g.device_id, g.gps_timestamp DESC NULLS LAST, g.received_timestamp DESC NULLS LAST
-				""";
-
-			var rows = await _dbContext.DeviceLastLocations
-				.FromSqlRaw(sql, driverId, organizationId)
-				.AsNoTracking()
-				.ToListAsync(cancellationToken);
-
-			var wktWriter = new WKTWriter();
-
-			return rows
-				.Select(row => new DeviceLastLocationDto(
-					row.DeviceId,
-					row.VehicleId,
-					row.DeviceName,
-					row.TripId,
-					row.Location is null ? null : wktWriter.Write(row.Location),
-					row.Latitude,
-					row.Longitude,
-					row.Accuracy,
-					row.Speed,
-					row.IsMoving,
-					row.IsStopped,
-					row.GpsTimestamp,
-					row.ReceivedTimestamp
-				))
-				.ToList();
-		}
-		public async Task<IReadOnlyList<DeviceLastLocationDto>> GetLatestDeviceLocationsByUserAsync(
-			Guid userId,
-			CancellationToken cancellationToken
-		)
-		{
-			const string sql = """
-				SELECT DISTINCT ON (g.device_id)
-					g.device_id,
-					v.id AS vehicle_id,
-					dev.device_name,
-					g.trip_id,
-					g.location,
-					g.latitude,
-					g.longitude,
-					g.accuracy,
-					g.speed,
-					g.is_moving,
-					g.is_stopped,
-					g.gps_timestamp,
-					g.received_timestamp
-				FROM tyb_core.drivers dr
-				INNER JOIN tyb_core.vehicles v ON v.id = dr.vehicle_id
-				INNER JOIN tyb_core.devices dev ON dev.id = v.device_id
-				INNER JOIN tyb_spatial.gps_data g ON g.device_id = dev.id
-				WHERE dr.user_id = {0}
-					AND COALESCE(dr.is_active, TRUE) = TRUE
-					AND dev.is_active = TRUE
-					AND g.latitude IS NOT NULL
-					AND g.longitude IS NOT NULL
-					AND g.latitude BETWEEN -90 AND 90
-					AND g.longitude BETWEEN -180 AND 180
-					AND NOT (g.latitude = 0 AND g.longitude = 0)
-				ORDER BY g.device_id, g.gps_timestamp DESC NULLS LAST, g.received_timestamp DESC NULLS LAST
-				""";
-
-			var rows = await _dbContext.DeviceLastLocations
-				.FromSqlRaw(sql, userId)
-				.AsNoTracking()
-				.ToListAsync(cancellationToken);
-
-			var wktWriter = new WKTWriter();
-
-			return rows
-				.Select(row => new DeviceLastLocationDto(
-					row.DeviceId,
-					row.VehicleId,
-					row.DeviceName,
-					row.TripId,
-					row.Location is null ? null : wktWriter.Write(row.Location),
-					row.Latitude,
-					row.Longitude,
-					row.Accuracy,
-					row.Speed,
-					row.IsMoving,
-					row.IsStopped,
-					row.GpsTimestamp,
-					row.ReceivedTimestamp
-				))
-				.ToList();
-		}
 		public async Task<DeviceInfoDto?> GetDeviceInformationAsync(
 			Guid deviceId,
 			CancellationToken cancellationToken
@@ -239,28 +59,30 @@ namespace TYB.ApiService.Application.Services
 			);
 		}
 
+		/// <summary>
+		/// Safely executes a parameterized raw SQL query to retrieve detailed information for a specific vehicle.
+		/// It uses EF Core's string interpolation to prevent SQL injection and maps the result to a DTO.
+		/// </summary>
 		public async Task<VehicleInfoDto?> GetVehicleInformationAsync(
 			Guid vehicleId,
 			CancellationToken cancellationToken
 		)
 		{
-			const string sql = """
-				SELECT
-					v.organization_id,
-					v.device_id,
-					v.vehicle_name,
-					v.plate_number,
-					v.brand,
-					v.model,
-					v.year,
-					v.color
-				FROM tyb_core.vehicles v
-				WHERE v.id = {0}
-				LIMIT 1
-				""";
-
 			var row = await _dbContext.VehicleInformations
-				.FromSqlRaw(sql, vehicleId)
+				.FromSql($"""
+			SELECT
+				v.organization_id,
+				v.device_id,
+				v.vehicle_name,
+				v.plate_number,
+				v.brand,
+				v.model,
+				v.year,
+				v.color
+			FROM tyb_core.vehicles v
+			WHERE v.id = {vehicleId}
+			LIMIT 1
+			""")
 				.AsNoTracking()
 				.FirstOrDefaultAsync(cancellationToken);
 
@@ -281,28 +103,30 @@ namespace TYB.ApiService.Application.Services
 			);
 		}
 
+		/// <summary>
+		/// Safely executes a parameterized raw SQL query to retrieve the most recently updated driver information for a specific vehicle.
+		/// It uses EF Core's string interpolation to prevent SQL injection and maps the result to a DTO.
+		/// </summary>
 		public async Task<DriverInfoDto?> GetDriverInformationByVehicleAsync(
 			Guid vehicleId,
 			CancellationToken cancellationToken
 		)
 		{
-			const string sql = """
-				SELECT
-					d.organization_id,
-					d.user_id,
-					d.vehicle_id,
-					u.full_name,
-					u.phone,
-					u.avatar_url
-				FROM tyb_core.drivers d
-				LEFT JOIN tyb_core.users u ON u.id = d.user_id
-				WHERE d.vehicle_id = {0}
-				ORDER BY d.updated_at DESC NULLS LAST, d.created_at DESC NULLS LAST
-				LIMIT 1
-				""";
-
 			var row = await _dbContext.DriverInformations
-				.FromSqlRaw(sql, vehicleId)
+				.FromSql($"""
+			SELECT
+				d.organization_id,
+				d.user_id,
+				d.vehicle_id,
+				u.full_name,
+				u.phone,
+				u.avatar_url
+			FROM tyb_core.drivers d
+			LEFT JOIN tyb_core.users u ON u.id = d.user_id
+			WHERE d.vehicle_id = {vehicleId}
+			ORDER BY d.updated_at DESC NULLS LAST, d.created_at DESC NULLS LAST
+			LIMIT 1
+			""")
 				.AsNoTracking()
 				.FirstOrDefaultAsync(cancellationToken);
 
@@ -321,72 +145,250 @@ namespace TYB.ApiService.Application.Services
 			);
 		}
 
-		public async Task<IReadOnlyList<GpsRoutePointDto>> GetGpsRouteByVehicleAsync(
-			Guid vehicleId,
-			DateTime start,
-			DateTime end,
+		private static OrganizationSummaryDto MapOrganization(Organization o, User? creator) => new()
+		{
+			Id = o.Id,
+			Name = o.Name,
+			LegalName = o.LegalName,
+			TaxNumber = o.TaxNumber,
+			Email = o.Email,
+			Phone = o.Phone,
+			Address = o.Address,
+			City = o.City,
+			Country = o.Country,
+			Website = o.Website,
+			LogoUrl = o.LogoUrl,
+			IsActive = o.IsActive,
+			CreatedAt = o.CreatedAt,
+			UpdatedAt = o.UpdatedAt,
+			CreatedBy = o.CreatedBy,
+			CreatedByName = creator?.FullName,
+		};
+
+		public async Task<IReadOnlyList<OrganizationSummaryDto>> GetOrganizationsAsync(
 			CancellationToken cancellationToken
 		)
 		{
-			const string sql = """
-				SELECT
-					g.latitude,
-					g.longitude,
-					g.gps_timestamp
-				FROM tyb_spatial.gps_data g
-				INNER JOIN tyb_core.vehicles v ON v.device_id = g.device_id
-				WHERE v.id = {0}
-					AND g.gps_timestamp >= {1}
-					AND g.gps_timestamp <= {2}
-				ORDER BY g.gps_timestamp ASC
-				""";
-
-			var rows = await _dbContext.GpsRoutePoints
-				.FromSqlRaw(sql, vehicleId, start, end)
-				.AsNoTracking()
-				.ToListAsync(cancellationToken);
-
-			return rows.Select(row => new GpsRoutePointDto(
-				row.Latitude,
-				row.Longitude,
-				row.GpsTimestamp
-			)).ToList();
+			return await (
+				from org in _dbContext.Organizations.AsNoTracking()
+				join creator in _dbContext.Users.AsNoTracking()
+					on org.CreatedBy equals creator.Id into creatorJoin
+				from creator in creatorJoin.DefaultIfEmpty()
+				orderby org.Name
+				select new OrganizationSummaryDto
+				{
+					Id = org.Id,
+					Name = org.Name,
+					LegalName = org.LegalName,
+					TaxNumber = org.TaxNumber,
+					Email = org.Email,
+					Phone = org.Phone,
+					Address = org.Address,
+					City = org.City,
+					Country = org.Country,
+					Website = org.Website,
+					LogoUrl = org.LogoUrl,
+					IsActive = org.IsActive,
+					CreatedAt = org.CreatedAt,
+					UpdatedAt = org.UpdatedAt,
+					CreatedBy = org.CreatedBy,
+					CreatedByName = creator != null ? creator.FullName : null,
+				}
+			).ToListAsync(cancellationToken);
 		}
 
-		public async Task<IReadOnlyList<DeviceSummaryDto>> GetDevicesAsync(
+		public async Task<OrganizationSummaryDto?> GetOrganizationByIdAsync(
+			Guid orgId,
+			CancellationToken cancellationToken
+		)
+		{
+			return await (
+				from org in _dbContext.Organizations.AsNoTracking()
+				where org.Id == orgId
+				join creator in _dbContext.Users.AsNoTracking()
+					on org.CreatedBy equals creator.Id into creatorJoin
+				from creator in creatorJoin.DefaultIfEmpty()
+				select new OrganizationSummaryDto
+				{
+					Id = org.Id,
+					Name = org.Name,
+					LegalName = org.LegalName,
+					TaxNumber = org.TaxNumber,
+					Email = org.Email,
+					Phone = org.Phone,
+					Address = org.Address,
+					City = org.City,
+					Country = org.Country,
+					Website = org.Website,
+					LogoUrl = org.LogoUrl,
+					IsActive = org.IsActive,
+					CreatedAt = org.CreatedAt,
+					UpdatedAt = org.UpdatedAt,
+					CreatedBy = org.CreatedBy,
+					CreatedByName = creator != null ? creator.FullName : null,
+				}
+			).FirstOrDefaultAsync(cancellationToken);
+		}
+
+		public async Task<OrganizationSummaryDto?> CreateOrganizationAsync(
+			OrganizationUpsertRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			if (string.IsNullOrWhiteSpace(request.Name))
+				throw new InvalidOperationException("Name is required.");
+
+			var now = DateTime.UtcNow;
+			var entity = new Organization
+			{
+				Id = Guid.NewGuid(),
+				Name = request.Name.Trim(),
+				LegalName = request.LegalName?.Trim(),
+				TaxNumber = request.TaxNumber?.Trim(),
+				Email = request.Email?.Trim(),
+				Phone = request.Phone?.Trim(),
+				Address = request.Address?.Trim(),
+				City = request.City?.Trim(),
+				Country = request.Country?.Trim(),
+				Website = request.Website?.Trim(),
+				LogoUrl = request.LogoUrl?.Trim(),
+				IsActive = request.IsActive ?? true,
+				CreatedAt = now,
+				UpdatedAt = now,
+			};
+
+			_dbContext.Organizations.Add(entity);
+			await _dbContext.SaveChangesAsync(cancellationToken);
+
+			return await GetOrganizationByIdAsync(entity.Id, cancellationToken);
+		}
+
+		public async Task<OrganizationSummaryDto?> UpdateOrganizationAsync(
+			Guid orgId,
+			OrganizationUpsertRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			var entity = await _dbContext.Organizations.FirstOrDefaultAsync(o => o.Id == orgId, cancellationToken);
+			if (entity is null) return null;
+
+			if (!string.IsNullOrWhiteSpace(request.Name)) entity.Name = request.Name.Trim();
+			entity.LegalName = request.LegalName?.Trim() ?? entity.LegalName;
+			entity.TaxNumber = request.TaxNumber?.Trim() ?? entity.TaxNumber;
+			entity.Email = request.Email?.Trim() ?? entity.Email;
+			entity.Phone = request.Phone?.Trim() ?? entity.Phone;
+			entity.Address = request.Address?.Trim() ?? entity.Address;
+			entity.City = request.City?.Trim() ?? entity.City;
+			entity.Country = request.Country?.Trim() ?? entity.Country;
+			entity.Website = request.Website?.Trim() ?? entity.Website;
+			entity.LogoUrl = request.LogoUrl?.Trim() ?? entity.LogoUrl;
+			if (request.IsActive.HasValue) entity.IsActive = request.IsActive;
+			entity.UpdatedAt = DateTime.UtcNow;
+
+			await _dbContext.SaveChangesAsync(cancellationToken);
+			return await GetOrganizationByIdAsync(entity.Id, cancellationToken);
+		}
+
+		public async Task<bool> DeleteOrganizationAsync(Guid orgId, CancellationToken cancellationToken)
+		{
+			var entity = await _dbContext.Organizations.FirstOrDefaultAsync(o => o.Id == orgId, cancellationToken);
+			if (entity is null) return false;
+			_dbContext.Organizations.Remove(entity);
+			await _dbContext.SaveChangesAsync(cancellationToken);
+			return true;
+		}
+
+				public async Task<IReadOnlyList<DeviceSummaryDto>> GetDevicesAsync(
 			Guid? organizationId,
 			bool? onlyActive,
 			CancellationToken cancellationToken
 		)
 		{
-			var query = _dbContext.Devices.AsNoTracking();
+			var devicesQuery = _dbContext.Devices.AsNoTracking();
 
 			if (organizationId.HasValue)
-			{
-				query = query.Where(device => device.OrganizationId == organizationId);
-			}
+				devicesQuery = devicesQuery.Where(d => d.OrganizationId == organizationId);
 
 			if (onlyActive == true)
-			{
-				query = query.Where(device => device.IsActive == true);
-			}
+				devicesQuery = devicesQuery.Where(d => d.IsActive == true);
 
-			return await query
-				.AsNoTracking()
-				.OrderBy(device => device.DeviceName)
-				.Select(device => new DeviceSummaryDto
+			return await (
+				from device in devicesQuery
+				join org in _dbContext.Organizations.AsNoTracking()
+					on device.OrganizationId equals org.Id into orgJoin
+				from org in orgJoin.DefaultIfEmpty()
+				join creator in _dbContext.Users.AsNoTracking()
+					on device.CreatedBy equals creator.Id into creatorJoin
+				from creator in creatorJoin.DefaultIfEmpty()
+				orderby device.DeviceName
+				select new DeviceSummaryDto
 				{
 					Id = device.Id,
+					OrganizationId = device.OrganizationId,
+					OrganizationName = org != null ? org.Name : null,
 					DeviceName = device.DeviceName,
 					DeviceIdentifier = device.DeviceIdentifier,
+					DeviceModel = device.DeviceModel,
+					MqttUsername = device.MqttUsername,
+					MqttPassword = device.MqttPassword,
+					SecretKey = device.SecretKey,
 					InstallationDate = device.InstallationDate,
+					LastMaintenanceDate = device.LastMaintenanceDate,
+					NextMaintenanceDate = device.NextMaintenanceDate,
+					BatteryLevel = device.BatteryLevel,
 					SignalStrength = device.SignalStrength,
+					IsActive = device.IsActive,
+					CreatedAt = device.CreatedAt,
+					UpdatedAt = device.UpdatedAt,
+					CreatedBy = device.CreatedBy,
+					CreatedByName = creator != null ? creator.FullName : null,
 					Imei = device.Imei,
 					IpAddress = device.IpAddress,
-					LastSeenAt = device.LastSeenAt,
-					IsActive = device.IsActive
-				})
-				.ToListAsync(cancellationToken);
+					LastSeenAt = device.LastSeenAt
+				}
+			).ToListAsync(cancellationToken);
+		}
+
+		public async Task<DeviceSummaryDto?> GetDeviceByIdAsync(
+			Guid deviceId,
+			CancellationToken cancellationToken
+		)
+		{
+			return await (
+				from device in _dbContext.Devices.AsNoTracking()
+				where device.Id == deviceId
+				join org in _dbContext.Organizations.AsNoTracking()
+					on device.OrganizationId equals org.Id into orgJoin
+				from org in orgJoin.DefaultIfEmpty()
+				join creator in _dbContext.Users.AsNoTracking()
+					on device.CreatedBy equals creator.Id into creatorJoin
+				from creator in creatorJoin.DefaultIfEmpty()
+				select new DeviceSummaryDto
+				{
+					Id = device.Id,
+					OrganizationId = device.OrganizationId,
+					OrganizationName = org != null ? org.Name : null,
+					DeviceName = device.DeviceName,
+					DeviceIdentifier = device.DeviceIdentifier,
+					DeviceModel = device.DeviceModel,
+					MqttUsername = device.MqttUsername,
+					MqttPassword = device.MqttPassword,
+					SecretKey = device.SecretKey,
+					InstallationDate = device.InstallationDate,
+					LastMaintenanceDate = device.LastMaintenanceDate,
+					NextMaintenanceDate = device.NextMaintenanceDate,
+					BatteryLevel = device.BatteryLevel,
+					SignalStrength = device.SignalStrength,
+					IsActive = device.IsActive,
+					CreatedAt = device.CreatedAt,
+					UpdatedAt = device.UpdatedAt,
+					CreatedBy = device.CreatedBy,
+					CreatedByName = creator != null ? creator.FullName : null,
+					Imei = device.Imei,
+					IpAddress = device.IpAddress,
+					LastSeenAt = device.LastSeenAt
+				}
+			).FirstOrDefaultAsync(cancellationToken);
 		}
 
 		public async Task<DeviceSummaryDto?> CreateDeviceAsync(
@@ -401,11 +403,15 @@ namespace TYB.ApiService.Application.Services
 				OrganizationId = request.OrganizationId,
 				DeviceName = request.DeviceName ?? string.Empty,
 				DeviceIdentifier = request.DeviceIdentifier ?? string.Empty,
+				DeviceModel = request.DeviceModel,
+				MqttUsername = request.MqttUsername ?? string.Empty,
+				MqttPassword = request.MqttPassword ?? string.Empty,
+				SecretKey = request.SecretKey ?? string.Empty,
 				InstallationDate = EnsureUtc(request.InstallationDate),
-				SignalStrength = request.SignalStrength,
+				LastMaintenanceDate = EnsureUtc(request.LastMaintenanceDate),
+				NextMaintenanceDate = EnsureUtc(request.NextMaintenanceDate),
 				Imei = request.Imei,
 				IpAddress = request.IpAddress,
-				LastSeenAt = EnsureUtc(request.LastSeenAt),
 				IsActive = request.IsActive,
 				CreatedAt = now,
 				UpdatedAt = now
@@ -417,14 +423,25 @@ namespace TYB.ApiService.Application.Services
 			return new DeviceSummaryDto
 			{
 				Id = entity.Id,
+				OrganizationId = entity.OrganizationId,
 				DeviceName = entity.DeviceName,
 				DeviceIdentifier = entity.DeviceIdentifier,
+				DeviceModel = entity.DeviceModel,
+				MqttUsername = entity.MqttUsername,
+				MqttPassword = entity.MqttPassword,
+				SecretKey = entity.SecretKey,
 				InstallationDate = entity.InstallationDate,
+				LastMaintenanceDate = entity.LastMaintenanceDate,
+				NextMaintenanceDate = entity.NextMaintenanceDate,
+				BatteryLevel = entity.BatteryLevel,
 				SignalStrength = entity.SignalStrength,
+				IsActive = entity.IsActive,
+				CreatedAt = entity.CreatedAt,
+				UpdatedAt = entity.UpdatedAt,
+				CreatedBy = entity.CreatedBy,
 				Imei = entity.Imei,
 				IpAddress = entity.IpAddress,
-				LastSeenAt = entity.LastSeenAt,
-				IsActive = entity.IsActive
+				LastSeenAt = entity.LastSeenAt
 			};
 		}
 
@@ -445,11 +462,15 @@ namespace TYB.ApiService.Application.Services
 			entity.OrganizationId = request.OrganizationId ?? entity.OrganizationId;
 			entity.DeviceName = request.DeviceName ?? entity.DeviceName;
 			entity.DeviceIdentifier = request.DeviceIdentifier ?? entity.DeviceIdentifier;
+			entity.DeviceModel = request.DeviceModel;
+			if (request.MqttUsername is not null) entity.MqttUsername = request.MqttUsername;
+			if (request.MqttPassword is not null) entity.MqttPassword = request.MqttPassword;
+			if (request.SecretKey is not null) entity.SecretKey = request.SecretKey;
 			entity.InstallationDate = EnsureUtc(request.InstallationDate);
-			entity.SignalStrength = request.SignalStrength;
+			entity.LastMaintenanceDate = EnsureUtc(request.LastMaintenanceDate);
+			entity.NextMaintenanceDate = EnsureUtc(request.NextMaintenanceDate);
 			entity.Imei = request.Imei;
 			entity.IpAddress = request.IpAddress;
-			entity.LastSeenAt = EnsureUtc(request.LastSeenAt);
 			entity.IsActive = request.IsActive;
 			entity.UpdatedAt = DateTime.UtcNow;
 
@@ -458,14 +479,25 @@ namespace TYB.ApiService.Application.Services
 			return new DeviceSummaryDto
 			{
 				Id = entity.Id,
+				OrganizationId = entity.OrganizationId,
 				DeviceName = entity.DeviceName,
 				DeviceIdentifier = entity.DeviceIdentifier,
+				DeviceModel = entity.DeviceModel,
+				MqttUsername = entity.MqttUsername,
+				MqttPassword = entity.MqttPassword,
+				SecretKey = entity.SecretKey,
 				InstallationDate = entity.InstallationDate,
+				LastMaintenanceDate = entity.LastMaintenanceDate,
+				NextMaintenanceDate = entity.NextMaintenanceDate,
+				BatteryLevel = entity.BatteryLevel,
 				SignalStrength = entity.SignalStrength,
+				IsActive = entity.IsActive,
+				CreatedAt = entity.CreatedAt,
+				UpdatedAt = entity.UpdatedAt,
+				CreatedBy = entity.CreatedBy,
 				Imei = entity.Imei,
 				IpAddress = entity.IpAddress,
-				LastSeenAt = entity.LastSeenAt,
-				IsActive = entity.IsActive
+				LastSeenAt = entity.LastSeenAt
 			};
 		}
 
@@ -712,41 +744,6 @@ namespace TYB.ApiService.Application.Services
 			return true;
 		}
 
-		public async Task<User?> UpdateUserAsync(
-			Guid userId,
-			UserUpsertRequest request,
-			CancellationToken cancellationToken
-		)
-		{
-			var entity = await _dbContext.Users
-				.FirstOrDefaultAsync(user => user.Id == userId, cancellationToken);
-
-			if (entity is null)
-			{
-				return null;
-			}
-
-			if (!string.IsNullOrWhiteSpace(request.FullName))
-			{
-				entity.FullName = request.FullName;
-			}
-
-			if (!string.IsNullOrWhiteSpace(request.Email))
-			{
-				entity.Email = request.Email;
-			}
-
-			if (!string.IsNullOrWhiteSpace(request.Phone))
-			{
-				entity.Phone = request.Phone;
-			}
-
-			entity.AvatarUrl = request.AvatarUrl ?? entity.AvatarUrl;
-			entity.UpdatedAt = DateTime.UtcNow;
-
-			await _dbContext.SaveChangesAsync(cancellationToken);
-			return entity;
-		}
 
 		public async Task<IReadOnlyList<VehicleSummaryDto>> GetVehiclesAsync(
 			Guid? organizationId,
@@ -768,6 +765,7 @@ namespace TYB.ApiService.Application.Services
 				select new VehicleSummaryDto
 				{
 					Id = vehicle.Id,
+					OrganizationId = vehicle.OrganizationId,
 					DeviceId = vehicle.DeviceId,
 					DeviceName = device != null ? device.DeviceName : null,
 					VehicleName = vehicle.VehicleName,
@@ -779,6 +777,7 @@ namespace TYB.ApiService.Application.Services
 					FuelType = vehicle.FuelType,
 					Capacity = vehicle.Capacity,
 					InsuranceExpiry = vehicle.InsuranceExpiry,
+					InspectionExpiry = vehicle.InspectionExpiry,
 					IsActive = vehicle.IsActive,
 					CreatedAt = vehicle.CreatedAt
 				};
@@ -807,6 +806,7 @@ namespace TYB.ApiService.Application.Services
 				select new VehicleSummaryDto
 				{
 					Id = vehicle.Id,
+					OrganizationId = vehicle.OrganizationId,
 					DeviceId = vehicle.DeviceId,
 					DeviceName = device != null ? device.DeviceName : null,
 					VehicleName = vehicle.VehicleName,
@@ -818,6 +818,7 @@ namespace TYB.ApiService.Application.Services
 					FuelType = vehicle.FuelType,
 					Capacity = vehicle.Capacity,
 					InsuranceExpiry = vehicle.InsuranceExpiry,
+					InspectionExpiry = vehicle.InspectionExpiry,
 					IsActive = vehicle.IsActive,
 					CreatedAt = vehicle.CreatedAt
 				};
@@ -825,6 +826,10 @@ namespace TYB.ApiService.Application.Services
 			return await query.FirstOrDefaultAsync(cancellationToken);
 		}
 
+		/// <summary>
+		/// Safely creates a new vehicle and conditionally clones an existing device using a parameterized interpolated SQL query.
+		/// If a device reassignment is requested and confirmed, the source device is deactivated and its properties are cloned to a new device record.
+		/// </summary>
 		public async Task<VehicleSummaryDto?> CreateVehicleAsync(
 			VehicleUpsertRequest request,
 			CancellationToken cancellationToken
@@ -850,26 +855,21 @@ namespace TYB.ApiService.Application.Services
 
 				var clonedDeviceId = Guid.NewGuid();
 
-				await _dbContext.Database.ExecuteSqlRawAsync(
-					"""
-            INSERT INTO tyb_core.devices (
-                id, organization_id, device_name, device_identifier, device_model,
-                mqtt_username, mqtt_password, secret_key, installation_date,
-                last_maintenance_date, next_maintenance_date, battery_level, signal_strength,
-                is_active, created_at, updated_at, created_by, imei, ip_address, last_seen_at
-            )
-            SELECT
-                {0}, organization_id, device_name, device_identifier, device_model,
-                mqtt_username, mqtt_password, secret_key, installation_date,
-                last_maintenance_date, next_maintenance_date, battery_level, signal_strength,
-                TRUE, {1}, {1}, created_by, imei, ip_address, last_seen_at
-            FROM tyb_core.devices
-            WHERE id = {2}
-            """,
-					clonedDeviceId,
-					now,
-					sourceDevice.Id
-				);
+				await _dbContext.Database.ExecuteSqlAsync($"""
+			INSERT INTO tyb_core.devices (
+				id, organization_id, device_name, device_identifier, device_model,
+				mqtt_username, mqtt_password, secret_key, installation_date,
+				last_maintenance_date, next_maintenance_date, battery_level, signal_strength,
+				is_active, created_at, updated_at, created_by, imei, ip_address, last_seen_at
+			)
+			SELECT
+				{clonedDeviceId}, organization_id, device_name, device_identifier, device_model,
+				mqtt_username, mqtt_password, secret_key, installation_date,
+				last_maintenance_date, next_maintenance_date, battery_level, signal_strength,
+				TRUE, {now}, {now}, created_by, imei, ip_address, last_seen_at
+			FROM tyb_core.devices
+			WHERE id = {sourceDevice.Id}
+			""", cancellationToken);
 
 				sourceDevice.IsActive = false;
 				sourceDevice.UpdatedAt = now;
@@ -881,7 +881,7 @@ namespace TYB.ApiService.Application.Services
 			{
 				Id = Guid.NewGuid(),
 				OrganizationId = request.OrganizationId,
-				DeviceId = finalDeviceId, // Klonlanmýþ ID kullanýlýyor
+				DeviceId = finalDeviceId,
 				VehicleName = request.VehicleName ?? string.Empty,
 				PlateNumber = request.PlateNumber ?? string.Empty,
 				Brand = request.Brand,
@@ -891,6 +891,7 @@ namespace TYB.ApiService.Application.Services
 				FuelType = request.FuelType,
 				Capacity = request.Capacity,
 				InsuranceExpiry = EnsureUtc(request.InsuranceExpiry),
+				InspectionExpiry = EnsureUtc(request.InspectionExpiry),
 				IsActive = request.IsActive,
 				CreatedAt = now,
 				UpdatedAt = now
@@ -902,6 +903,7 @@ namespace TYB.ApiService.Application.Services
 			return new VehicleSummaryDto
 			{
 				Id = entity.Id,
+				OrganizationId = entity.OrganizationId,
 				DeviceId = entity.DeviceId,
 				VehicleName = entity.VehicleName,
 				PlateNumber = entity.PlateNumber,
@@ -912,10 +914,14 @@ namespace TYB.ApiService.Application.Services
 				FuelType = entity.FuelType,
 				Capacity = entity.Capacity,
 				InsuranceExpiry = entity.InsuranceExpiry,
+				InspectionExpiry = entity.InspectionExpiry,
 				IsActive = entity.IsActive
 			};
 		}
 
+		/// <summary>
+		/// Safely updates an existing vehicle's information. Conditionally clones a device record using a parameterized interpolated SQL query if a device reassignment is requested and confirmed, deactivating the source device in the process.
+		/// </summary>
 		public async Task<VehicleSummaryDto?> UpdateVehicleAsync(
 			Guid vehicleId,
 			VehicleUpsertRequest request,
@@ -929,8 +935,8 @@ namespace TYB.ApiService.Application.Services
 
 			entity.OrganizationId = request.OrganizationId ?? entity.OrganizationId;
 
-			var requestedDeviceId = request.DeviceId; // Arayüzden seçilen (Kaynak) cihaz ID'si
-			var currentDeviceId = entity.DeviceId;    // Aracýn halihazýrda baðlý olduðu cihaz ID'si
+			var requestedDeviceId = request.DeviceId; // Arayï¿½zden seï¿½ilen (Kaynak) cihaz ID'si
+			var currentDeviceId = entity.DeviceId;    // Aracï¿½n halihazï¿½rda baï¿½lï¿½ olduï¿½u cihaz ID'si
 
 			var isDeviceChanged = requestedDeviceId.HasValue &&
 								 (!currentDeviceId.HasValue || requestedDeviceId.Value != currentDeviceId.Value);
@@ -942,8 +948,13 @@ namespace TYB.ApiService.Application.Services
 					throw new InvalidOperationException("Changing connected device requires confirmation.");
 				}
 
-				var sourceDevice = await _dbContext.Devices
+				Device? sourceDevice = null;
+
+				if (requestedDeviceId != null)
+				{
+					sourceDevice = await _dbContext.Devices
 					.FirstOrDefaultAsync(device => device.Id == requestedDeviceId.Value, cancellationToken);
+				} 
 
 				if (sourceDevice is null)
 				{
@@ -953,26 +964,21 @@ namespace TYB.ApiService.Application.Services
 				var clonedDeviceId = Guid.NewGuid();
 				var now = DateTime.UtcNow;
 
-				await _dbContext.Database.ExecuteSqlRawAsync(
-					"""
-            INSERT INTO tyb_core.devices (
-                id, organization_id, device_name, device_identifier, device_model,
-                mqtt_username, mqtt_password, secret_key, installation_date,
-                last_maintenance_date, next_maintenance_date, battery_level, signal_strength,
-                is_active, created_at, updated_at, created_by, imei, ip_address, last_seen_at
-            )
-            SELECT
-                {0}, organization_id, device_name, device_identifier, device_model,
-                mqtt_username, mqtt_password, secret_key, installation_date,
-                last_maintenance_date, next_maintenance_date, battery_level, signal_strength,
-                TRUE, {1}, {1}, created_by, imei, ip_address, last_seen_at
-            FROM tyb_core.devices
-            WHERE id = {2}
-            """,
-					clonedDeviceId,
-					now,
-					sourceDevice.Id
-				);
+				await _dbContext.Database.ExecuteSqlAsync($"""
+			INSERT INTO tyb_core.devices (
+				id, organization_id, device_name, device_identifier, device_model,
+				mqtt_username, mqtt_password, secret_key, installation_date,
+				last_maintenance_date, next_maintenance_date, battery_level, signal_strength,
+				is_active, created_at, updated_at, created_by, imei, ip_address, last_seen_at
+			)
+			SELECT
+				{clonedDeviceId}, organization_id, device_name, device_identifier, device_model,
+				mqtt_username, mqtt_password, secret_key, installation_date,
+				last_maintenance_date, next_maintenance_date, battery_level, signal_strength,
+				TRUE, {now}, {now}, created_by, imei, ip_address, last_seen_at
+			FROM tyb_core.devices
+			WHERE id = {sourceDevice.Id}
+			""", cancellationToken);
 
 				entity.DeviceId = clonedDeviceId;
 
@@ -982,9 +988,9 @@ namespace TYB.ApiService.Application.Services
 			}
 			else
 			{
-				// Eðer cihaz deðiþmediyse (isDeviceChanged false) 
-				// ama kullanýcý null gönderdiyse, mevcut cihazý kaldýr.
-				// Eðer kullanýcý zaten ayný cihazý gönderdiyse, ayný kalýr.
+				// Eï¿½er cihaz deï¿½iï¿½mediyse (isDeviceChanged false) 
+				// ama kullanï¿½cï¿½ null gï¿½nderdiyse, mevcut cihazï¿½ kaldï¿½r.
+				// Eï¿½er kullanï¿½cï¿½ zaten aynï¿½ cihazï¿½ gï¿½nderdiyse, aynï¿½ kalï¿½r.
 				entity.DeviceId = requestedDeviceId;
 			}
 
@@ -997,6 +1003,7 @@ namespace TYB.ApiService.Application.Services
 			entity.FuelType = request.FuelType;
 			entity.Capacity = request.Capacity;
 			entity.InsuranceExpiry = EnsureUtc(request.InsuranceExpiry);
+			entity.InspectionExpiry = EnsureUtc(request.InspectionExpiry);
 			entity.IsActive = request.IsActive;
 			entity.UpdatedAt = DateTime.UtcNow;
 
@@ -1005,6 +1012,7 @@ namespace TYB.ApiService.Application.Services
 			return new VehicleSummaryDto
 			{
 				Id = entity.Id,
+				OrganizationId = entity.OrganizationId,
 				DeviceId = entity.DeviceId,
 				VehicleName = entity.VehicleName,
 				PlateNumber = entity.PlateNumber,
@@ -1015,6 +1023,7 @@ namespace TYB.ApiService.Application.Services
 				FuelType = entity.FuelType,
 				Capacity = entity.Capacity,
 				InsuranceExpiry = entity.InsuranceExpiry,
+				InspectionExpiry = entity.InspectionExpiry,
 				IsActive = entity.IsActive
 			};
 		}
@@ -1030,6 +1039,180 @@ namespace TYB.ApiService.Application.Services
 			}
 
 			_dbContext.Vehicles.Remove(entity);
+			await _dbContext.SaveChangesAsync(cancellationToken);
+			return true;
+		}
+
+		private static string RoleToString(UserRole role) => role switch
+		{
+			UserRole.Admin => "admin",
+			UserRole.FleetManager => "fleet_manager",
+			UserRole.Driver => "driver",
+			_ => "viewer"
+		};
+
+		private static UserRole ParseRole(string? roleStr) => roleStr?.ToLower() switch
+		{
+			"admin" => UserRole.Admin,
+			"fleet_manager" => UserRole.FleetManager,
+			"driver" => UserRole.Driver,
+			_ => UserRole.Viewer
+		};
+
+		public async Task<IReadOnlyList<UserSummaryDto>> GetUsersAsync(
+			Guid? organizationId,
+			CancellationToken cancellationToken
+		)
+		{
+			var query = _dbContext.Users.AsNoTracking();
+
+			if (organizationId.HasValue)
+				query = query.Where(u => u.OrganizationId == organizationId);
+
+			return await (
+				from user in query
+				join org in _dbContext.Organizations.AsNoTracking()
+					on user.OrganizationId equals org.Id into orgJoin
+				from org in orgJoin.DefaultIfEmpty()
+				join creator in _dbContext.Users.AsNoTracking()
+					on user.CreatedBy equals creator.Id into creatorJoin
+				from creator in creatorJoin.DefaultIfEmpty()
+				orderby user.FullName
+				select new UserSummaryDto
+				{
+					Id = user.Id,
+					OrganizationId = user.OrganizationId,
+					OrganizationName = org != null ? org.Name : null,
+					Username = user.Username,
+					Email = user.Email,
+					FullName = user.FullName,
+					Phone = user.Phone,
+					Role = RoleToString(user.Role),
+					IsActive = user.IsActive,
+					LastLogin = user.LastLogin,
+					AvatarUrl = user.AvatarUrl,
+					CreatedAt = user.CreatedAt,
+					UpdatedAt = user.UpdatedAt,
+					CreatedBy = user.CreatedBy,
+					CreatedByName = creator != null ? creator.FullName : null,
+				}
+			).ToListAsync(cancellationToken);
+		}
+
+		public async Task<UserSummaryDto?> GetUserByIdAsync(
+			Guid userId,
+			CancellationToken cancellationToken
+		)
+		{
+			return await (
+				from user in _dbContext.Users.AsNoTracking()
+				where user.Id == userId
+				join org in _dbContext.Organizations.AsNoTracking()
+					on user.OrganizationId equals org.Id into orgJoin
+				from org in orgJoin.DefaultIfEmpty()
+				join creator in _dbContext.Users.AsNoTracking()
+					on user.CreatedBy equals creator.Id into creatorJoin
+				from creator in creatorJoin.DefaultIfEmpty()
+				select new UserSummaryDto
+				{
+					Id = user.Id,
+					OrganizationId = user.OrganizationId,
+					OrganizationName = org != null ? org.Name : null,
+					Username = user.Username,
+					Email = user.Email,
+					FullName = user.FullName,
+					Phone = user.Phone,
+					Role = RoleToString(user.Role),
+					IsActive = user.IsActive,
+					LastLogin = user.LastLogin,
+					AvatarUrl = user.AvatarUrl,
+					CreatedAt = user.CreatedAt,
+					UpdatedAt = user.UpdatedAt,
+					CreatedBy = user.CreatedBy,
+					CreatedByName = creator != null ? creator.FullName : null,
+				}
+			).FirstOrDefaultAsync(cancellationToken);
+		}
+
+		public async Task<UserSummaryDto?> CreateUserAsync(
+			UserUpsertRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			if (string.IsNullOrWhiteSpace(request.Username))
+			{
+				throw new InvalidOperationException("Username is required.");
+			}
+
+			if (string.IsNullOrWhiteSpace(request.Email))
+			{
+				throw new InvalidOperationException("Email is required.");
+			}
+
+			var now = DateTime.UtcNow;
+			var password = string.IsNullOrWhiteSpace(request.Password) ? "Tyb.1905" : request.Password;
+
+			var entity = new User
+			{
+				Id = Guid.NewGuid(),
+				OrganizationId = request.OrganizationId,
+				Username = request.Username.Trim(),
+				Email = request.Email.Trim(),
+				FullName = request.FullName?.Trim() ?? string.Empty,
+				Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
+				AvatarUrl = string.IsNullOrWhiteSpace(request.AvatarUrl) ? null : request.AvatarUrl.Trim(),
+				Role = ParseRole(request.Role),
+				IsActive = request.IsActive ?? true,
+				PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+				CreatedAt = now,
+				UpdatedAt = now
+			};
+
+			_dbContext.Users.Add(entity);
+			await _dbContext.SaveChangesAsync(cancellationToken);
+
+			return await GetUserByIdAsync(entity.Id, cancellationToken);
+		}
+
+		public async Task<UserSummaryDto?> UpdateUserAsync(
+			Guid userId,
+			UserUpsertRequest request,
+			CancellationToken cancellationToken
+		)
+		{
+			var entity = await _dbContext.Users
+				.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+			if (entity is null) return null;
+
+			if (!string.IsNullOrWhiteSpace(request.Username)) entity.Username = request.Username.Trim();
+			if (!string.IsNullOrWhiteSpace(request.FullName)) entity.FullName = request.FullName;
+			if (!string.IsNullOrWhiteSpace(request.Email)) entity.Email = request.Email;
+			if (!string.IsNullOrWhiteSpace(request.Phone)) entity.Phone = request.Phone;
+			entity.AvatarUrl = request.AvatarUrl ?? entity.AvatarUrl;
+
+			if (request.OrganizationId.HasValue) entity.OrganizationId = request.OrganizationId;
+			if (!string.IsNullOrWhiteSpace(request.Role)) entity.Role = ParseRole(request.Role);
+			if (request.IsActive.HasValue) entity.IsActive = request.IsActive;
+			if (!string.IsNullOrWhiteSpace(request.Password))
+			{
+				entity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+			}
+
+			entity.UpdatedAt = DateTime.UtcNow;
+			await _dbContext.SaveChangesAsync(cancellationToken);
+
+			return await GetUserByIdAsync(entity.Id, cancellationToken);
+		}
+
+		public async Task<bool> DeleteUserAsync(Guid userId, CancellationToken cancellationToken)
+		{
+			var entity = await _dbContext.Users
+				.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+			if (entity is null) return false;
+
+			_dbContext.Users.Remove(entity);
 			await _dbContext.SaveChangesAsync(cancellationToken);
 			return true;
 		}

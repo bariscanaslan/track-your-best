@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using TYB.ApiService.Application.Services;
+using TYB.ApiService.Application.Services.Routing;
 using TYB.ApiService.Infrastructure.DTOs.Spatial;
 
 namespace TYB.ApiService.Controllers.Spatial

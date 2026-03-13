@@ -14,6 +14,7 @@ namespace TYB.ApiService.Infrastructure.DTOs.Core
 		public string? FuelType { get; set; }
 		public int? Capacity { get; set; }
 		public DateTime? InsuranceExpiry { get; set; }
+		public DateTime? InspectionExpiry { get; set; }
 		public bool? IsActive { get; set; }
 	}
 }

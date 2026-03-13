@@ -5,6 +5,7 @@ using TYB.ApiService.Application.Services;
 using TYB.ApiService.Infrastructure.Data;
 using TYB.ApiService.Infrastructure.Entities.Spatial;
 using TYB.ApiService.Infrastructure.Entities.Core;
+using TYB.ApiService.Application.Services.Routing;
 
 LoadEnv(new[]
 {
@@ -36,24 +37,26 @@ builder.Services.AddDbContext<TybDbContext>(options =>
 );
 
 builder.Services.AddScoped<CoreService>();
+builder.Services.AddScoped<SpatialService>();
 builder.Services.AddScoped<TripsService>();
 builder.Services.AddMemoryCache();
+
 builder.Services.AddHttpClient<OsrmService>(client =>
 {
-	var baseUrl =
-		builder.Configuration["TYB_OSRM_BASE_URL"]
-		?? "http://localhost:5000";
+	var baseUrl = builder.Configuration["TYB_OSRM_BASE_URL"]
+		?? throw new InvalidOperationException("TYB_OSRM_BASE_URL is missing in environment variables.");
+
 	client.BaseAddress = new Uri(baseUrl);
 });
+
 builder.Services.AddHttpClient<NominatimService>(client =>
 {
-	var baseUrl =
-		builder.Configuration["TYB_NOMINATIM_BASE_URL"]
-		?? "https://nominatim.openstreetmap.org";
+	var baseUrl = builder.Configuration["TYB_NOMINATIM_BASE_URL"]
+		?? throw new InvalidOperationException("TYB_NOMINATIM_BASE_URL is missing in environment variables.");
+
 	client.BaseAddress = new Uri(baseUrl);
-	var userAgent =
-		builder.Configuration["TYB_NOMINATIM_USER_AGENT"]
-		?? "TYB.ApiService/1.0 (contact: ops@tyb.local)";
+
+	var userAgent = builder.Configuration["TYB_NOMINATIM_USER_AGENT"] ?? "TYB-Default-Agent";
 	client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
 	client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
 });
@@ -86,7 +89,6 @@ app.UseHttpsRedirection();
 app.UseCors("LocalDev");
 app.UseAuthorization();
 app.MapControllers();
-
 app.Run();
 
 static void LoadEnv(IEnumerable<string> candidates)
@@ -103,7 +105,6 @@ static void LoadEnv(IEnumerable<string> candidates)
 		break;
 	}
 }
-
 static void LoadEnvFallback(string envPath)
 {
 	foreach (var rawLine in File.ReadAllLines(envPath))

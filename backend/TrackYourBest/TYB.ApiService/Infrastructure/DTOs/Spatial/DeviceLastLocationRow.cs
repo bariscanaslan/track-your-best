@@ -11,10 +11,6 @@ namespace TYB.ApiService.Infrastructure.DTOs.Spatial
 		public Point? Location { get; set; }
 		public double Latitude { get; set; }
 		public double Longitude { get; set; }
-		public decimal? Accuracy { get; set; }
-		public decimal? Speed { get; set; }
-		public bool? IsMoving { get; set; }
-		public bool? IsStopped { get; set; }
 		public DateTime? GpsTimestamp { get; set; }
 		public DateTime? ReceivedTimestamp { get; set; }
 	}

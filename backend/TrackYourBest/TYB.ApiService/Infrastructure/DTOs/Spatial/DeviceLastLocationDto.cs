@@ -8,10 +8,6 @@ namespace TYB.ApiService.Infrastructure.DTOs.Spatial
 		string? Geography,
 		double Latitude,
 		double Longitude,
-		decimal? Accuracy,
-		decimal? Speed,
-		bool? IsMoving,
-		bool? IsStopped,
 		DateTime? GpsTimestamp,
 		DateTime? ReceivedTimestamp
 	);

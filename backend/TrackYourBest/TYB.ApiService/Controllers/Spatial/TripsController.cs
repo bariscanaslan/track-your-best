@@ -151,5 +151,12 @@ namespace TYB.ApiService.Controllers.Spatial
 			var response = await _tripsService.GetPastTripsForVehicleAsync(vehicleId, cancellationToken);
 			return Ok(response);
 		}
+
+		[HttpGet]
+		public async Task<IActionResult> GetAllTrips(CancellationToken cancellationToken)
+		{
+			var response = await _tripsService.GetAllTripsAsync(cancellationToken);
+			return Ok(response);
+		}
 	}
 }
