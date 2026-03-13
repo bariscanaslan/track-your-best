@@ -19,9 +19,15 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Load model
-MODEL_PATH = 'models/eta_model_istanbul.pkl'
-PATTERNS_PATH = 'data/processed/ibb_traffic_patterns_2024_2025.csv'
+# Load model - ABSOLUTE PATHS
+import sys
+
+# Get script directory and project root
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR) if 'scripts' in SCRIPT_DIR else SCRIPT_DIR
+
+MODEL_PATH = os.path.join(PROJECT_ROOT, 'models', 'eta_model_istanbul.pkl')
+PATTERNS_PATH = os.path.join(PROJECT_ROOT, 'data', 'processed', 'ibb_traffic_patterns_2024_2025.csv')
 
 print("=" * 80)
 print("LOADING ML MODEL...")
@@ -76,7 +82,7 @@ def get_traffic_pattern(hour, day_of_week):
     
     p = pattern.iloc[0]
     return {
-        'avg_speed': float(p['avg_speed_mean']),
+        'avg_speed': float(p['avg_speed_kmh']),  # ✅ FIXED: Use avg_speed_kmh column!
         'traffic_density': float(p['traffic_density']),
         'speed_factor': float(p['speed_factor'])
     }
@@ -140,7 +146,18 @@ def predict_eta():
         hour = ts.hour
         day_of_week = ts.dayofweek
         is_weekend = 1 if day_of_week >= 5 else 0
-        is_rush_hour = 1 if hour in [7, 8, 9, 16, 17, 18, 19] else 0
+        
+        # CUSTOM RUSH HOUR CALCULATION - OPTIMIZED FOR ISTANBUL
+        # Based on Google Maps validation and real testing
+        # Peak rush: 8, 17, 18 (10th percentile)
+        # Rush+Evening: 7, 9, 16, 19, 20, 21 (25th percentile)
+        
+        if is_weekend:
+            # Weekend: No rush hour
+            is_rush_hour = 0
+        else:
+            # Weekday: Custom rush hour pattern
+            is_rush_hour = 1 if hour in [7, 8, 9, 16, 17, 18, 19, 20, 21] else 0
         
         # Get traffic pattern
         traffic_info = get_traffic_pattern(hour, day_of_week)
@@ -236,7 +253,12 @@ def batch_predict():
             hour = ts.hour
             day_of_week = ts.dayofweek
             is_weekend = 1 if day_of_week >= 5 else 0
-            is_rush_hour = 1 if hour in [7, 8, 9, 16, 17, 18, 19] else 0
+            
+            # CUSTOM RUSH HOUR - ISTANBUL OPTIMIZED
+            if is_weekend:
+                is_rush_hour = 0
+            else:
+                is_rush_hour = 1 if hour in [7, 8, 9, 16, 17, 18, 19, 20, 21] else 0
             
             traffic_info = get_traffic_pattern(hour, day_of_week)
             
@@ -281,13 +303,13 @@ def index():
             'batch': 'POST /batch_predict'
         },
         'model_status': 'loaded' if model is not None else 'not loaded',
-        'documentation': 'See README.md for API details'
+        'documentation': 'See phase4_ml_api.py for API details'
     })
 
 if __name__ == '__main__':
     if model is None:
         print("\n❌ ERROR: Model not loaded!")
-        print("   Lütfen önce 'python scripts/phase3_train_model.py' çalıştırın!")
+        print("   Lütfen önce 'python phase3_train_model.py' çalıştırın!")
         exit(1)
     
     print("\n" + "=" * 80)

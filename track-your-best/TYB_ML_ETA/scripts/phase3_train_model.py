@@ -3,9 +3,8 @@ PHASE 3: TRAIN ML MODEL FOR ETA PREDICTION
 ===========================================
 İstanbul traffic-aware ETA prediction model
 
-Input:  data/processed/istanbul_eta_training.csv
-Output: models/eta_model_istanbul.pkl
-        models/visualizations/*.png
+Input:  istanbul_eta_training.csv
+Output: eta_model_istanbul.pkl (trained model)
 """
 
 import pandas as pd
@@ -17,21 +16,17 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
-import os
 
 def train_eta_model(
     training_csv='data/processed/istanbul_eta_training.csv',
-    model_output='models/eta_model_istanbul.pkl'
+    model_output='models/eta_model_istanbul.pkl',
+    viz_dir='models/visualizations'
 ):
     print("=" * 80)
     print("PHASE 3: TRAIN ML MODEL FOR ETA PREDICTION")
     print("=" * 80)
     print(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 80)
-    
-    # Create output directories
-    os.makedirs('models', exist_ok=True)
-    os.makedirs('models/visualizations', exist_ok=True)
     
     # Load training data
     print(f"\n📂 Loading training data...")
@@ -40,7 +35,7 @@ def train_eta_model(
         print(f"✓ Loaded {len(df)} samples")
     except Exception as e:
         print(f"❌ ERROR: {e}")
-        print(f"   Lütfen önce 'python scripts/phase2_generate_training.py' çalıştırın!")
+        print(f"   Lütfen önce 'python phase2_generate_training.py' çalıştırın!")
         return None
     
     print(f"\n📊 Dataset Info:")
@@ -142,6 +137,21 @@ def train_eta_model(
     for idx, row in feature_importance.iterrows():
         print(f"   • {row['feature']:25s} : {row['importance']:.4f}")
     
+    # Check if OSRM dominates
+    osrm_importance = feature_importance[
+        feature_importance['feature'] == 'osrm_duration_sec'
+    ]['importance'].values[0]
+    
+    if osrm_importance > 0.90:
+        print(f"\n⚠️  WARNING: OSRM duration dominates ({osrm_importance*100:.1f}%)!")
+        print(f"   Traffic features have minimal impact (<{(1-osrm_importance)*100:.1f}%).")
+        print(f"   This is NORMAL but means rush hour calibration is critical.")
+        print(f"   → Phase 1 multipliers must be accurate!")
+    elif osrm_importance < 0.70:
+        print(f"\n✅ GOOD: Balanced feature importance!")
+        print(f"   OSRM: {osrm_importance*100:.1f}%, Traffic: {(1-osrm_importance)*100:.1f}%")
+        print(f"   Model is using traffic patterns effectively.")
+    
     # Error analysis
     print(f"\n📊 ERROR ANALYSIS (Test Set):")
     test_errors = np.abs(y_test - y_test_pred)
@@ -175,6 +185,11 @@ def train_eta_model(
         'training_samples': len(df)
     }
     
+    # Create output directory if it doesn't exist
+    from pathlib import Path
+    output_path = Path(model_output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
     joblib.dump(model_data, model_output)
     
     print(f"\n💾 Model saved: {model_output}")
@@ -184,6 +199,11 @@ def train_eta_model(
     print(f"\n📊 Creating visualizations...")
     
     try:
+        # Create visualizations directory
+        from pathlib import Path
+        viz_path = Path(viz_dir)
+        viz_path.mkdir(parents=True, exist_ok=True)
+        
         # Set style
         sns.set_style("whitegrid")
         
@@ -195,8 +215,9 @@ def train_eta_model(
         plt.ylabel('Predicted Duration (minutes)')
         plt.title(f'ETA Prediction: Actual vs Predicted\nMAE: {test_mae:.2f} min, R²: {test_r2:.3f}')
         plt.tight_layout()
-        plt.savefig('models/visualizations/model_actual_vs_predicted.png', dpi=150)
-        print(f"   ✓ Saved: models/visualizations/model_actual_vs_predicted.png")
+        output_file = viz_path / 'model_actual_vs_predicted.png'
+        plt.savefig(output_file, dpi=150)
+        print(f"   ✓ Saved: {output_file}")
         plt.close()
         
         # 2. Feature Importance
@@ -205,8 +226,9 @@ def train_eta_model(
         plt.xlabel('Importance')
         plt.title('Feature Importance')
         plt.tight_layout()
-        plt.savefig('models/visualizations/model_feature_importance.png', dpi=150)
-        print(f"   ✓ Saved: models/visualizations/model_feature_importance.png")
+        output_file = viz_path / 'model_feature_importance.png'
+        plt.savefig(output_file, dpi=150)
+        print(f"   ✓ Saved: {output_file}")
         plt.close()
         
         # 3. Error Distribution
@@ -219,8 +241,9 @@ def train_eta_model(
         plt.axvline(test_errors.median(), color='g', linestyle='--', label=f'Median: {test_errors.median():.2f}')
         plt.legend()
         plt.tight_layout()
-        plt.savefig('models/visualizations/model_error_distribution.png', dpi=150)
-        print(f"   ✓ Saved: models/visualizations/model_error_distribution.png")
+        output_file = viz_path / 'model_error_distribution.png'
+        plt.savefig(output_file, dpi=150)
+        print(f"   ✓ Saved: {output_file}")
         plt.close()
         
     except Exception as e:
@@ -235,7 +258,8 @@ def train_eta_model(
 if __name__ == "__main__":
     model_data = train_eta_model(
         training_csv='data/processed/istanbul_eta_training.csv',
-        model_output='models/eta_model_istanbul.pkl'
+        model_output='models/eta_model_istanbul.pkl',
+        viz_dir='models/visualizations'
     )
     
     if model_data is not None:

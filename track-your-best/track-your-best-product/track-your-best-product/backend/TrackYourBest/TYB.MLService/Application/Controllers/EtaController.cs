@@ -37,7 +37,7 @@ namespace TYB.MLService.Application.Controllers
         {
             try
             {
-                _logger.LogInformation("ETA Prediction started for TripId: {TripId}, DeviceId: {DeviceId}", 
+                _logger.LogInformation("ETA Prediction started for TripId: {TripId}, DeviceId: {DeviceId}",
                     request.TripId, request.DeviceId);
 
                 // 1. OSRM'den route al
@@ -53,13 +53,17 @@ namespace TYB.MLService.Application.Controllers
                 _logger.LogInformation("OSRM Route: {Distance}km, {Duration}s", distanceKm, durationSec);
 
                 // 2. ML API'den prediction al
+                // CRITICAL: Use Turkey local time (UTC+3), not UTC!
+                var turkeyTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Turkey Standard Time");
+                var turkeyTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, turkeyTimeZone);
+
                 var prediction = await _mlService.PredictEtaAsync(
-                    distanceKm, 
-                    durationSec, 
-                    DateTime.UtcNow
+                    distanceKm,
+                    durationSec,
+                    turkeyTime  // ✅ Turkey local time!
                 );
 
-                _logger.LogInformation("ML Prediction: {Minutes} minutes, Confidence: {Confidence}", 
+                _logger.LogInformation("ML Prediction: {Minutes} minutes, Confidence: {Confidence}",
                     prediction.eta_minutes, prediction.confidence);
 
                 // 3. PostgreSQL'e kaydet (tyb_analytics.eta_predictions)
@@ -79,7 +83,7 @@ namespace TYB.MLService.Application.Controllers
                     Metadata = JsonSerializer.Serialize(new
                     {
                         prediction.eta_hours,
-                        prediction.eta_minutes,
+                        prediction.eta_minutes,  // ✅ Total minutes saved to metadata
                         prediction.eta_seconds,
                         traffic_info = prediction.traffic_info,
                         model_info = prediction.model_info
@@ -92,30 +96,44 @@ namespace TYB.MLService.Application.Controllers
                 _logger.LogInformation("ETA Prediction saved to database: {EtaId}", etaPrediction.Id);
 
                 // 4. React'a response döner (sadece gerekli bilgiler)
+                // ✅ CRITICAL FIX: Use eta_minutes (TOTAL) for calculations!
                 return Ok(new
                 {
                     prediction_id = etaPrediction.Id,
+
+                    // ✅ FIX: Use eta_minutes (TOTAL minutes), NOT eta_minutes_display!
+                    eta_minutes = prediction.eta_minutes,  // ✅ TOTAL (e.g., 72.12)
+
                     eta_hours = prediction.eta_hours,
-                    eta_minutes = prediction.eta_minutes_display,
+                    eta_minutes_display = prediction.eta_minutes_display,  // Just minute part (e.g., 12)
                     eta_seconds = prediction.eta_seconds,
+
+                    // Formatted string for UI display
+                    eta_formatted = prediction.eta_hours > 0
+                        ? $"{prediction.eta_hours}h {prediction.eta_minutes_display}min"
+                        : $"{prediction.eta_minutes_display}min",
+
                     predicted_arrival_time = etaPrediction.PredictedArrivalTime,
                     distance_km = Math.Round(distanceKm, 2),
                     confidence = Math.Round(prediction.confidence, 4),
+
                     traffic_info = new
                     {
                         is_rush_hour = prediction.traffic_info.is_rush_hour,
                         avg_speed_kmh = Math.Round(prediction.traffic_info.avg_speed_kmh, 1),
-                        traffic_density = Math.Round(prediction.traffic_info.traffic_density, 1)
+                        traffic_density = Math.Round(prediction.traffic_info.traffic_density, 1),
+                        hour = prediction.traffic_info.hour,  // For debugging
+                        day_of_week = prediction.traffic_info.day_of_week
                     }
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "ETA Prediction failed for TripId: {TripId}", request.TripId);
-                return StatusCode(500, new 
-                { 
-                    error = "ETA prediction failed", 
-                    message = ex.Message 
+                return StatusCode(500, new
+                {
+                    error = "ETA prediction failed",
+                    message = ex.Message
                 });
             }
         }
@@ -128,7 +146,7 @@ namespace TYB.MLService.Application.Controllers
 
             var status = (mlHealthy && dbHealthy) ? "healthy" : "unhealthy";
 
-            _logger.LogInformation("Health Check: Status={Status}, ML={ML}, DB={DB}", 
+            _logger.LogInformation("Health Check: Status={Status}, ML={ML}, DB={DB}",
                 status, mlHealthy, dbHealthy);
 
             return Ok(new
