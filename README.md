@@ -145,7 +145,6 @@ TYB.MLService/
 │   ├── __init__.py
 │   ├── logger.py                # JSON logging
 │   ├── osrm_client.py           # 🆕 OSRM routing API client
-│   └── geo_utils.py             # Haversine, bearing calculations
 │
 ├── models_bin/
 │   ├── eta_model_istanbul.pkl   # 🆕 ETA prediction model (MAE: 1.11 min)
