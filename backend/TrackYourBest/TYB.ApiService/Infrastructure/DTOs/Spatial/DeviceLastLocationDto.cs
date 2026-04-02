@@ -9,6 +9,7 @@ namespace TYB.ApiService.Infrastructure.DTOs.Spatial
 		double Latitude,
 		double Longitude,
 		DateTime? GpsTimestamp,
-		DateTime? ReceivedTimestamp
+		DateTime? ReceivedTimestamp,
+		double? Speed
 	);
 }

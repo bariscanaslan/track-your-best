@@ -2,6 +2,7 @@ using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using TYB.ApiService.Application.Services;
+using TYB.ApiService.Background;
 using TYB.ApiService.Infrastructure.Data;
 using TYB.ApiService.Infrastructure.Entities.Spatial;
 using TYB.ApiService.Infrastructure.Entities.Core;
@@ -39,7 +40,10 @@ builder.Services.AddDbContext<TybDbContext>(options =>
 builder.Services.AddScoped<CoreService>();
 builder.Services.AddScoped<SpatialService>();
 builder.Services.AddScoped<TripsService>();
+builder.Services.AddScoped<TripRouteDeviationMonitorService>();
+builder.Services.AddSingleton<GpsSpeedCalculator>();
 builder.Services.AddMemoryCache();
+builder.Services.AddHostedService<TripRouteDeviationWorker>();
 
 builder.Services.AddHttpClient<OsrmService>(client =>
 {

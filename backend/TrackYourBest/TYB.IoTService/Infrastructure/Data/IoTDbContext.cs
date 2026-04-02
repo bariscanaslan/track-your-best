@@ -26,6 +26,7 @@ namespace TYB.IoTService.Infrastructure.Data
 				entity.Property(d => d.SecretKey).HasColumnName("secret_key");
 				entity.Property(d => d.Imei).HasColumnName("imei");
 				entity.Property(d => d.IpAddress).HasColumnName("ip_address");
+				entity.Property(d => d.IsActive).HasColumnName("is_active");
 				entity.Property(d => d.SignalStrength).HasColumnName("signal_strength");
 				entity.Property(d => d.LastSeenAt).HasColumnName("last_seen_at");
 				entity.Property(d => d.UpdatedAt).HasColumnName("updated_at");

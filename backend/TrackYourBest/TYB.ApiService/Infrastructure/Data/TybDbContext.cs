@@ -20,6 +20,7 @@ namespace TYB.ApiService.Infrastructure.Data
 		public DbSet<GpsData> GpsData => Set<GpsData>();
 		public DbSet<DeviceLastLocationRow> DeviceLastLocations => Set<DeviceLastLocationRow>();
 		public DbSet<GpsRoutePointRow> GpsRoutePoints => Set<GpsRoutePointRow>();
+		public DbSet<TripDeviationCandidateRow> TripDeviationCandidates => Set<TripDeviationCandidateRow>();
 		public DbSet<DriverInformationRow> DriverInformations => Set<DriverInformationRow>();
 		public DbSet<VehicleInformationRow> VehicleInformations => Set<VehicleInformationRow>();
 		public DbSet<Trip> Trips => Set<Trip>();
@@ -182,6 +183,25 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(g => g.Latitude).HasColumnName("latitude");
 				entity.Property(g => g.Longitude).HasColumnName("longitude");
 				entity.Property(g => g.GpsTimestamp).HasColumnName("gps_timestamp");
+			});
+
+			modelBuilder.Entity<TripDeviationCandidateRow>(entity =>
+			{
+				entity.HasNoKey();
+				entity.ToView(null);
+				entity.Property(t => t.TripId).HasColumnName("trip_id");
+				entity.Property(t => t.VehicleId).HasColumnName("vehicle_id");
+				entity.Property(t => t.DeviceId).HasColumnName("device_id");
+				entity.Property(t => t.EndLocation)
+					.HasColumnName("end_location")
+					.HasColumnType("geometry(Point,4326)");
+				entity.Property(t => t.RouteGeometry)
+					.HasColumnName("route_geometry")
+					.HasColumnType("geometry(LineString,4326)");
+				entity.Property(t => t.Latitude).HasColumnName("latitude");
+				entity.Property(t => t.Longitude).HasColumnName("longitude");
+				entity.Property(t => t.PositionTimestamp).HasColumnName("position_timestamp");
+				entity.Property(t => t.DistanceToRouteMeters).HasColumnName("distance_to_route_meters");
 			});
 
 			modelBuilder.Entity<DriverInformationRow>(entity =>

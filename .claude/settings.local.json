@@ -3,7 +3,9 @@
     "allow": [
       "Bash(ls:*)",
       "Bash(python3:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(find /c/Users/baris/Desktop/TYB/source-code/tyb/backend/TrackYourBest/TYB.ApiService -type f -name \"*.cs\" | xargs grep -l \"IsActive\" 2>/dev/null | head -10)",
+      "Bash(grep -E \"\\(frontend|src\\)$\")"
     ]
   }
 }
