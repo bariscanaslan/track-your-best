@@ -11,10 +11,12 @@ namespace TYB.ApiService.Application.Services
 	public class SpatialService
 	{
 		private readonly TybDbContext _dbContext;
+		private readonly GpsSpeedCalculator _speedCalculator;
 
-		public SpatialService(TybDbContext dbContext)
+		public SpatialService(TybDbContext dbContext, GpsSpeedCalculator speedCalculator)
 		{
 			_dbContext = dbContext;
+			_speedCalculator = speedCalculator;
 		}
 
 		/// <summary>
@@ -65,7 +67,8 @@ namespace TYB.ApiService.Application.Services
 					row.Latitude,
 					row.Longitude,
 					row.GpsTimestamp,
-					row.ReceivedTimestamp
+					row.ReceivedTimestamp,
+					null
 				))
 				.ToList();
 		}
@@ -122,7 +125,8 @@ namespace TYB.ApiService.Application.Services
 					row.Latitude,
 					row.Longitude,
 					row.GpsTimestamp,
-					row.ReceivedTimestamp
+					row.ReceivedTimestamp,
+					null
 				))
 				.ToList();
 		}
@@ -130,6 +134,8 @@ namespace TYB.ApiService.Application.Services
 		/// <summary>
 		/// Safely executes a parameterized raw SQL query to fetch the latest valid GPS location for a specific user's associated device.
 		/// It uses EF Core's string interpolation to prevent SQL injection and converts the spatial geometry data into WKT format.
+		/// In addition, computes a smoothed current speed from recent GPS history and embeds it in the response so that the
+		/// driver-speed-card on the /driver page receives a stable, backend-derived value without requiring any DB schema changes.
 		/// </summary>
 		public async Task<IReadOnlyList<DeviceLastLocationDto>> GetLatestDeviceLocationsByUserAsync(
 			Guid userId,
@@ -165,6 +171,9 @@ namespace TYB.ApiService.Application.Services
 				.AsNoTracking()
 				.ToListAsync(cancellationToken);
 
+			var deviceIds = rows.Select(r => r.DeviceId).ToList();
+			var speedByDevice = await ComputeSpeedByDeviceAsync(deviceIds, cancellationToken);
+
 			var wktWriter = new WKTWriter();
 
 			return rows
@@ -177,9 +186,75 @@ namespace TYB.ApiService.Application.Services
 					row.Latitude,
 					row.Longitude,
 					row.GpsTimestamp,
-					row.ReceivedTimestamp
+					row.ReceivedTimestamp,
+					speedByDevice.TryGetValue(row.DeviceId, out var spd) ? spd : null
 				))
 				.ToList();
+		}
+
+		/// <summary>
+		/// Fetches the latest GPS points (within a short recent window) for the given devices and
+		/// computes a smoothed current speed for each one using <see cref="GpsSpeedCalculator"/>.
+		/// Only valid, sanity-checked GPS points are considered; outlier segments are discarded
+		/// before the aggregate window speed is derived.
+		/// </summary>
+		private async Task<Dictionary<Guid, double?>> ComputeSpeedByDeviceAsync(
+			IReadOnlyList<Guid> deviceIds,
+			CancellationToken cancellationToken
+		)
+		{
+			if (deviceIds.Count == 0)
+				return new Dictionary<Guid, double?>();
+
+			// Fetch GPS points from the last 2 minutes only.
+			// At a typical 1 Hz device cadence this is at most ~120 rows per device.
+			// Any segment spanning more than MaxSegmentGapSeconds (30 s) is discarded
+			// inside the calculator, so a 2-minute window gives ample points to build
+			// the smoothing window without loading historical data.
+			var since = DateTime.UtcNow.AddMinutes(-2);
+
+			var recentPoints = await _dbContext.GpsData
+				.Where(g =>
+					deviceIds.Contains(g.DeviceId)
+					&& g.Latitude != 0
+					&& g.Longitude != 0
+					&& g.Latitude >= -90 && g.Latitude <= 90
+					&& g.Longitude >= -180 && g.Longitude <= 180
+					&& (g.GpsTimestamp >= since || (g.GpsTimestamp == null && g.ReceivedTimestamp >= since)))
+				.OrderByDescending(g => g.GpsTimestamp)
+				.ThenByDescending(g => g.ReceivedTimestamp)
+				.AsNoTracking()
+				.Select(g => new
+				{
+					g.DeviceId,
+					g.Latitude,
+					g.Longitude,
+					g.GpsTimestamp,
+					g.ReceivedTimestamp,
+				})
+				.ToListAsync(cancellationToken);
+
+			var result = new Dictionary<Guid, double?>(deviceIds.Count);
+
+			foreach (var deviceId in deviceIds)
+			{
+				// Take the 6 most recent valid points for this device (query is already ordered
+				// desc), then reverse to chronological order for the speed calculator.
+				var points = recentPoints
+					.Where(g => g.DeviceId == deviceId)
+					.Take(6)
+					.Select(g => new GpsSpeedCalculator.GpsPoint(
+						g.Latitude,
+						g.Longitude,
+						g.GpsTimestamp,
+						g.ReceivedTimestamp))
+					.Reverse()
+					.ToList();
+
+				result[deviceId] = _speedCalculator.Compute(points);
+			}
+
+			return result;
 		}
 
 		/// <summary>

@@ -9,6 +9,7 @@ namespace TYB.IoTService.Infrastructure.Entities.Core
 		public string? Imei { get; set; }
 		public string? IpAddress { get; set; }
 		public int? SignalStrength { get; set; }
+		public bool IsActive { get; set; }
 		public DateTime? LastSeenAt { get; set; }
 		public DateTime? UpdatedAt { get; set; }
 	}

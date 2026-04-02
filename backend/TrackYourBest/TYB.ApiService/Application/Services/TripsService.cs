@@ -68,12 +68,6 @@ namespace TYB.ApiService.Application.Services
 				cancellationToken
 			);
 
-			var lineString = _geometryFactory.CreateLineString(
-				route.Coordinates
-					.Select(coord => new Coordinate(coord[1], coord[0]))
-					.ToArray()
-			);
-
 			var startAddress = await ResolveAddressAsync(
 				request.StartLat,
 				request.StartLng,
@@ -104,7 +98,7 @@ namespace TYB.ApiService.Application.Services
 				PlannedEndTime = plannedEndTime,
 				DurationSeconds = (int)Math.Round(route.DurationSeconds),
 				TotalDistanceKm = (decimal)(route.DistanceMeters / 1000.0),
-				RouteGeometry = lineString,
+				RouteGeometry = BuildLineString(route.Coordinates),
                 Notes = request.Notes,
                 PauseCount = 0,
 				CreatedAt = DateTime.UtcNow,
@@ -545,6 +539,42 @@ namespace TYB.ApiService.Application.Services
 				);
 		}
 
+		public async Task<TripRouteRefreshResult?> RefreshRouteFromCurrentPositionAsync(
+			Guid tripId,
+			double currentLat,
+			double currentLng,
+			CancellationToken cancellationToken)
+		{
+			var trip = await _dbContext.Trips
+				.FirstOrDefaultAsync(t => t.Id == tripId, cancellationToken);
+
+			if (trip is null
+				|| trip.EndLocation is null
+				|| (trip.Status != TripStatus.Ongoing && trip.Status != TripStatus.Paused))
+			{
+				return null;
+			}
+
+			var route = await _osrmService.GetRouteAsync(
+				currentLat,
+				currentLng,
+				trip.EndLocation.Y,
+				trip.EndLocation.X,
+				cancellationToken);
+
+			trip.RouteGeometry = BuildLineString(route.Coordinates);
+			trip.TotalDistanceKm = (decimal)(route.DistanceMeters / 1000.0);
+			trip.DurationSeconds = (int)Math.Round(route.DurationSeconds);
+			trip.UpdatedAt = DateTime.UtcNow;
+
+			await _dbContext.SaveChangesAsync(cancellationToken);
+
+			return new TripRouteRefreshResult(
+				trip.Id,
+				decimal.ToDouble(trip.TotalDistanceKm ?? 0m),
+				trip.DurationSeconds ?? 0);
+		}
+
 		private static string TripStatusToString(TripStatus status) => status switch
 		{
 			TripStatus.DriverApprove => "driver_approve",
@@ -610,7 +640,20 @@ namespace TYB.ApiService.Application.Services
 				CreatedAt = t.CreatedAt,
 			}).ToList();
 		}
+
+		private LineString BuildLineString(IReadOnlyList<double[]> coordinates)
+		{
+			return _geometryFactory.CreateLineString(
+				coordinates
+					.Select(coord => new Coordinate(coord[1], coord[0]))
+					.ToArray());
+		}
 	}
+
+	public record TripRouteRefreshResult(
+		Guid TripId,
+		double DistanceKm,
+		int DurationSeconds);
 }
 
 

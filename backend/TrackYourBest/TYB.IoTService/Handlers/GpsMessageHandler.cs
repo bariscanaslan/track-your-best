@@ -78,6 +78,12 @@ namespace TYB.IoTService.Handlers
 				return;
 			}
 
+			if (!device.IsActive)
+			{
+				_logger.LogWarning("GPS data rejected for inactive device: {DeviceId}", deviceId);
+				return;
+			}
+
 			var now = DateTime.UtcNow;
 
 			if (!IsValidSignature(device.SecretKey, message, out var signatureError))

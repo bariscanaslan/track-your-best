@@ -19,6 +19,7 @@ import { driversApi, devicesApi, gpsApi, tripsApi, vehiclesApi } from "../../../
 import "../../../components/MapView.css";
 
 export default function DriverMapView() {
+  const ACTIVE_TRIP_REFRESH_MS = 5000;
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
   const USR_ID = "f45f1f3a-73ae-481c-8a65-5e359360d393";
   const API_URL = `${gpsApi.lastLocationByUserId(USR_ID, API_BASE)}`;
@@ -33,6 +34,7 @@ export default function DriverMapView() {
   const [activeTrip, setActiveTrip] = useState<TripSummary | null>(null);
   const [activeTripError, setActiveTripError] = useState<string | null>(null);
   const [isLoadingActiveTrip, setIsLoadingActiveTrip] = useState(false);
+  const [shouldShowActiveTripRoute, setShouldShowActiveTripRoute] = useState(true);
 
   const [deviceInformation, setDeviceInformation] = useState<DeviceInfo | null>(null);
   const [vehicleInformation, setVehicleInformation] = useState<VehicleInfo | null>(null);
@@ -253,6 +255,20 @@ export default function DriverMapView() {
     }
   };
 
+  useEffect(() => {
+    if (!selectedLocation?.vehicleId || !API_BASE) {
+      return;
+    }
+
+    fetchActiveTrip(selectedLocation.vehicleId);
+
+    const interval = setInterval(() => {
+      fetchActiveTrip(selectedLocation.vehicleId);
+    }, ACTIVE_TRIP_REFRESH_MS);
+
+    return () => clearInterval(interval);
+  }, [API_BASE, selectedLocation?.vehicleId]);
+
   const fetchVehicleAndDeviceInformation = async (location: MapDeviceLocation) => {
     if (!API_BASE) return;
     setIsLoadingInformation(true);
@@ -370,6 +386,19 @@ export default function DriverMapView() {
     setVisibleTripRoutes([nextPath]);
     setRouteError(null);
   };
+
+  useEffect(() => {
+    if (!shouldShowActiveTripRoute) {
+      return;
+    }
+
+    if (!activeTrip?.geometry || activeTrip.geometry.length < 2) {
+      setVisibleTripRoutes([]);
+      return;
+    }
+
+    applyTripRouteToMap(activeTrip);
+  }, [activeTrip, shouldShowActiveTripRoute]);
 
   const handleDriverDecision = async (decision: "accepted" | "rejected") => {
     if (!activeTrip?.id || !API_BASE) {
@@ -523,10 +552,14 @@ export default function DriverMapView() {
     setDriverError(null);
     setIsLoadingDriver(false);
     setVisibleTripRoutes([]);
+    setShouldShowActiveTripRoute(true);
     setDecisionNotes("");
   };
 
   const currentSpeedKmh = selectedLocation?.speed ? Number(selectedLocation.speed) : 0;
+  const renderedDestinationPoints = visibleTripRoutes
+    .filter((path) => path.length > 1)
+    .map((path) => path[path.length - 1]);
 
   return (
     <main className="map-page" style={{ height: "100vh", width: "100%" }}>
@@ -534,7 +567,7 @@ export default function DriverMapView() {
         deviceLocations={deviceLocations}
         selectedVehicleId={selectedLocation?.vehicleId ?? selectedLocation?.deviceId ?? null}
         routePaths={visibleTripRoutes}
-        destinationPoints={[]}
+        destinationPoints={renderedDestinationPoints}
         filteredStartPoint={null}
         filteredEndPoint={null}
         tileStyle={mapStyle}
@@ -551,6 +584,7 @@ export default function DriverMapView() {
         onMarkerClick={(location) => {
           setSelectedLocation(location);
           setActivePanel("vehicle");
+          setShouldShowActiveTripRoute(true);
           fetchActiveTrip(location.vehicleId);
           fetchVehicleAndDeviceInformation(location);
           fetchDriverInformation(location.vehicleId);
@@ -575,7 +609,10 @@ export default function DriverMapView() {
         onContinueTrip={() => handleDriverAction("continue")}
         onFinishTrip={() => handleDriverAction("finish")}
         onCancelTrip={() => handleDriverAction("cancel")}
-        onShowActiveTripRoute={() => applyTripRouteToMap(activeTrip)}
+        onShowActiveTripRoute={() => {
+          setShouldShowActiveTripRoute(true);
+          applyTripRouteToMap(activeTrip);
+        }}
         onClose={() => setActivePanel(null)}
       />
 

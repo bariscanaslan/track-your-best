@@ -23,6 +23,7 @@ import { driversApi, devicesApi, geocodingApi, gpsApi, tripsApi, vehiclesApi } f
 import "../../../components/MapView.css";
 
 export default function FleetManagerMapView() {
+  const ACTIVE_TRIP_REFRESH_MS = 5000;
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
   const ORG_ID = "0310ed50-86f2-468c-901d-6b3fcb113914";
   const API_URL = `${gpsApi.lastLocationByDeviceId(API_BASE)}?organizationId=${ORG_ID}`;
@@ -36,6 +37,7 @@ export default function FleetManagerMapView() {
 
   const [routeMode, setRouteMode] = useState(false);
   const [routePath, setRoutePath] = useState<Array<[number, number]>>([]);
+  const [activeTripRoutePath, setActiveTripRoutePath] = useState<Array<[number, number]>>([]);
   const [visibleTripRoutes, setVisibleTripRoutes] = useState<Array<Array<[number, number]>>>([]);
   const [filteredRoutePath, setFilteredRoutePath] = useState<Array<[number, number]>>([]);
 
@@ -51,6 +53,7 @@ export default function FleetManagerMapView() {
   const [activeTrip, setActiveTrip] = useState<TripSummary | null>(null);
   const [activeTripError, setActiveTripError] = useState<string | null>(null);
   const [isLoadingActiveTrip, setIsLoadingActiveTrip] = useState(false);
+  const [shouldShowActiveTripRoute, setShouldShowActiveTripRoute] = useState(false);
   const [pastTrips, setPastTrips] = useState<TripSummary[]>([]);
   const [pastTripsError, setPastTripsError] = useState<string | null>(null);
   const [isLoadingPastTrips, setIsLoadingPastTrips] = useState(false);
@@ -437,6 +440,7 @@ export default function FleetManagerMapView() {
       if (res.status === 404) {
         setActiveTrip(null);
         setHasApprovedRoute(false);
+        setActiveTripRoutePath([]);
         return;
       }
       if (!res.ok) {
@@ -450,6 +454,7 @@ export default function FleetManagerMapView() {
       if (data === null) {
         setActiveTrip(null);
         setHasApprovedRoute(false);
+        setActiveTripRoutePath([]);
         return;
       }
 
@@ -458,10 +463,25 @@ export default function FleetManagerMapView() {
     } catch {
       setActiveTripError("Connection error: Unable to retrieve active trip.");
       setActiveTrip(null);
+      setActiveTripRoutePath([]);
     } finally {
       setIsLoadingActiveTrip(false);
     }
   };
+
+  useEffect(() => {
+    if (!selectedLocation?.vehicleId || !API_BASE) {
+      return;
+    }
+
+    fetchActiveTrip(selectedLocation.vehicleId);
+
+    const interval = setInterval(() => {
+      fetchActiveTrip(selectedLocation.vehicleId);
+    }, ACTIVE_TRIP_REFRESH_MS);
+
+    return () => clearInterval(interval);
+  }, [API_BASE, selectedLocation?.vehicleId]);
 
   const fetchPastTrips = async (vehicleId: string | null | undefined) => {
     if (!vehicleId || !API_BASE) return;
@@ -591,14 +611,28 @@ export default function FleetManagerMapView() {
       return;
     }
 
-    setVisibleTripRoutes((prev) => {
-      const key = routeKey(trip.geometry!);
-      const exists = prev.some((path) => routeKey(path) === key);
-      return exists ? prev : [...prev, trip.geometry!];
-    });
+    const nextPath = trip.geometry.map((point) => [point[0], point[1]] as [number, number]);
+    setActiveTripRoutePath(nextPath);
+    setShouldShowActiveTripRoute(true);
     setRouteMode(false);
     setRouteError(null);
   };
+
+  useEffect(() => {
+    if (!shouldShowActiveTripRoute) {
+      return;
+    }
+
+    if (!activeTrip?.geometry || activeTrip.geometry.length < 2) {
+      setActiveTripRoutePath([]);
+      return;
+    }
+
+    setActiveTripRoutePath(
+      activeTrip.geometry.map((point) => [point[0], point[1]] as [number, number])
+    );
+    setRouteError(null);
+  }, [activeTrip, shouldShowActiveTripRoute]);
 
   const handleFilterRoute = async () => {
     if (!API_BASE) return;
@@ -670,6 +704,7 @@ export default function FleetManagerMapView() {
       await res.json();
       setActiveTrip(null);
       setHasApprovedRoute(false);
+      setActiveTripRoutePath([]);
       setRoutePath([]);
       setVisibleTripRoutes([]);
       setDestinationPoint(null);
@@ -708,6 +743,7 @@ export default function FleetManagerMapView() {
       }
 
       setHasApprovedRoute(true);
+      setShouldShowActiveTripRoute(true);
       fetchActiveTrip(pendingTrip.vehicleId);
     } catch {
       setRouteError("Route approval failed.");
@@ -730,7 +766,9 @@ export default function FleetManagerMapView() {
 
   const clearAllVisibleRoutes = () => {
     setRoutePath([]);
+    setActiveTripRoutePath([]);
     setVisibleTripRoutes([]);
+    setShouldShowActiveTripRoute(false);
     setDestinationPoint(null);
     setPendingTrip(null);
     setHasApprovedRoute(false);
@@ -746,6 +784,8 @@ export default function FleetManagerMapView() {
     setActivePanel((prev) => (prev === "vehicle" ? null : prev));
     setActiveTrip(null);
     setActiveTripError(null);
+    setActiveTripRoutePath([]);
+    setShouldShowActiveTripRoute(false);
     setPastTrips([]);
     setPastTripsError(null);
     setIsLoadingActiveTrip(false);
@@ -765,6 +805,7 @@ export default function FleetManagerMapView() {
   };
 
   const renderedRoutePaths = [
+    ...(activeTripRoutePath.length > 1 ? [activeTripRoutePath] : []),
     ...visibleTripRoutes,
     ...(routePath.length > 1 ? [routePath] : []),
     ...(filteredRoutePath.length > 1 ? [filteredRoutePath] : []),
@@ -803,6 +844,7 @@ export default function FleetManagerMapView() {
         onMarkerClick={(location) => {
           setSelectedLocation(location);
           setActivePanel("vehicle");
+          setShouldShowActiveTripRoute(true);
           fetchActiveTrip(location.vehicleId);
           fetchPastTrips(location.vehicleId);
           fetchVehicleAndDeviceInformation(location);
