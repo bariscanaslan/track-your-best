@@ -28,3 +28,242 @@ frontend/.next/
 **/.venv
 .venv
 esp32-sim/.venv
+
+# ============================================
+# TYB MLService - Git Ignore File
+# ============================================
+
+# ============================================
+# PYTHON
+# ============================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv
+.env.local
+.virtualenv
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# pyenv
+.python-version
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# ============================================
+# MACHINE LEARNING MODELS & DATA
+# ============================================
+# ML Models (Large binary files - use Git LFS or cloud storage)
+models_bin/*.pkl
+models_bin/*.onnx
+models_bin/*.h5
+models_bin/*.pt
+models_bin/*.pth
+models_bin/*.joblib
+
+# EXCEPTION: Keep model metadata
+!models_bin/model_meta.json
+!models_bin/.gitkeep
+
+# Training Data (Large CSV files)
+data/*.csv
+data/*.xlsx
+data/*.json
+data/*.parquet
+
+# EXCEPTION: Keep sample/test data
+!data/sample_*.csv
+!data/.gitkeep
+
+# Temporary ML files
+*.npy
+*.npz
+checkpoints/
+logs/
+runs/
+tensorboard/
+
+# ============================================
+# ENVIRONMENT & SECRETS
+# ============================================
+.env
+.env.local
+.env.*.local
+*.env
+secrets/
+credentials/
+*.key
+*.pem
+*.crt
+
+# EXCEPTION: Keep .env.example
+!.env.example
+
+# ============================================
+# DATABASE
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+db.sqlite3
+*.sql
+migrations/versions/*.py
+!migrations/versions/.gitkeep
+
+# ============================================
+# LOGS
+# ============================================
+logs/
+*.log
+*.log.*
+log.txt
+
+# ============================================
+# IDE / EDITORS
+# ============================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================
+# OS FILES
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# DOCKER
+# ============================================
+docker-compose.override.yml
+.dockerignore
+*.tar
+*.tar.gz
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+*.orig
+*.rej
+*.pyc
+*.pyo
+
+# ============================================
+# PROJECT SPECIFIC
+# ============================================
+# Output files
+outputs/
+results/
+cache/
+downloads/
+
+# Test files
+test_*.py
+*_test.py
+tests/fixtures/*.pkl
+tests/fixtures/*.csv
+
+# Documentation builds
+docs/_build/
+docs/_static/
+docs/_templates/
+site/
+
+# ============================================
+# KEEP THESE DIRECTORIES (Empty marker files)
+# ============================================
+!models_bin/.gitkeep
+!data/.gitkeep
+!logs/.gitkeep
