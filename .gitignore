@@ -27,6 +27,7 @@ frontend/.next/
 **/.env.local
 **/.venv
 .venv
+<<<<<<< HEAD
 esp32-sim/.venv
 
 # ============================================
@@ -157,3 +158,6 @@ TYB.MLService/outputs/
 TYB.MLService/results/
 TYB.MLService/cache/
 TYB.MLService/downloads/
+=======
+esp32-sim/.venv
+>>>>>>> 7d8ba62135f76ced29d12f5862064e8e92309e9f
