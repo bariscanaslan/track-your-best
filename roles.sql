@@ -1,0 +1,39 @@
+--
+-- PostgreSQL database cluster dump
+--
+
+\restrict KtNXBgNkHpduM87tdoZl8wZejwbcTBJUzltztmI9oxHelrDAyu3cqvT44kx005A
+
+SET default_transaction_read_only = off;
+
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+
+--
+-- Roles
+--
+
+CREATE ROLE bariscanaslan;
+ALTER ROLE bariscanaslan WITH SUPERUSER INHERIT NOCREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:Uk8QZLhKcF/L4ZFCZfthrg==$5Cu51Vn2MJrMrLvEOR2uCC9qCJjEcxlcEMC0Fiwe2EA=:bb1I+3u4tCJ6sI+SHtNn3klrRp2uKLeWHT7WJANa93g=';
+CREATE ROLE postgres;
+ALTER ROLE postgres WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:pNbnUNFFxmPEq8wzu5qM+w==$gZMqo+su8pVv1MdyDFiDFrupQBVmBfoh1NNGNgJeySk=:A453RVA0DeapJRhnZTIKb5WUhdDgBZu7BsvDI6XMSk8=';
+CREATE ROLE toprakkamburoglu;
+ALTER ROLE toprakkamburoglu WITH SUPERUSER INHERIT NOCREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:jKLdA8lAaSXclpHTRiXBWg==$2vPGv9PMQIxuEMmzFyQbrfojtwtkCnvgYdYjY0TUgRs=:uCY/rsUFLHugJJ916cGbw/JMg8EH0poap/sie+g0N+c=';
+CREATE ROLE yigitavar;
+ALTER ROLE yigitavar WITH SUPERUSER INHERIT NOCREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:kxqPZ6M0K5vYu+3yaV2tgg==$H0+Hf+CO6F3fPIn3To68zQqhB6KlgV6bhOZ7Kumx9Pc=:wHVcoLuhuq89Gcf4KcVo1YFEBH4PGvivkfCU0VErfDA=';
+
+--
+-- User Configurations
+--
+
+
+
+
+
+
+\unrestrict KtNXBgNkHpduM87tdoZl8wZejwbcTBJUzltztmI9oxHelrDAyu3cqvT44kx005A
+
+--
+-- PostgreSQL database cluster dump complete
+--
+
