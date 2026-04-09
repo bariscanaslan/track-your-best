@@ -1,0 +1,16 @@
+{
+  "features": [
+    "duration_sec",
+    "distance_m",
+    "avg_speed_mps",
+    "p95_speed_mps",
+    "max_speed_mps",
+    "speed_std_mps",
+    "harsh_accel_count",
+    "harsh_brake_count",
+    "stop_count",
+    "stop_time_total_sec",
+    "n_points",
+    "spike_segments"
+  ]
+} 
