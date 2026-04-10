@@ -4,15 +4,19 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-interface User {
-  id: number;
+export interface AuthUser {
+  id: string;
+  organizationId?: string;
   username: string;
-  full_name?: string;
+  email: string;
+  fullName: string;
+  role: "admin" | "viewer" | "fleet_manager" | "driver";
+  avatarUrl?: string;
 }
 
 interface AuthContextType {
-  user: User | null;
-  login: (user: User) => void;
+  user: AuthUser | null;
+  login: (user: AuthUser) => void;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -20,23 +24,33 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch(`${API}/auth/me`, {
+        const res = await fetch(`${API}/api/auth/me`, {
           credentials: "include",
         });
 
         if (res.ok) {
-          const data = await res.json();
+          const data: AuthUser = await res.json();
           setUser(data);
         } else {
+          // Session is invalid — delete the httpOnly cookie via the backend so the
+          // middleware stops seeing a stale token and redirecting to role home.
+          try {
+            await fetch(`${API}/api/auth/logout`, {
+              method: "POST",
+              credentials: "include",
+            });
+          } catch {
+            // Ignore — the important thing is setting user to null below.
+          }
           setUser(null);
         }
       } catch {
@@ -49,16 +63,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     checkAuth();
   }, []);
 
-  const login = (user: User) => {
-    setUser(user);
+  const login = (userData: AuthUser) => {
+    setUser(userData);
   };
 
   const logout = async () => {
-    await fetch(`${API}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-    setUser(null);
+    try {
+      await fetch(`${API}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      setUser(null);
+    }
   };
 
   return (

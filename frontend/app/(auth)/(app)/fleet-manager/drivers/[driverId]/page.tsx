@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { driversApi, usersApi, vehiclesApi } from "../../../../../utils/api";
+import { useAuth } from "../../../../../context/AuthContext";
 import "../../fleet-manager.css";
 
 type DriverDetail = {
@@ -39,8 +40,6 @@ type DriverListItem = {
   id: string;
   vehicleId?: string | null;
 };
-
-const ORG_ID = "0310ed50-86f2-468c-901d-6b3fcb113914";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "";
@@ -82,6 +81,8 @@ export default function FleetManagerDriverEditPage() {
   const params = useParams();
   const driverId = String(params?.driverId ?? "");
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? "";
 
   const [driver, setDriver] = useState<DriverDetail | null>(null);
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
@@ -121,7 +122,7 @@ export default function FleetManagerDriverEditPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(driversApi.getById(driverId, ORG_ID, apiBase), {
+      const res = await fetch(driversApi.getById(driverId, orgId, apiBase), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -159,7 +160,7 @@ export default function FleetManagerDriverEditPage() {
 
   const fetchVehicles = async () => {
     try {
-      const res = await fetch(vehiclesApi.list(ORG_ID, apiBase), {
+      const res = await fetch(vehiclesApi.list(orgId, apiBase), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -176,7 +177,7 @@ export default function FleetManagerDriverEditPage() {
 
   const fetchBusyVehicles = async () => {
     try {
-      const res = await fetch(driversApi.list(ORG_ID, apiBase), {
+      const res = await fetch(driversApi.list(orgId, apiBase), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -230,7 +231,7 @@ export default function FleetManagerDriverEditPage() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          organizationId: ORG_ID,
+          organizationId: orgId,
           userId: driver.userId ?? null,
           vehicleId: driverForm.vehicleId.trim() || null,
           licenseNumber: driverForm.licenseNumber.trim(),

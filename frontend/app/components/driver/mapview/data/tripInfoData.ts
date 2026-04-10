@@ -1,3 +1,20 @@
+export type EtaPrediction = {
+  id: string;
+  tripId: string;
+  predictionTime: string;
+  predictedArrivalTime?: string | null;
+  remainingDistanceKm?: number | null;
+  confidenceScore?: number | null;
+  trafficFactor?: number | null;
+  modelVersion?: string | null;
+  etaMinutes?: number | null;
+  isRushHour?: boolean | null;
+  avgSpeedKmh?: number | null;
+  trafficDensity?: number | null;
+  dayOfWeek?: string | null;
+  isWeekend?: boolean | null;
+};
+
 export type TripPlanPayload = {
   vehicleId: string;
   driverId?: string | null;

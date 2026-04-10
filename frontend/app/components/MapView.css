@@ -193,11 +193,19 @@
   letter-spacing: 0.01em;
 }
 
+.driver-stats-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
 .driver-speed-card {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 2px;
   padding: 6px 10px;
   border-radius: 12px;
   border: 1px solid rgba(59, 130, 246, 0.25);
@@ -241,6 +249,13 @@
   color: #475569;
   font-weight: 600;
   margin-left: 3px;
+}
+
+.driver-speed-card-empty {
+  font-size: 18px;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: -0.02em;
 }
 
 .map-footer-actions {
@@ -525,6 +540,30 @@
 .map-sidecard-content {
   display: grid;
   gap: 10px;
+}
+
+.map-sidecard-eta {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(27, 134, 206, 0.06), rgba(27, 134, 206, 0.02));
+  border: 1px solid rgba(27, 134, 206, 0.2);
+}
+
+.map-sidecard-eta-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1b86ce;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.map-sidecard-eta-updated {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 1px;
+  line-height: 1.2;
 }
 
 .map-sidecard-section {

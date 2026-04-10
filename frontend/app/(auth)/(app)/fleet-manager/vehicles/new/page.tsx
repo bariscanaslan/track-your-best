@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { devicesApi, vehiclesApi } from "../../../../../utils/api";
+import { useAuth } from "../../../../../context/AuthContext";
 import "../../fleet-manager.css";
 
 type DeviceOption = {
@@ -17,8 +18,6 @@ type VehicleListItem = {
   deviceId?: string | null;
 };
 
-const ORG_ID = "0310ed50-86f2-468c-901d-6b3fcb113914";
-
 const parseDateInput = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -28,6 +27,8 @@ const parseDateInput = (value: string) => {
 
 export default function FleetManagerVehicleCreatePage() {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? "";
   const router = useRouter();
 
   const [devices, setDevices] = useState<DeviceOption[]>([]);
@@ -57,7 +58,7 @@ export default function FleetManagerVehicleCreatePage() {
 
   const fetchDevices = async () => {
     try {
-      const res = await fetch(devicesApi.list(ORG_ID, apiBase, true), {
+      const res = await fetch(devicesApi.list(orgId, apiBase, true), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -75,7 +76,7 @@ export default function FleetManagerVehicleCreatePage() {
 
   const fetchBusyDevices = async () => {
     try {
-      const res = await fetch(vehiclesApi.list(ORG_ID, apiBase), {
+      const res = await fetch(vehiclesApi.list(orgId, apiBase), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -112,7 +113,7 @@ export default function FleetManagerVehicleCreatePage() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          organizationId: ORG_ID,
+          organizationId: orgId,
           deviceId: selectedDeviceId || null,
           // KRİTİK EKLEME: Eğer bir cihaz seçilmişse onay bilgisini true gönder
           confirmDeviceReassignment: !!selectedDeviceId, 
@@ -162,7 +163,7 @@ export default function FleetManagerVehicleCreatePage() {
           <strong>New Vehicle Profile</strong>
           <div className="fm-list-sub">Fill vehicle identity, specs and device assignment.</div>
         </div>
-        <div className="fm-list-sub">Organization: {ORG_ID}</div>
+        <div className="fm-list-sub">Organization: {orgId}</div>
       </div>
 
       {error && <div className="fm-note">{error}</div>}

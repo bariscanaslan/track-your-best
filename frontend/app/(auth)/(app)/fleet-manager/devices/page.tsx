@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { devicesApi } from "../../../../utils/api";
+import { useAuth } from "../../../../context/AuthContext";
 import "../fleet-manager.css";
 
 type DeviceRow = {
@@ -26,8 +27,6 @@ const fields = [
   { key: "ipAddress", label: "ip_address" },
   { key: "lastSeenAt", label: "last_seen_at" },
 ] as const;
-
-const ORG_ID = "0310ed50-86f2-468c-901d-6b3fcb113914";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "-";
@@ -98,12 +97,14 @@ export default function FleetManagerDevicesPage() {
   const pageSize = 8;
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? "";
 
   const fetchDevices = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(devicesApi.list(ORG_ID, apiBase, true), {
+      const res = await fetch(devicesApi.list(orgId, apiBase, true), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

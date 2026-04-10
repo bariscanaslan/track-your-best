@@ -48,7 +48,6 @@ class Trip(Base):
     stop_count = Column(Integer, default=0)
     harsh_acceleration_count = Column(Integer, default=0)
     harsh_braking_count = Column(Integer, default=0)
-    purpose = Column(String(255))
     notes = Column(Text)
     extra_data = Column('metadata', JSON, default={})  # Map to 'metadata' column in DB
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -110,6 +109,7 @@ class Anomaly(Base):
     algorithm_used = Column(String(100))  # IsolationForest_v1, etc.
     detected_at = Column(DateTime, default=datetime.utcnow)
     model_metadata = Column('metadata', JSON)  # {anomaly_score, flags, raw_score, ...}
+    location = Column(Geometry('POINT', srid=4326))  # centroid of GPS track where anomaly occurred
 
 
 # ============================================
@@ -159,21 +159,53 @@ class EtaPrediction(Base):
 def get_pending_trips(session):
     """
     Get trips that need ETA calculation
-    
+
     Status flow:
-    - 'driver_approve': Route selected, calculate ETA every 3 minutes
+    - 'driver_approve': Route selected, waiting for driver to accept
+    - 'ongoing': Trip in progress, update ETA continuously
     - 'cancelled': Trip cancelled, skip
-    
+
     Returns:
-        List of Trip objects with status='driver_approve'
+        List of Trip objects with status in ('driver_approve', 'ongoing')
     """
-    
-    # Get all approved trips
+
+    # Get all trips that need ETA predictions
     pending = session.query(Trip).filter(
-        Trip.status == 'driver_approve'
+        Trip.status.in_(['driver_approve', 'ongoing'])
     ).all()
-    
+
     return pending
+
+
+def get_device_id_for_trip(session, trip_id):
+    """
+    Resolve device_id for a trip by checking gps_data first,
+    then falling back to the vehicle's assigned device.
+    Returns None if not found.
+    """
+    from sqlalchemy import text
+    # Try GPS data first (most reliable for active trips)
+    gps = session.query(GpsData).filter(
+        GpsData.trip_id == trip_id,
+        GpsData.device_id.isnot(None)
+    ).order_by(GpsData.gps_timestamp.desc()).first()
+    if gps:
+        return gps.device_id
+    # Fallback: look up device assigned to the vehicle via tyb_core schema
+    row = session.execute(
+        text("""
+            SELECT v.device_id
+            FROM tyb_core.vehicles v
+            JOIN tyb_spatial.trips t ON t.vehicle_id = v.id
+            WHERE t.id = :trip_id AND v.device_id IS NOT NULL
+            LIMIT 1
+        """),
+        {"trip_id": str(trip_id)}
+    ).fetchone()
+    if row:
+        import uuid
+        return uuid.UUID(str(row[0]))
+    return None
 
 
 def create_eta_prediction(session, trip_id, start_location, end_location, prediction_data):
@@ -208,9 +240,11 @@ def create_eta_prediction(session, trip_id, start_location, end_location, predic
         'model_info': prediction_data.get('model_info', {})
     }
     
+    resolved_device_id = get_device_id_for_trip(session, trip_id)
+
     eta_record = EtaPrediction(
         trip_id=trip_id,
-        device_id=None,  # Can be added if needed
+        device_id=resolved_device_id,
         prediction_time=prediction_data['prediction_timestamp'],
         predicted_arrival_time=prediction_data['predicted_arrival_time'],
         current_location=start_location,  # WKBElement

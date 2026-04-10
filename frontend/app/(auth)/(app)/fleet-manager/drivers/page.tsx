@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaSearch, FaUndo } from "react-icons/fa";
 import { driversApi } from "../../../../utils/api";
+import { useAuth } from "../../../../context/AuthContext";
 import "../fleet-manager.css";
 
 type DriverRow = {
@@ -25,8 +26,6 @@ type DriverRow = {
   userCreatedAt?: string | null;
   lastLogin?: string | null;
 };
-
-const ORG_ID = "0310ed50-86f2-468c-901d-6b3fcb113914";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "-";
@@ -59,12 +58,14 @@ export default function FleetManagerDriversPage() {
   const pageSize = 8;
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? "";
 
   const fetchDrivers = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(driversApi.list(ORG_ID, apiBase), {
+      const res = await fetch(driversApi.list(orgId, apiBase), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

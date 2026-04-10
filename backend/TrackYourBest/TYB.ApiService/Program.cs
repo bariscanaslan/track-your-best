@@ -1,5 +1,9 @@
+using System.Text;
+using System.Security.Claims;
 using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using TYB.ApiService.Application.Services;
 using TYB.ApiService.Background;
@@ -30,6 +34,9 @@ if (string.IsNullOrWhiteSpace(connectionString))
 	);
 }
 
+var jwtSecret = builder.Configuration["TYB_JWT_SECRET"]
+	?? throw new InvalidOperationException("TYB_JWT_SECRET is not configured.");
+
 NpgsqlConnection.GlobalTypeMapper.MapEnum<TripStatus>("trip_status");
 NpgsqlConnection.GlobalTypeMapper.MapEnum<UserRole>("user_role");
 
@@ -41,6 +48,7 @@ builder.Services.AddScoped<CoreService>();
 builder.Services.AddScoped<SpatialService>();
 builder.Services.AddScoped<TripsService>();
 builder.Services.AddScoped<TripRouteDeviationMonitorService>();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<GpsSpeedCalculator>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<TripRouteDeviationWorker>();
@@ -77,6 +85,36 @@ builder.Services.AddCors(options =>
 	});
 });
 
+builder.Services
+	.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+	.AddJwtBearer(options =>
+	{
+		options.TokenValidationParameters = new TokenValidationParameters
+		{
+			ValidateIssuer = true,
+			ValidateAudience = true,
+			ValidateLifetime = true,
+			ValidateIssuerSigningKey = true,
+			ValidIssuer = "TYB.ApiService",
+			ValidAudience = "TYB.Frontend",
+			IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+			NameClaimType = ClaimTypes.NameIdentifier,
+			RoleClaimType = ClaimTypes.Role,
+			ClockSkew = TimeSpan.Zero
+		};
+
+		// Read JWT from httpOnly cookie instead of Authorization header
+		options.Events = new JwtBearerEvents
+		{
+			OnMessageReceived = context =>
+			{
+				if (context.Request.Cookies.TryGetValue("tyb_token", out var token))
+					context.Token = token;
+				return Task.CompletedTask;
+			}
+		};
+	});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -91,6 +129,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("LocalDev");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

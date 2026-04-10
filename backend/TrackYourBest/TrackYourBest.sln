@@ -7,10 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TYB.ApiService", "TYB.ApiSe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TYB.IoTService", "TYB.IoTService\TYB.IoTService.csproj", "{2D278F4B-1123-44FE-BBED-AD80B4324A12}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TYB.MLService", "TYB.MLService\TYB.MLService.csproj", "{A5A1E762-4F9A-4A6F-9155-C3958FB5FC7E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TYB.Shared", "TYB.Shared\TYB.Shared.csproj", "{A0235BA8-972D-4C1D-8B26-15688A832BDA}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,14 +21,6 @@ Global
 		{2D278F4B-1123-44FE-BBED-AD80B4324A12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D278F4B-1123-44FE-BBED-AD80B4324A12}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D278F4B-1123-44FE-BBED-AD80B4324A12}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A5A1E762-4F9A-4A6F-9155-C3958FB5FC7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A5A1E762-4F9A-4A6F-9155-C3958FB5FC7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A5A1E762-4F9A-4A6F-9155-C3958FB5FC7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A5A1E762-4F9A-4A6F-9155-C3958FB5FC7E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A0235BA8-972D-4C1D-8B26-15688A832BDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A0235BA8-972D-4C1D-8B26-15688A832BDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A0235BA8-972D-4C1D-8B26-15688A832BDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A0235BA8-972D-4C1D-8B26-15688A832BDA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../../context/AuthContext";
 
 import DriverMapFooter from "./DriverMapFooter";
 import MapCanvas from "../../MapCanvas";
@@ -14,15 +15,17 @@ import { MapDeviceLocation } from "./data/gpsDataInfo";
 import { VehicleInfo } from "./data/vehicleInfoData";
 import { TripSummary } from "./data/tripInfoData";
 import { DriverInfo } from "./data/driverInfoData";
-import { driversApi, devicesApi, gpsApi, tripsApi, vehiclesApi } from "../../../utils/api.js";
+import { driversApi, devicesApi, etaApi, gpsApi, tripsApi, vehiclesApi } from "../../../utils/api.js";
+import { EtaPrediction } from "./data/tripInfoData";
 
 import "../../../components/MapView.css";
 
 export default function DriverMapView() {
   const ACTIVE_TRIP_REFRESH_MS = 5000;
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const USR_ID = "f45f1f3a-73ae-481c-8a65-5e359360d393";
-  const API_URL = `${gpsApi.lastLocationByUserId(USR_ID, API_BASE)}`;
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
+  const API_URL = `${gpsApi.lastLocationByUserId(userId, API_BASE)}`;
 
   const [deviceLocations, setDeviceLocations] = useState<MapDeviceLocation[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<MapDeviceLocation | null>(null);
@@ -35,6 +38,7 @@ export default function DriverMapView() {
   const [activeTripError, setActiveTripError] = useState<string | null>(null);
   const [isLoadingActiveTrip, setIsLoadingActiveTrip] = useState(false);
   const [shouldShowActiveTripRoute, setShouldShowActiveTripRoute] = useState(true);
+  const [eta, setEta] = useState<EtaPrediction | null>(null);
 
   const [deviceInformation, setDeviceInformation] = useState<DeviceInfo | null>(null);
   const [vehicleInformation, setVehicleInformation] = useState<VehicleInfo | null>(null);
@@ -254,6 +258,32 @@ export default function DriverMapView() {
       setIsLoadingActiveTrip(false);
     }
   };
+
+  const fetchEta = async (tripId: string) => {
+    if (!API_BASE) return;
+    try {
+      const res = await fetch(etaApi.byTrip(tripId, API_BASE), {
+        credentials: "include",
+      });
+      if (res.ok) {
+        setEta(await res.json());
+      } else {
+        setEta(null);
+      }
+    } catch {
+      setEta(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!activeTrip?.id) {
+      setEta(null);
+      return;
+    }
+    fetchEta(activeTrip.id);
+    const interval = setInterval(() => fetchEta(activeTrip.id), ACTIVE_TRIP_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [activeTrip?.id]);
 
   useEffect(() => {
     if (!selectedLocation?.vehicleId || !API_BASE) {
@@ -557,6 +587,8 @@ export default function DriverMapView() {
   };
 
   const currentSpeedKmh = selectedLocation?.speed ? Number(selectedLocation.speed) : 0;
+  const normalizedTripStatus = (activeTrip?.status ?? "").toLowerCase();
+  const isTripOngoing = normalizedTripStatus === "ongoing";
   const renderedDestinationPoints = visibleTripRoutes
     .filter((path) => path.length > 1)
     .map((path) => path[path.length - 1]);
@@ -600,6 +632,7 @@ export default function DriverMapView() {
         isLoadingActiveTrip={isLoadingActiveTrip}
         activeTrip={activeTrip}
         activeTripError={activeTripError}
+        eta={eta}
         isSubmittingDecision={isSubmittingDecision}
         decisionNotes={decisionNotes}
         onDecisionNotesChange={setDecisionNotes}
@@ -634,6 +667,8 @@ export default function DriverMapView() {
         activePanel={activePanel}
         hasSelection={selectedLocation !== null}
         currentSpeedKmh={currentSpeedKmh}
+        eta={eta}
+        isOngoing={isTripOngoing}
         onTogglePanel={(panel) => {
           if (selectedLocation && (panel === "vehicle" || panel === "trips")) {
             fetchActiveTrip(selectedLocation.vehicleId);

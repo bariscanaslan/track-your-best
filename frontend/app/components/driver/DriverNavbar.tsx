@@ -4,9 +4,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { FiMap } from "react-icons/fi";
-import { FaMapMarkedAlt, FaUserTie, FaCar } from "react-icons/fa";
+import { usePathname, useRouter } from "next/navigation";
+import { FiMap, FiLogOut } from "react-icons/fi";
+import { FaMapMarkedAlt } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 import "../../components/Navbar.css";
 
@@ -18,12 +19,12 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { href: "/driver", label: "Map", icon: FiMap },
-  { href: "/driver/trips", label: "Trips", icon: FaUserTie },
-  { href: "/driver/logs", label: "Logs", icon: FaCar },
 ];
 
 export default function DriverNavbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
   const mapStyleKey = "tyb.mapStyle";
   const resolveStoredStyle = (value: string | null) => {
     if (value === "satellite" || value === "light" || value === "colorful") {
@@ -114,6 +115,16 @@ export default function DriverNavbar() {
               <FaMapMarkedAlt size={16} />
             </button>
           )}
+
+          <button
+            type="button"
+            className="tyb-nav-button tyb-nav-button-logout"
+            onClick={async () => { await logout(); router.replace("/login"); }}
+            aria-label="Logout"
+          >
+            <span className="tyb-nav-icon"><FiLogOut size={18} /></span>
+            <span className="tyb-nav-label">Logout</span>
+          </button>
         </div>
       </div>
     </nav>

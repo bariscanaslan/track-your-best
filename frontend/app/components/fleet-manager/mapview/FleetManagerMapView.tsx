@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../../context/AuthContext";
 
 import FleetManagerMapFooter from "./FleetManagerMapFooter";
 
@@ -18,15 +19,17 @@ import { GpsRoutePoint, MapDeviceLocation } from "../mapview/data/gpsDataInfo";
 import { VehicleInfo } from "../mapview/data/vehicleInfoData";
 import { TripPlanPayload, TripSummary } from "../mapview/data/tripInfoData";
 import { DriverInfo } from "../mapview/data/driverInfoData";
-import { driversApi, devicesApi, geocodingApi, gpsApi, tripsApi, vehiclesApi } from "../../../utils/api.js";
+import { driversApi, devicesApi, etaApi, geocodingApi, gpsApi, tripsApi, vehiclesApi } from "../../../utils/api.js";
+import { EtaPrediction } from "./data/tripInfoData";
 
 import "../../../components/MapView.css";
 
 export default function FleetManagerMapView() {
   const ACTIVE_TRIP_REFRESH_MS = 5000;
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const ORG_ID = "0310ed50-86f2-468c-901d-6b3fcb113914";
-  const API_URL = `${gpsApi.lastLocationByDeviceId(API_BASE)}?organizationId=${ORG_ID}`;
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? "";
+  const API_URL = `${gpsApi.lastLocationByDeviceId(API_BASE)}?organizationId=${orgId}`;
 
   const [deviceLocations, setDeviceLocations] = useState<MapDeviceLocation[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<MapDeviceLocation | null>(null);
@@ -54,6 +57,7 @@ export default function FleetManagerMapView() {
   const [activeTripError, setActiveTripError] = useState<string | null>(null);
   const [isLoadingActiveTrip, setIsLoadingActiveTrip] = useState(false);
   const [shouldShowActiveTripRoute, setShouldShowActiveTripRoute] = useState(false);
+  const [eta, setEta] = useState<EtaPrediction | null>(null);
   const [pastTrips, setPastTrips] = useState<TripSummary[]>([]);
   const [pastTripsError, setPastTripsError] = useState<string | null>(null);
   const [isLoadingPastTrips, setIsLoadingPastTrips] = useState(false);
@@ -469,6 +473,32 @@ export default function FleetManagerMapView() {
     }
   };
 
+  const fetchEta = async (tripId: string) => {
+    if (!API_BASE) return;
+    try {
+      const res = await fetch(etaApi.byTrip(tripId, API_BASE), {
+        credentials: "include",
+      });
+      if (res.ok) {
+        setEta(await res.json());
+      } else {
+        setEta(null);
+      }
+    } catch {
+      setEta(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!activeTrip?.id) {
+      setEta(null);
+      return;
+    }
+    fetchEta(activeTrip.id);
+    const interval = setInterval(() => fetchEta(activeTrip.id), ACTIVE_TRIP_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [activeTrip?.id]);
+
   useEffect(() => {
     if (!selectedLocation?.vehicleId || !API_BASE) {
       return;
@@ -877,6 +907,7 @@ export default function FleetManagerMapView() {
         geocodeError={geocodeError}
         activeTrip={activeTrip}
         activeTripError={activeTripError}
+        eta={eta}
         onToggleRouteMode={() => setRouteMode((prev) => !prev)}
         onApproveRoute={handleApproveTrip}
         onShowActiveTripRoute={() => applyTripRouteToMap(activeTrip)}

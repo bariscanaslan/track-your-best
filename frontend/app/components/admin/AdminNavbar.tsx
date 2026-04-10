@@ -3,9 +3,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { FiCpu, FiHome, FiUsers, FiTruck, FiActivity } from "react-icons/fi";
+import { usePathname, useRouter } from "next/navigation";
+import { FiCpu, FiHome, FiUsers, FiTruck, FiActivity, FiLogOut } from "react-icons/fi";
 import { FaBuilding, FaCar, FaUserTie } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 import "../../components/Navbar.css";
 
@@ -29,6 +30,13 @@ const navItems: NavItem[] = [
 
 export default function AdminNavbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/login");
+  };
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -59,6 +67,15 @@ export default function AdminNavbar() {
               </Link>
             );
           })}
+          <button
+            type="button"
+            className="tyb-nav-button tyb-nav-button-logout"
+            onClick={handleLogout}
+            aria-label="Logout"
+          >
+            <span className="tyb-nav-icon"><FiLogOut size={18} /></span>
+            <span className="tyb-nav-label">Logout</span>
+          </button>
         </div>
       </div>
     </nav>

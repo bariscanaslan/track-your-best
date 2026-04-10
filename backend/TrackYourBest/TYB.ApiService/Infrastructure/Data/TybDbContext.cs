@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TYB.ApiService.Infrastructure.DTOs.Core;
 using TYB.ApiService.Infrastructure.DTOs.Spatial;
+using TYB.ApiService.Infrastructure.Entities.Analytics;
 using TYB.ApiService.Infrastructure.Entities.Core;
 using TYB.ApiService.Infrastructure.Entities.Spatial;
 
@@ -24,6 +25,8 @@ namespace TYB.ApiService.Infrastructure.Data
 		public DbSet<DriverInformationRow> DriverInformations => Set<DriverInformationRow>();
 		public DbSet<VehicleInformationRow> VehicleInformations => Set<VehicleInformationRow>();
 		public DbSet<Trip> Trips => Set<Trip>();
+		public DbSet<EtaPrediction> EtaPredictions => Set<EtaPrediction>();
+		public DbSet<Anomaly> Anomalies => Set<Anomaly>();
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -228,6 +231,44 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(v => v.Model).HasColumnName("model");
 				entity.Property(v => v.Year).HasColumnName("year");
 				entity.Property(v => v.Color).HasColumnName("color");
+			});
+
+			modelBuilder.Entity<EtaPrediction>(entity =>
+			{
+				entity.ToTable("eta_predictions", "tyb_analytics");
+				entity.HasKey(e => e.Id);
+				entity.Property(e => e.Id).HasColumnName("id");
+				entity.Property(e => e.TripId).HasColumnName("trip_id");
+				entity.Property(e => e.DeviceId).HasColumnName("device_id");
+				entity.Property(e => e.PredictionTime).HasColumnName("prediction_time");
+				entity.Property(e => e.PredictedArrivalTime).HasColumnName("predicted_arrival_time");
+				entity.Property(e => e.RemainingDistanceKm).HasColumnName("remaining_distance_km");
+				entity.Property(e => e.ConfidenceScore).HasColumnName("confidence_score");
+				entity.Property(e => e.TrafficFactor).HasColumnName("traffic_factor");
+				entity.Property(e => e.ModelVersion).HasColumnName("model_version");
+				entity.Property(e => e.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
+				entity.HasIndex(e => e.TripId);
+			});
+
+			modelBuilder.Entity<Anomaly>(entity =>
+			{
+				entity.ToTable("anomalies", "tyb_analytics");
+				entity.HasKey(a => a.Id);
+				entity.Property(a => a.Id).HasColumnName("id");
+				entity.Property(a => a.TripId).HasColumnName("trip_id");
+				entity.Property(a => a.DeviceId).HasColumnName("device_id");
+				entity.Property(a => a.AnomalyType).HasColumnName("anomaly_type");
+				entity.Property(a => a.Severity).HasColumnName("severity");
+				entity.Property(a => a.Description).HasColumnName("description");
+				entity.Property(a => a.ConfidenceScore).HasColumnName("confidence_score");
+				entity.Property(a => a.AlgorithmUsed).HasColumnName("algorithm_used");
+				entity.Property(a => a.DetectedAt).HasColumnName("detected_at");
+				entity.Property(a => a.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
+				entity.Property(a => a.Location)
+					.HasColumnName("location")
+					.HasColumnType("geometry(Point,4326)");
+				entity.HasIndex(a => a.DeviceId);
+				entity.HasIndex(a => a.TripId);
 			});
 
 			modelBuilder.Entity<Trip>(entity =>

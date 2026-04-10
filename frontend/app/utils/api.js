@@ -98,6 +98,21 @@ export const systemEventsApi = {
   list: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/system-events`,
 };
 
+export const etaApi = {
+  byTrip: (tripId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/eta/trip/${tripId}`,
+};
+
+export const anomaliesApi = {
+  list: (organizationId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/anomaly?organizationId=${encodeURIComponent(organizationId)}`,
+};
+
+export const authApi = {
+  login: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/auth/login`,
+  me: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/auth/me`,
+  logout: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/auth/logout`,
+};
+
 export const geocodingApi = {
   forward: (query, baseUrl = getApiBaseUrl()) =>
     `${baseUrl}/api/geocoding/forward?query=${encodeURIComponent(query)}`,
@@ -106,6 +121,9 @@ export const geocodingApi = {
 };
 
 export const api = {
+  auth: authApi,
+  eta: etaApi,
+  anomalies: anomaliesApi,
   devices: devicesApi,
   drivers: driversApi,
   gps: gpsApi,

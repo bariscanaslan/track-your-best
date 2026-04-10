@@ -2,7 +2,7 @@
 
 "use client";
 
-import { TripSummary } from "../data/tripInfoData";
+import { EtaPrediction, TripSummary } from "../data/tripInfoData";
 import {
   FaBan,
   FaCheck,
@@ -20,6 +20,7 @@ type TripsSidecardProps = {
   isLoadingActiveTrip: boolean;
   activeTrip: TripSummary | null;
   activeTripError: string | null;
+  eta: EtaPrediction | null;
   isSubmittingDecision: boolean;
   decisionNotes: string;
   onDecisionNotesChange: (value: string) => void;
@@ -39,6 +40,7 @@ export default function TripsSidecard({
   isLoadingActiveTrip,
   activeTrip,
   activeTripError,
+  eta,
   isSubmittingDecision,
   decisionNotes,
   onDecisionNotesChange,
@@ -72,38 +74,27 @@ export default function TripsSidecard({
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const formatDuration = (seconds?: number | null) => {
-    if (seconds === null || seconds === undefined) return "-";
-    const totalMinutes = Math.round(seconds / 60);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-  };
-
-  const formatDistance = (km?: number | null) => {
-    if (km === null || km === undefined) return "-";
-    return `${km.toFixed(2)} km`;
-  };
-
-  const getPlannedEnd = () => {
-    if (activeTrip?.plannedEndTime) {
-      return new Date(activeTrip.plannedEndTime).toLocaleString();
-    }
-    if (activeTrip?.durationSeconds && activeTrip?.startTime) {
-      const startMs = new Date(activeTrip.startTime).getTime();
-      return new Date(startMs + activeTrip.durationSeconds * 1000).toLocaleString();
-    }
-    return "-";
-  };
+  const formatHHmm = (date: Date) =>
+    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   const normalizedStatus = (activeTrip?.status ?? "").toLowerCase();
   const isAwaitingDriverDecision =
     normalizedStatus === "driverapprove" || normalizedStatus === "driver_approve";
   const isOngoing = normalizedStatus === "ongoing";
   const isPaused = normalizedStatus === "paused";
+
+  const getPlannedEnd = () => {
+    if (isOngoing && eta) {
+      if (eta.predictedArrivalTime) return formatHHmm(new Date(eta.predictedArrivalTime));
+      if (eta.etaMinutes != null) return formatHHmm(new Date(Date.now() + eta.etaMinutes * 60_000));
+    }
+    if (activeTrip?.plannedEndTime) return formatHHmm(new Date(activeTrip.plannedEndTime));
+    if (activeTrip?.durationSeconds && activeTrip?.startTime) {
+      const startMs = new Date(activeTrip.startTime).getTime();
+      return formatHHmm(new Date(startMs + activeTrip.durationSeconds * 1000));
+    }
+    return "-";
+  };
 
   return (
     <aside className={`map-sidecard ${isOpen ? "is-open" : ""}`} onClick={(e) => e.stopPropagation()}>
@@ -157,22 +148,57 @@ export default function TripsSidecard({
                   <span className="map-sidecard-value">{activeTrip.status ?? "Unknown"}</span>
                 </div>
                 <div className="map-sidecard-stat">
-                  <span className="map-sidecard-label">Duration</span>
-                  <span className="map-sidecard-value">{formatDuration(activeTrip.durationSeconds)}</span>
-                </div>
-                <div className="map-sidecard-stat">
-                  <span className="map-sidecard-label">Distance</span>
-                  <span className="map-sidecard-value">{formatDistance(activeTrip.totalDistanceKm)}</span>
-                </div>
-                <div className="map-sidecard-stat">
-                  <span className="map-sidecard-label">Planned End</span>
-                  <span className="map-sidecard-value">{getPlannedEnd()}</span>
-                </div>
-                <div className="map-sidecard-stat">
                   <span className="map-sidecard-label">Pause Count</span>
                   <span className="map-sidecard-value">{activeTrip.pauseCount ?? 0}</span>
                 </div>
               </div>
+              {eta && (
+                <div className="map-sidecard-eta">
+                  <div className="map-sidecard-eta-title">ETA Prediction</div>
+                  <div className="map-sidecard-stats">
+                    {eta.predictedArrivalTime && (
+                      <div className="map-sidecard-stat">
+                        <span className="map-sidecard-label">Arrival</span>
+                        <span className="map-sidecard-value">
+                          {new Date(eta.predictedArrivalTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                    )}
+                    {eta.etaMinutes != null && (
+                      <>
+                        <div className="map-sidecard-stat">
+                          <span className="map-sidecard-label">ETA</span>
+                          <span className="map-sidecard-value">{Math.round(eta.etaMinutes)} min</span>
+                          <span className="map-sidecard-eta-updated">
+                            Updated {formatHHmm(new Date(eta.predictionTime))}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {eta.remainingDistanceKm != null && (
+                      <div className="map-sidecard-stat">
+                        <span className="map-sidecard-label">Remaining</span>
+                        <span className="map-sidecard-value">{eta.remainingDistanceKm.toFixed(1)} km</span>
+                      </div>
+                    )}
+                    { /*
+                      {eta.confidenceScore != null && (
+                        <div className="map-sidecard-stat">
+                          <span className="map-sidecard-label">Confidence</span>
+                          <span className="map-sidecard-value">{Math.round(eta.confidenceScore)}%</span>
+                        </div>
+                      )}
+                      */
+                    }
+                    {eta.isRushHour != null && (
+                      <div className="map-sidecard-stat">
+                        <span className="map-sidecard-label">Traffic</span>
+                        <span className="map-sidecard-value">{eta.isRushHour ? "Rush Hour" : "Normal"}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="map-sidecard-actions">
                 <button className="map-footer-action is-primary" onClick={onShowActiveTripRoute}>
                   <FaRoute size={12} />

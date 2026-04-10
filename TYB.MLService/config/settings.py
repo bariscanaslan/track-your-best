@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =============================================
 DATABASE_URL = os.getenv(
     'DATABASE_URL',
-    'postgresql://postgres:password@localhost:5432/tyb_production'
+    'postgresql://postgres:Tyb.1905@localhost:5432/trackyourbest_local'
 )
 
 # =============================================
@@ -46,7 +46,7 @@ SCHEDULER_CONFIG = {
 JOB_INTERVALS = {
     'anomaly_detection': 120,      # Her 2 dakika
     'driver_scoring': 300,         # Her 5 dakika
-    'eta_prediction': 180,         # Her 3 dakika ← ETA EKLENDİ!
+    'eta_prediction': 20,         # Her 3 dakika ← ETA EKLENDİ!
 }
 
 # =============================================

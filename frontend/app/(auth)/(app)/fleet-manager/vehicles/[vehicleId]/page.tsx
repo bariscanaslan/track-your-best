@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { devicesApi, vehiclesApi } from "../../../../../utils/api";
+import { useAuth } from "../../../../../context/AuthContext";
 import "../../fleet-manager.css";
 
 type VehicleDetail = {
@@ -33,8 +34,6 @@ type VehicleListItem = {
   id: string;
   deviceId?: string | null;
 };
-
-const ORG_ID = "0310ed50-86f2-468c-901d-6b3fcb113914";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "";
@@ -67,6 +66,8 @@ export default function FleetManagerVehicleEditPage() {
   const params = useParams();
   const vehicleId = String(params?.vehicleId ?? "");
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? "";
 
   const [vehicle, setVehicle] = useState<VehicleDetail | null>(null);
   const [devices, setDevices] = useState<DeviceOption[]>([]);
@@ -105,7 +106,7 @@ export default function FleetManagerVehicleEditPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(vehiclesApi.getById(vehicleId, ORG_ID, apiBase), {
+      const res = await fetch(vehiclesApi.getById(vehicleId, orgId, apiBase), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -139,7 +140,7 @@ export default function FleetManagerVehicleEditPage() {
 
   const fetchDevices = async () => {
     try {
-      const res = await fetch(devicesApi.list(ORG_ID, apiBase, true), {
+      const res = await fetch(devicesApi.list(orgId, apiBase, true), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -159,7 +160,7 @@ export default function FleetManagerVehicleEditPage() {
 
   const fetchBusyDevices = async () => {
     try {
-      const res = await fetch(vehiclesApi.list(ORG_ID, apiBase), {
+      const res = await fetch(vehiclesApi.list(orgId, apiBase), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -218,7 +219,7 @@ export default function FleetManagerVehicleEditPage() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          organizationId: ORG_ID,
+          organizationId: orgId,
           deviceId: vehicleForm.deviceId.trim() || null,
           confirmDeviceReassignment: isDeviceChanged,
           vehicleName: vehicleForm.vehicleName.trim(),

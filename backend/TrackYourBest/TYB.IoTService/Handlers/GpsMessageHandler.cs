@@ -112,11 +112,24 @@ namespace TYB.IoTService.Handlers
 				SRID = 4326
 			};
 
+			// Resolve ongoing trip for the vehicle assigned to this device.
+			var ongoingTripId = await _dbContext.Vehicles
+				.AsNoTracking()
+				.Where(v => v.DeviceId == device.Id)
+				.Join(
+					_dbContext.Trips.AsNoTracking().Where(t => t.Status == "ongoing"),
+					v => v.Id,
+					t => t.VehicleId,
+					(v, t) => t.Id
+				)
+				.FirstOrDefaultAsync();
+
 			var gpsData = new GpsData
 			{
 				Id = Guid.NewGuid(),
 				OrganizationId = device.OrganizationId,
 				DeviceId = device.Id,
+				TripId = ongoingTripId == Guid.Empty ? null : ongoingTripId,
 				Latitude = message.Latitude,
 				Longitude = message.Longitude,
 				Location = location,

@@ -4,10 +4,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
-import { FiMap, FiCpu} from "react-icons/fi";
+import { FiMap, FiCpu, FiLogOut, FiAlertTriangle } from "react-icons/fi";
 import { FaMapMarkedAlt, FaCar, FaUserTie } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 import "../../components/Navbar.css";
 
@@ -24,11 +25,14 @@ const navItemsByRole: Record<string, NavItem[]> = {
     { href: "/fleet-manager/devices", label: "Devices", icon: FiCpu },
     { href: "/fleet-manager/vehicles", label: "Vehicles", icon: FaCar },
     { href: "/fleet-manager/drivers", label: "Drivers", icon: FaUserTie },
+    { href: "/fleet-manager/anomalies", label: "Anomalies", icon: FiAlertTriangle },
   ],
 };
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
   const [mapStyle, setMapStyle] = useState<"satellite" | "light" | "colorful">("colorful");
   const mapStyleKey = "tyb.mapStyle";
 
@@ -133,7 +137,15 @@ export default function Navbar() {
             </button>
           )}
 
-          {/* Logout button disabled while auth is off. */}
+          <button
+            type="button"
+            className="tyb-nav-button tyb-nav-button-logout"
+            onClick={async () => { await logout(); router.replace("/login"); }}
+            aria-label="Logout"
+          >
+            <span className="tyb-nav-icon"><FiLogOut size={18} /></span>
+            <span className="tyb-nav-label">Logout</span>
+          </button>
         </div>
       </div>
     </nav>

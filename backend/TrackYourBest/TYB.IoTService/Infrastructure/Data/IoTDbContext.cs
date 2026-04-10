@@ -11,8 +11,10 @@ namespace TYB.IoTService.Infrastructure.Data
 		}
 
 		public DbSet<Device> Devices => Set<Device>();
+		public DbSet<Vehicle> Vehicles => Set<Vehicle>();
 		public DbSet<GpsData> GpsData => Set<GpsData>();
 		public DbSet<GpsRaw> GpsRaw => Set<GpsRaw>();
+		public DbSet<Trip> Trips => Set<Trip>();
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -33,6 +35,23 @@ namespace TYB.IoTService.Infrastructure.Data
 				entity.HasIndex(d => d.DeviceIdentifier);
 			});
 
+			modelBuilder.Entity<Vehicle>(entity =>
+			{
+				entity.ToTable("vehicles", "tyb_core");
+				entity.HasKey(v => v.Id);
+				entity.Property(v => v.Id).HasColumnName("id");
+				entity.Property(v => v.DeviceId).HasColumnName("device_id");
+			});
+
+			modelBuilder.Entity<Trip>(entity =>
+			{
+				entity.ToTable("trips", "tyb_spatial");
+				entity.HasKey(t => t.Id);
+				entity.Property(t => t.Id).HasColumnName("id");
+				entity.Property(t => t.VehicleId).HasColumnName("vehicle_id");
+				entity.Property(t => t.Status).HasColumnName("status");
+			});
+
 			modelBuilder.Entity<GpsData>(entity =>
 			{
 				entity.ToTable("gps_data", "tyb_spatial");
@@ -40,6 +59,7 @@ namespace TYB.IoTService.Infrastructure.Data
 				entity.Property(g => g.Id).HasColumnName("id");
 				entity.Property(g => g.OrganizationId).HasColumnName("organization_id");
 				entity.Property(g => g.DeviceId).HasColumnName("device_id");
+				entity.Property(g => g.TripId).HasColumnName("trip_id");
 				entity.Property(g => g.Latitude).HasColumnName("latitude");
 				entity.Property(g => g.Longitude).HasColumnName("longitude");
 				entity.Property(g => g.Location)

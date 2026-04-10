@@ -297,6 +297,13 @@ export default function MapCanvas({
     selectedVehicleId && selectedAnimatedPoint?.vehicleId === selectedVehicleId
       ? selectedAnimatedPoint.point
       : selectedFallbackPoint;
+  const initialBoundsPoints: Array<[number, number]> = [
+    ...deviceLocations.map(
+      (location): [number, number] => [location.latitude, location.longitude]
+    ),
+    ...(filteredStartPoint ? [filteredStartPoint] : []),
+    ...(filteredEndPoint ? [filteredEndPoint] : []),
+  ];
 
   return (
     <MapContainer
@@ -313,13 +320,7 @@ export default function MapCanvas({
         onMapClick={onMapClick}
         onMapBackgroundClick={onMapBackgroundClick}
       />
-      <MapInitialBounds
-        points={[
-          ...deviceLocations.map((location) => [location.latitude, location.longitude]),
-          ...(filteredStartPoint ? [filteredStartPoint] : []),
-          ...(filteredEndPoint ? [filteredEndPoint] : []),
-        ]}
-      />
+      <MapInitialBounds points={initialBoundsPoints} />
       <MapFocusFollower focusPoint={focusPoint} focusZoom={focusZoom} />
       {shouldFollowSelected && (
         <SelectedVehicleFollower

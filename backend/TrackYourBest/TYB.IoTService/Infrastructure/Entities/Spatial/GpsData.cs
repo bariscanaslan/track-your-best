@@ -7,6 +7,7 @@ namespace TYB.IoTService.Infrastructure.Entities.Spatial
 		public Guid Id { get; set; }
 		public Guid OrganizationId { get; set; }
 		public Guid DeviceId { get; set; }
+		public Guid? TripId { get; set; }
 		public double Latitude { get; set; }
 		public double Longitude { get; set; }
 		public Point? Location { get; set; }
