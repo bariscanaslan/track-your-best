@@ -27,8 +27,9 @@ namespace TYB.ApiService.Infrastructure.Data
 		public DbSet<Trip> Trips => Set<Trip>();
 		public DbSet<EtaPrediction> EtaPredictions => Set<EtaPrediction>();
 		public DbSet<Anomaly> Anomalies => Set<Anomaly>();
+        public DbSet<DriverScore> DriverScores => Set<DriverScore>();
 
-		protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			modelBuilder.HasPostgresEnum<TripStatus>("trip_status");
 			modelBuilder.HasPostgresEnum<UserRole>("user_role");
@@ -271,7 +272,38 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.HasIndex(a => a.TripId);
 			});
 
-			modelBuilder.Entity<Trip>(entity =>
+            modelBuilder.Entity<DriverScore>(entity =>
+            {
+                entity.ToTable("driver_scores", "tyb_analytics");
+                entity.HasKey(d => d.Id);
+
+                entity.Property(d => d.Id).HasColumnName("id");
+                entity.Property(d => d.DriverId).HasColumnName("driver_id");
+                entity.Property(d => d.TripId).HasColumnName("trip_id");
+                entity.Property(d => d.AnalysisDate).HasColumnName("analysis_date");
+                entity.Property(d => d.PeriodType).HasColumnName("period_type");
+                entity.Property(d => d.OverallScore).HasColumnName("overall_score");
+                entity.Property(d => d.SpeedScore).HasColumnName("speed_score");
+                entity.Property(d => d.AccelerationScore).HasColumnName("acceleration_score");
+                entity.Property(d => d.BrakingScore).HasColumnName("braking_score");
+                entity.Property(d => d.CorneringScore).HasColumnName("cornering_score");
+                entity.Property(d => d.IdleTimeScore).HasColumnName("idle_time_score");
+                entity.Property(d => d.TotalTrips).HasColumnName("total_trips");
+                entity.Property(d => d.TotalDistanceKm).HasColumnName("total_distance_km");
+                entity.Property(d => d.TotalDurationSeconds).HasColumnName("total_duration_seconds");
+                entity.Property(d => d.SpeedingEvents).HasColumnName("speeding_events");
+                entity.Property(d => d.HarshAccelerationEvents).HasColumnName("harsh_acceleration_events");
+                entity.Property(d => d.HarshBrakingEvents).HasColumnName("harsh_braking_events");
+                entity.Property(d => d.FuelEfficiencyScore).HasColumnName("fuel_efficiency_score");
+                entity.Property(d => d.EstimatedFuelConsumption).HasColumnName("estimated_fuel_consumption");
+                entity.Property(d => d.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
+                entity.Property(d => d.CalculatedAt).HasColumnName("calculated_at");
+
+                entity.HasIndex(d => d.DriverId);
+                entity.HasIndex(d => d.TripId);
+            });
+
+            modelBuilder.Entity<Trip>(entity =>
 			{
 				entity.ToTable("trips", "tyb_spatial");
 				entity.HasKey(t => t.Id);

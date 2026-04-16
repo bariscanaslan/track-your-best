@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =============================================
 DATABASE_URL = os.getenv(
     'DATABASE_URL',
-    'postgresql://postgres:Tyb.1905@localhost:5432/trackyourbest_local'
+    'postgresql://postgres:Tyb.1905@localhost:5433/trackyourbest_local'
 )
 
 # =============================================
