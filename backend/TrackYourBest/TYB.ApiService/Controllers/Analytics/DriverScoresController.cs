@@ -18,7 +18,10 @@ namespace TYB.ApiService.Controllers.Analytics
 
         /// <summary>
         /// Returns average driver grading scores for the given organization.
+<<<<<<< HEAD
         /// Only formula-based v6 scores are included.
+=======
+>>>>>>> 7194decf14bc13fdc7e9bb2d82d51a0d6462cfc0
         /// </summary>
         [HttpGet("summary")]
         public async Task<IActionResult> GetDriverScoreSummary(
@@ -33,11 +36,15 @@ namespace TYB.ApiService.Controllers.Analytics
                     d => d.Id,
                     (ds, d) => new { Score = ds, Driver = d }
                 )
+<<<<<<< HEAD
                 .Where(x =>
                     x.Driver.OrganizationId == organizationId &&
                     x.Score.Metadata != null &&
                     x.Score.Metadata.Contains("v6_formula_only")
                 )
+=======
+                .Where(x => x.Driver.OrganizationId == organizationId)
+>>>>>>> 7194decf14bc13fdc7e9bb2d82d51a0d6462cfc0
                 .GroupBy(x => x.Driver.Id)
                 .Select(g => new
                 {
