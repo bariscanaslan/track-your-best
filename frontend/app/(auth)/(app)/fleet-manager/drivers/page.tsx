@@ -25,6 +25,16 @@ type DriverRow = {
   avatarUrl?: string | null;
   userCreatedAt?: string | null;
   lastLogin?: string | null;
+
+  averageOverallScore?: number | null;
+  tripCount?: number | null;
+};
+
+type DriverScoreSummary = {
+  driverId: string;
+  averageOverallScore: number;
+  tripCount: number;
+  lastCalculatedAt?: string | null;
 };
 
 const formatDate = (value?: string | null) => {
@@ -46,6 +56,18 @@ const formatDateTime = (value?: string | null) => {
   return `${hours}:${minutes} - ${formatDate(value)}`;
 };
 
+const formatGrade = (value?: number | null) => {
+  if (value == null || Number.isNaN(value)) return "No grade";
+  return `${value.toFixed(1)} / 100`;
+};
+
+const getGradeClassName = (value?: number | null) => {
+  if (value == null || Number.isNaN(value)) return "fm-grade is-empty";
+  if (value >= 80) return "fm-grade is-good";
+  if (value >= 60) return "fm-grade is-medium";
+  return "fm-grade is-bad";
+};
+
 export default function FleetManagerDriversPage() {
   const [rows, setRows] = useState<DriverRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,19 +84,52 @@ export default function FleetManagerDriversPage() {
   const orgId = user?.organizationId ?? "";
 
   const fetchDrivers = async () => {
+    if (!orgId) return;
+
     setIsLoading(true);
     setError(null);
+
     try {
-      const res = await fetch(driversApi.list(orgId, apiBase), {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      if (!res.ok) {
+      const [driversRes, scoresRes] = await Promise.all([
+        fetch(driversApi.list(orgId, apiBase), {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }),
+        fetch(`${apiBase}/api/DriverScores/summary?organizationId=${orgId}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }),
+      ]);
+
+      if (!driversRes.ok) {
         throw new Error("Failed to load drivers.");
       }
-      const data = (await res.json()) as DriverRow[];
-      setRows(Array.isArray(data) ? data : []);
+
+      const driversData = (await driversRes.json()) as DriverRow[];
+      const scoresData = scoresRes.ok
+        ? ((await scoresRes.json()) as DriverScoreSummary[])
+        : [];
+
+      console.log("driversData", driversData);
+      console.log("scoresData", scoresData);
+      
+      const scoreMap = new Map(
+        (Array.isArray(scoresData) ? scoresData : []).map((item) => [item.driverId, item])
+      );
+
+      const mergedRows = (Array.isArray(driversData) ? driversData : []).map((driver) => {
+        const summary = scoreMap.get(driver.id);
+
+        return {
+          ...driver,
+          averageOverallScore: summary?.averageOverallScore ?? null,
+          tripCount: summary?.tripCount ?? 0,
+        };
+      });
+
+      setRows(mergedRows);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load drivers.";
       setError(message);
@@ -86,7 +141,7 @@ export default function FleetManagerDriversPage() {
 
   useEffect(() => {
     fetchDrivers();
-  }, []);
+  }, [orgId]);
 
   const filteredRows = useMemo(() => {
     const sorted = [...rows].sort((a, b) => {
@@ -118,6 +173,7 @@ export default function FleetManagerDriversPage() {
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
+
       return haystack.includes(q);
     });
   }, [rows, appliedQuery, appliedField]);
@@ -216,27 +272,38 @@ export default function FleetManagerDriversPage() {
                 <div>
                   <div className="fm-list-title-row">
                     <div className="fm-list-title">{driver.fullName || driver.licenseNumber || "-"}</div>
+
+                    <span className={getGradeClassName(driver.averageOverallScore)}>
+                      {formatGrade(driver.averageOverallScore)}
+                    </span>
+
                     <span className={`fm-status ${driver.isActive ? "" : "is-inactive"}`}>
                       {driver.isActive ? "active" : "inactive"}
                     </span>
+
                     {driver.licenseType && <span className="fm-list-pill">{driver.licenseType}</span>}
                   </div>
-                  <div className="fm-list-sub">User ID: {driver.userId ?? "-"}</div>
+
+                  <div className="fm-list-sub">
+                    User ID: {driver.userId ?? "-"}
+                    {driver.tripCount != null ? ` • Trips graded: ${driver.tripCount}` : ""}
+                  </div>
                 </div>
               </div>
+
               <div className="fm-list-actions">
                 <a className="fm-link" href={`/fleet-manager/drivers/${driver.id}`}>
                   Edit
                 </a>
-              <button
-                className="fm-link fm-link-danger"
-                onClick={() => {
-                  const ok = window.confirm("Delete this driver? This cannot be undone.");
-                  if (ok) handleDelete(driver.id);
-                }}
-              >
-                Delete
-              </button>
+                <button
+                  className="fm-link fm-link-danger"
+                  onClick={() => {
+                    const ok = window.confirm("Delete this driver? This cannot be undone.");
+                    if (ok) handleDelete(driver.id);
+                  }}
+                >
+                  Delete
+                </button>
               </div>
             </div>
 
@@ -316,7 +383,6 @@ export default function FleetManagerDriversPage() {
 
       {isLoading && <div className="fm-note">Loading drivers...</div>}
       {error && <div className="fm-note">{error}</div>}
-
     </div>
   );
 }

@@ -750,3 +750,34 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.fm-grade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.fm-grade.is-good {
+  background: #e8f7ee;
+  color: #15803d;
+}
+
+.fm-grade.is-medium {
+  background: #fff7e6;
+  color: #b45309;
+}
+
+.fm-grade.is-bad {
+  background: #fdecec;
+  color: #b91c1c;
+}
+
+.fm-grade.is-empty {
+  background: #eef2f7;
+  color: #64748b;
+}
