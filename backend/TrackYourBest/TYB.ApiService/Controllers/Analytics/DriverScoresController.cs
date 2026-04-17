@@ -10,63 +10,89 @@ namespace TYB.ApiService.Controllers.Analytics
     public class DriverScoresController : ControllerBase
     {
         private readonly TybDbContext _dbContext;
+        private readonly ILogger<DriverScoresController> _logger;
 
-        public DriverScoresController(TybDbContext dbContext)
+        public DriverScoresController(
+            TybDbContext dbContext,
+            ILogger<DriverScoresController> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
 
         /// <summary>
         /// Returns average driver grading scores for the given organization.
-<<<<<<< HEAD
         /// Only formula-based v6 scores are included.
-=======
->>>>>>> 7194decf14bc13fdc7e9bb2d82d51a0d6462cfc0
         /// </summary>
         [HttpGet("summary")]
         public async Task<IActionResult> GetDriverScoreSummary(
             [FromQuery] Guid organizationId,
             CancellationToken ct)
         {
-            var rawScores = await _dbContext.DriverScores
-                .AsNoTracking()
-                .Join(
-                    _dbContext.Drivers.AsNoTracking(),
-                    ds => ds.DriverId,
-                    d => d.Id,
-                    (ds, d) => new { Score = ds, Driver = d }
-                )
-<<<<<<< HEAD
-                .Where(x =>
-                    x.Driver.OrganizationId == organizationId &&
-                    x.Score.Metadata != null &&
-                    x.Score.Metadata.Contains("v6_formula_only")
-                )
-=======
-                .Where(x => x.Driver.OrganizationId == organizationId)
->>>>>>> 7194decf14bc13fdc7e9bb2d82d51a0d6462cfc0
-                .GroupBy(x => x.Driver.Id)
-                .Select(g => new
-                {
-                    DriverId = g.Key,
-                    AverageOverallScore = g.Average(x => x.Score.OverallScore),
-                    TripCount = g.Count(),
-                    LastCalculatedAt = g.Max(x => x.Score.CalculatedAt)
-                })
-                .ToListAsync(ct);
+            try
+            {
+                _logger.LogInformation("Driver score summary requested for organizationId: {OrganizationId}", organizationId);
 
-            var scores = rawScores
-                .Select(x => new DriverGradeSummaryDto
-                {
-                    DriverId = x.DriverId,
-                    AverageOverallScore = Math.Round(x.AverageOverallScore, 2),
-                    TripCount = x.TripCount,
-                    LastCalculatedAt = x.LastCalculatedAt
-                })
-                .OrderByDescending(x => x.AverageOverallScore)
-                .ToList();
+                // 1) Önce DB'den organization'a ait score kayıtlarını çek
+                // Metadata filter'ını SQL tarafında değil memory tarafında yapıyoruz
+                var rawRows = await _dbContext.DriverScores
+                    .AsNoTracking()
+                    .Join(
+                        _dbContext.Drivers.AsNoTracking(),
+                        ds => ds.DriverId,
+                        d => d.Id,
+                        (ds, d) => new { Score = ds, Driver = d }
+                    )
+                    .Where(x => x.Driver.OrganizationId == organizationId)
+                    .Select(x => new
+                    {
+                        DriverId = x.Driver.Id,
+                        OverallScore = x.Score.OverallScore,
+                        CalculatedAt = x.Score.CalculatedAt,
+                        Metadata = x.Score.Metadata
+                    })
+                    .ToListAsync(ct);
 
-            return Ok(scores);
+                _logger.LogInformation("Raw driver score rows fetched: {Count}", rawRows.Count);
+
+                // 2) Formula-only v6 kayıtlarını memory tarafında filtrele
+                var filteredRows = rawRows
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(x.Metadata) &&
+                        x.Metadata.Contains("v6_formula_only", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                _logger.LogInformation("Filtered v6_formula_only rows: {Count}", filteredRows.Count);
+
+                // 3) Driver bazında aggregate et
+                var scores = filteredRows
+                    .GroupBy(x => x.DriverId)
+                    .Select(g => new DriverGradeSummaryDto
+                    {
+                        DriverId = g.Key,
+                        AverageOverallScore = Math.Round(g.Average(x => x.OverallScore), 2),
+                        TripCount = g.Count(),
+                        LastCalculatedAt = g.Max(x => x.CalculatedAt)
+                    })
+                    .OrderByDescending(x => x.AverageOverallScore)
+                    .ToList();
+
+                _logger.LogInformation("Driver summary result count: {Count}", scores.Count);
+
+                return Ok(scores);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Error while fetching driver score summary for organizationId: {OrganizationId}",
+                    organizationId);
+
+                return StatusCode(500, new
+                {
+                    message = "Driver score summary alınırken hata oluştu.",
+                    detail = ex.Message
+                });
+            }
         }
     }
 }
