@@ -70,7 +70,9 @@ namespace TYB.IoTService.Handlers
 
 			var device = await _dbContext.Devices
 				.AsNoTracking()
-				.FirstOrDefaultAsync(d => d.DeviceIdentifier == deviceId);
+				.Where(d => d.DeviceIdentifier == deviceId && d.IsActive)
+				.OrderByDescending(d => d.UpdatedAt)
+				.FirstOrDefaultAsync();
 
 			if (device == null)
 			{

@@ -14,6 +14,7 @@ type MapSidecardProps = {
   deviceInformation: DeviceInfo | null;
   vehicleInformation: VehicleInfo | null;
   driverInformation: DriverInfo | null;
+  driverScore: number | null;
   informationError: string | null;
   isLoadingInformation: boolean;
   driverError: string | null;
@@ -22,12 +23,20 @@ type MapSidecardProps = {
   onClose: () => void;
 };
 
+function scoreClass(score: number | null): string {
+  if (score == null) return "map-sidecard-score is-empty";
+  if (score >= 80) return "map-sidecard-score is-good";
+  if (score >= 60) return "map-sidecard-score is-medium";
+  return "map-sidecard-score is-bad";
+}
+
 export default function MapSidecard({
   selectedLocation,
   error,
   deviceInformation,
   vehicleInformation,
   driverInformation,
+  driverScore,
   informationError,
   isLoadingInformation,
   driverError,
@@ -88,6 +97,12 @@ export default function MapSidecard({
             <div className="map-sidecard-row">
               <span className="map-sidecard-label">Phone</span>
               <span className="map-sidecard-value">{driverInformation?.phone ?? "-"}</span>
+            </div>
+            <div className="map-sidecard-row">
+              <span className="map-sidecard-label">Avg. Score</span>
+              <span className={scoreClass(driverScore)}>
+                {driverScore != null ? `${driverScore.toFixed(1)} / 100` : "No data"}
+              </span>
             </div>
             <div className="map-sidecard-row">
               <span className="map-sidecard-label">Image</span>

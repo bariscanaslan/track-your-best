@@ -84,10 +84,16 @@ namespace TYB.ApiService.Application.Services
 			var plannedEndTime = request.PlannedEndTime
 				?? DateTime.UtcNow.AddSeconds(route.DurationSeconds);
 
+			var assignedDriver = await _dbContext.Drivers
+				.AsNoTracking()
+				.FirstOrDefaultAsync(d => d.VehicleId == request.VehicleId && d.IsActive == true, cancellationToken);
+
+			var driverId = assignedDriver?.Id ?? request.DriverId;
+
 			var trip = new Trip
 			{
 				VehicleId = request.VehicleId,
-				DriverId = request.DriverId,
+				DriverId = driverId,
 				TripName = request.TripName,
 				Status = TripStatus.DriverApprove,
 				StartLocation = _geometryFactory.CreatePoint(new Coordinate(request.StartLng, request.StartLat)),
@@ -101,6 +107,7 @@ namespace TYB.ApiService.Application.Services
 				RouteGeometry = BuildLineString(route.Coordinates),
                 Notes = request.Notes,
                 PauseCount = 0,
+				AnomalyChecked = false,
 				CreatedAt = DateTime.UtcNow,
 				UpdatedAt = DateTime.UtcNow
 			};

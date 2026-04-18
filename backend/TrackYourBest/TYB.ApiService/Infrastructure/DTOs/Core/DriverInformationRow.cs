@@ -2,6 +2,7 @@ namespace TYB.ApiService.Infrastructure.DTOs.Core
 {
 	public class DriverInformationRow
 	{
+		public Guid? DriverId { get; set; }
 		public Guid? OrganizationId { get; set; }
 		public Guid? UserId { get; set; }
 		public Guid? VehicleId { get; set; }

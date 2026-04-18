@@ -203,6 +203,12 @@ export default function FleetManagerDriversPage() {
     }
   };
 
+  const fleetAvg = useMemo(() => {
+    const scored = rows.filter((r) => r.averageOverallScore != null);
+    if (scored.length === 0) return null;
+    return scored.reduce((sum, r) => sum + r.averageOverallScore!, 0) / scored.length;
+  }, [rows]);
+
   return (
     <div className="fm-page">
       <div className="fm-header">
@@ -259,6 +265,16 @@ export default function FleetManagerDriversPage() {
         </div>
       </div>
 
+      {fleetAvg != null && (
+        <div className="fm-driver-fleet-summary">
+          <span className="fm-driver-fleet-summary-label">Fleet average score</span>
+          <span className={getGradeClassName(fleetAvg)}>{fleetAvg.toFixed(1)} / 100</span>
+          <span className="fm-driver-fleet-summary-sub">
+            based on {rows.filter((r) => r.averageOverallScore != null).length} of {rows.length} drivers
+          </span>
+        </div>
+      )}
+
       <div className="fm-list">
         {pagedRows.map((driver) => (
           <div key={driver.id} className="fm-list-row">
@@ -273,10 +289,6 @@ export default function FleetManagerDriversPage() {
                   <div className="fm-list-title-row">
                     <div className="fm-list-title">{driver.fullName || driver.licenseNumber || "-"}</div>
 
-                    <span className={getGradeClassName(driver.averageOverallScore)}>
-                      {formatGrade(driver.averageOverallScore)}
-                    </span>
-
                     <span className={`fm-status ${driver.isActive ? "" : "is-inactive"}`}>
                       {driver.isActive ? "active" : "inactive"}
                     </span>
@@ -285,8 +297,7 @@ export default function FleetManagerDriversPage() {
                   </div>
 
                   <div className="fm-list-sub">
-                    User ID: {driver.userId ?? "-"}
-                    {driver.tripCount != null ? ` • Trips graded: ${driver.tripCount}` : ""}
+                    {driver.email || driver.userId || "-"}
                   </div>
                 </div>
               </div>
@@ -308,6 +319,19 @@ export default function FleetManagerDriversPage() {
             </div>
 
             <div className="fm-list-details">
+              <div className="fm-list-card">
+                <div className="fm-list-card-title">Avg. Score</div>
+                <div className="fm-list-card-value">
+                  <span className={getGradeClassName(driver.averageOverallScore)}>
+                    {formatGrade(driver.averageOverallScore)}
+                  </span>
+                </div>
+                <div className="fm-list-card-sub">
+                  {driver.tripCount != null && driver.tripCount > 0
+                    ? `${driver.tripCount} graded trip${driver.tripCount !== 1 ? "s" : ""}`
+                    : "No trips graded yet"}
+                </div>
+              </div>
               <div className="fm-list-card">
                 <div className="fm-list-card-title">Vehicle</div>
                 <div className="fm-list-card-value">{driver.vehicleName || "-"}</div>

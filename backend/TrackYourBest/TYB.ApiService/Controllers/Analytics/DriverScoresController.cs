@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TYB.ApiService.Infrastructure.Data;
 using TYB.ApiService.Infrastructure.DTOs.Analytics;
@@ -21,8 +21,43 @@ namespace TYB.ApiService.Controllers.Analytics
         }
 
         /// <summary>
+        /// Returns the average score for a single driver.
+        /// </summary>
+        [HttpGet("driver/{driverId:guid}")]
+        public async Task<IActionResult> GetDriverScore(
+            [FromRoute] Guid driverId,
+            CancellationToken ct)
+        {
+            try
+            {
+                var rows = await _dbContext.DriverScores
+                    .AsNoTracking()
+                    .Where(ds => ds.DriverId == driverId)
+                    .Select(ds => new { ds.OverallScore, ds.CalculatedAt })
+                    .ToListAsync(ct);
+
+                if (rows.Count == 0)
+                    return NotFound(new { message = "No score data found for this driver." });
+
+                var result = new DriverGradeSummaryDto
+                {
+                    DriverId = driverId,
+                    AverageOverallScore = Math.Round(rows.Average(x => x.OverallScore), 2),
+                    TripCount = rows.Count,
+                    LastCalculatedAt = rows.Max(x => x.CalculatedAt)
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching score for driverId: {DriverId}", driverId);
+                return StatusCode(500, new { message = "Error fetching driver score.", detail = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Returns average driver grading scores for the given organization.
-        /// Only formula-based v6 scores are included.
         /// </summary>
         [HttpGet("summary")]
         public async Task<IActionResult> GetDriverScoreSummary(
@@ -33,9 +68,7 @@ namespace TYB.ApiService.Controllers.Analytics
             {
                 _logger.LogInformation("Driver score summary requested for organizationId: {OrganizationId}", organizationId);
 
-                // 1) Önce DB'den organization'a ait score kayıtlarını çek
-                // Metadata filter'ını SQL tarafında değil memory tarafında yapıyoruz
-                var rawRows = await _dbContext.DriverScores
+                var rows = await _dbContext.DriverScores
                     .AsNoTracking()
                     .Join(
                         _dbContext.Drivers.AsNoTracking(),
@@ -49,23 +82,12 @@ namespace TYB.ApiService.Controllers.Analytics
                         DriverId = x.Driver.Id,
                         OverallScore = x.Score.OverallScore,
                         CalculatedAt = x.Score.CalculatedAt,
-                        Metadata = x.Score.Metadata
                     })
                     .ToListAsync(ct);
 
-                _logger.LogInformation("Raw driver score rows fetched: {Count}", rawRows.Count);
+                _logger.LogInformation("Driver score rows fetched: {Count}", rows.Count);
 
-                // 2) Formula-only v6 kayıtlarını memory tarafında filtrele
-                var filteredRows = rawRows
-                    .Where(x =>
-                        !string.IsNullOrWhiteSpace(x.Metadata) &&
-                        x.Metadata.Contains("v6_formula_only", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-                _logger.LogInformation("Filtered v6_formula_only rows: {Count}", filteredRows.Count);
-
-                // 3) Driver bazında aggregate et
-                var scores = filteredRows
+                var scores = rows
                     .GroupBy(x => x.DriverId)
                     .Select(g => new DriverGradeSummaryDto
                     {
@@ -89,7 +111,7 @@ namespace TYB.ApiService.Controllers.Analytics
 
                 return StatusCode(500, new
                 {
-                    message = "Driver score summary alınırken hata oluştu.",
+                    message = "An error occurred while fetching driver score summary.",
                     detail = ex.Message
                 });
             }

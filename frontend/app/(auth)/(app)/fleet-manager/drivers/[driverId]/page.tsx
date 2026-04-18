@@ -344,7 +344,7 @@ export default function FleetManagerDriverEditPage() {
                     if (isBusy && !isCurrent) return null;
                     return (
                       <option key={vehicle.id} value={vehicle.id}>
-                        {vehicle.vehicleName}
+                        {vehicle.vehicleName}{isCurrent ? " (current)" : ""}
                       </option>
                     );
                   })}

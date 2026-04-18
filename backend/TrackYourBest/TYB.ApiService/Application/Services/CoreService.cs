@@ -115,6 +115,7 @@ namespace TYB.ApiService.Application.Services
 			var row = await _dbContext.DriverInformations
 				.FromSql($"""
 			SELECT
+				d.id AS driver_id,
 				d.organization_id,
 				d.user_id,
 				d.vehicle_id,
@@ -136,6 +137,7 @@ namespace TYB.ApiService.Application.Services
 			}
 
 			return new DriverInfoDto(
+				row.DriverId,
 				row.OrganizationId,
 				row.UserId,
 				row.VehicleId,

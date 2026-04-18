@@ -19,7 +19,7 @@ import { GpsRoutePoint, MapDeviceLocation } from "../mapview/data/gpsDataInfo";
 import { VehicleInfo } from "../mapview/data/vehicleInfoData";
 import { TripPlanPayload, TripSummary } from "../mapview/data/tripInfoData";
 import { DriverInfo } from "../mapview/data/driverInfoData";
-import { driversApi, devicesApi, etaApi, geocodingApi, gpsApi, tripsApi, vehiclesApi } from "../../../utils/api.js";
+import { driversApi, devicesApi, driverScoresApi, etaApi, geocodingApi, gpsApi, tripsApi, vehiclesApi } from "../../../utils/api.js";
 import { EtaPrediction } from "./data/tripInfoData";
 
 import "../../../components/MapView.css";
@@ -81,6 +81,7 @@ export default function FleetManagerMapView() {
 
   const [driverError, setDriverError] = useState<string | null>(null);
   const [isLoadingDriver, setIsLoadingDriver] = useState(false);
+  const [driverScore, setDriverScore] = useState<number | null>(null);
 
   const [filterStart, setFilterStart] = useState<string>("");
   const [filterEnd, setFilterEnd] = useState<string>("");
@@ -608,6 +609,7 @@ export default function FleetManagerMapView() {
     if (!API_BASE || !vehicleId) return;
     setIsLoadingDriver(true);
     setDriverError(null);
+    setDriverScore(null);
     try {
       const res = await fetch(driversApi.infoByVehicle(vehicleId, API_BASE), {
         method: "GET",
@@ -627,6 +629,22 @@ export default function FleetManagerMapView() {
 
       const data: DriverInfo | null = await res.json();
       setDriverInformation(data ?? null);
+
+      if (data?.driverId) {
+        try {
+          const scoreRes = await fetch(driverScoresApi.byDriver(data.driverId, API_BASE), {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+          });
+          if (scoreRes.ok) {
+            const scoreData = await scoreRes.json();
+            setDriverScore(scoreData?.averageOverallScore ?? null);
+          }
+        } catch {
+          // Score fetch failure is non-critical — silently ignore
+        }
+      }
     } catch {
       setDriverError("Connection error: Unable to retrieve driver information.");
       setDriverInformation(null);
@@ -827,6 +845,7 @@ export default function FleetManagerMapView() {
     setDriverInformation(null);
     setDriverError(null);
     setIsLoadingDriver(false);
+    setDriverScore(null);
     setFilteredRoutePath([]);
     setFilterError(null);
     setStartAddressInput("");
@@ -953,6 +972,7 @@ export default function FleetManagerMapView() {
         deviceInformation={deviceInformation}
         vehicleInformation={vehicleInformation}
         driverInformation={driverInformation}
+        driverScore={driverScore}
         informationError={informationError}
         isLoadingInformation={isLoadingInformation}
         driverError={driverError}

@@ -53,6 +53,7 @@ class Trip(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     pause_count = Column(Integer, default=0)
+    anomaly_checked = Column(Boolean, default=False, nullable=False)
 
 
 class GpsData(Base):
@@ -158,20 +159,24 @@ class EtaPrediction(Base):
 
 def get_pending_trips(session):
     """
-    Get trips that need ETA calculation
+    Get ongoing trips that need ETA calculation.
 
-    Status flow:
-    - 'driver_approve': Route selected, waiting for driver to accept
-    - 'ongoing': Trip in progress, update ETA continuously
-    - 'cancelled': Trip cancelled, skip
+    Rules:
+    - Status must be 'ongoing' (driver_approve trips are excluded)
+    - created_at must be within the last 2 days (stale trips are skipped)
 
     Returns:
-        List of Trip objects with status in ('driver_approve', 'ongoing')
+        List of Trip objects matching the criteria
     """
+    from datetime import timezone, timedelta
 
-    # Get all trips that need ETA predictions
+    cutoff = datetime.now(timezone.utc) - timedelta(days=2)
+    # created_at is stored as UTC naive datetime, so compare without tzinfo
+    cutoff_naive = cutoff.replace(tzinfo=None)
+
     pending = session.query(Trip).filter(
-        Trip.status.in_(['driver_approve', 'ongoing'])
+        Trip.status == 'ongoing',
+        Trip.created_at >= cutoff_naive
     ).all()
 
     return pending

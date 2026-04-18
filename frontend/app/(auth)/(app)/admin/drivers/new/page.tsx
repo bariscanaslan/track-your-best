@@ -8,6 +8,7 @@ import "../../admin.css";
 
 type VehicleOption = { id: string; vehicleName: string };
 type OrgOption = { id: string; name: string };
+type DriverListItem = { id: string; vehicleId?: string | null };
 
 const parseDateInput = (value: string) => {
   if (!value.trim()) return null;
@@ -22,6 +23,7 @@ export default function AdminDriverCreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
   const [orgs, setOrgs] = useState<OrgOption[]>([]);
+  const [busyVehicles, setBusyVehicles] = useState<Set<string>>(new Set());
 
   const [userForm, setUserForm] = useState({
     username: "",
@@ -56,9 +58,10 @@ export default function AdminDriverCreatePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [vehRes, orgRes] = await Promise.allSettled([
+        const [vehRes, orgRes, drvRes] = await Promise.allSettled([
           fetch(vehiclesApi.listAll(apiBase), { credentials: "include" }),
           fetch(organizationsApi.list(apiBase), { credentials: "include" }),
+          fetch(driversApi.listAll(apiBase), { credentials: "include" }),
         ]);
         if (vehRes.status === "fulfilled" && vehRes.value.ok) {
           const data = await vehRes.value.json();
@@ -67,6 +70,11 @@ export default function AdminDriverCreatePage() {
         if (orgRes.status === "fulfilled" && orgRes.value.ok) {
           const data = await orgRes.value.json();
           setOrgs(Array.isArray(data) ? data : []);
+        }
+        if (drvRes.status === "fulfilled" && drvRes.value.ok) {
+          const data: DriverListItem[] = await drvRes.value.json();
+          const busy = new Set((Array.isArray(data) ? data : []).filter((d) => d.vehicleId).map((d) => String(d.vehicleId)));
+          setBusyVehicles(busy);
         }
       } catch { /* ignore */ }
     };
@@ -142,23 +150,23 @@ export default function AdminDriverCreatePage() {
           <div className="adm-form">
             <label className="adm-field">
               <div className="adm-field-label">Username</div>
-              <input placeholder="username" value={userForm.username} onChange={handleUserChange("username")} />
+              <input placeholder="Enter the username" value={userForm.username} onChange={handleUserChange("username")} />
             </label>
             <label className="adm-field">
               <div className="adm-field-label">Full name</div>
-              <input placeholder="full_name" value={userForm.fullName} onChange={handleUserChange("fullName")} />
+              <input placeholder="Enter the full name" value={userForm.fullName} onChange={handleUserChange("fullName")} />
             </label>
             <label className="adm-field">
               <div className="adm-field-label">Email</div>
-              <input type="email" placeholder="email" value={userForm.email} onChange={handleUserChange("email")} />
+              <input type="email" placeholder="Enter the email" value={userForm.email} onChange={handleUserChange("email")} />
             </label>
             <label className="adm-field">
               <div className="adm-field-label">Phone</div>
-              <input placeholder="phone" value={userForm.phone} onChange={handleUserChange("phone")} />
+              <input placeholder="Enter the phone number" value={userForm.phone} onChange={handleUserChange("phone")} />
             </label>
             <label className="adm-field">
               <div className="adm-field-label">Avatar URL</div>
-              <input placeholder="avatar_url" value={userForm.avatarUrl} onChange={handleUserChange("avatarUrl")} />
+              <input placeholder="Enter the url of the avatar image" value={userForm.avatarUrl} onChange={handleUserChange("avatarUrl")} />
             </label>
           </div>
         </section>
@@ -177,16 +185,19 @@ export default function AdminDriverCreatePage() {
               <div className="adm-field-label">Vehicle</div>
               <select className="adm-select" value={driverForm.vehicleId} onChange={handleDriverChange("vehicleId")}>
                 <option value="">-- no vehicle --</option>
-                {vehicles.map((v) => <option key={v.id} value={v.id}>{v.vehicleName}</option>)}
+                {vehicles.map((v) => {
+                  if (busyVehicles.has(v.id)) return null;
+                  return <option key={v.id} value={v.id}>{v.vehicleName}</option>;
+                })}
               </select>
             </label>
             <label className="adm-field">
               <div className="adm-field-label">License number</div>
-              <input placeholder="license_number" value={driverForm.licenseNumber} onChange={handleDriverChange("licenseNumber")} />
+              <input placeholder="Enter the license number" value={driverForm.licenseNumber} onChange={handleDriverChange("licenseNumber")} />
             </label>
             <label className="adm-field">
               <div className="adm-field-label">License type</div>
-              <input placeholder="license_type" value={driverForm.licenseType} onChange={handleDriverChange("licenseType")} />
+              <input placeholder="Enter the license type" value={driverForm.licenseType} onChange={handleDriverChange("licenseType")} />
             </label>
             <div className="adm-form-row">
               <label className="adm-field">
@@ -213,11 +224,11 @@ export default function AdminDriverCreatePage() {
             </div>
             <label className="adm-field">
               <div className="adm-field-label">Emergency contact</div>
-              <input placeholder="emergency_contact_name" value={driverForm.emergencyContactName} onChange={handleDriverChange("emergencyContactName")} />
+              <input placeholder="Enter the license number emergency contact name" value={driverForm.emergencyContactName} onChange={handleDriverChange("emergencyContactName")} />
             </label>
             <label className="adm-field">
               <div className="adm-field-label">Emergency phone</div>
-              <input placeholder="emergency_contact_phone" value={driverForm.emergencyContactPhone} onChange={handleDriverChange("emergencyContactPhone")} />
+              <input placeholder="Enter the emergency contact phone" value={driverForm.emergencyContactPhone} onChange={handleDriverChange("emergencyContactPhone")} />
             </label>
           </div>
         </section>

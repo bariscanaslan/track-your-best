@@ -739,6 +739,21 @@
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
 }
 
+.map-sidecard-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.map-sidecard-score.is-good   { background: #e8f7ee; color: #15803d; }
+.map-sidecard-score.is-medium { background: #fff7e6; color: #b45309; }
+.map-sidecard-score.is-bad    { background: #fdecec; color: #b91c1c; }
+.map-sidecard-score.is-empty  { background: #eef2f7; color: #64748b; }
+
 .map-sidecard-spinner {
   width: 10px;
   height: 10px;

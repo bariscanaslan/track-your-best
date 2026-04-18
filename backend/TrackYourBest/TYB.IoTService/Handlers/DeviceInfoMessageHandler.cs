@@ -83,12 +83,16 @@ namespace TYB.IoTService.Handlers
 			}
 
 			var device = await _dbContext.Devices
-				.FirstOrDefaultAsync(d => d.DeviceIdentifier == deviceId);
+				.Where(d => d.DeviceIdentifier == deviceId && d.IsActive)
+				.OrderByDescending(d => d.UpdatedAt)
+				.FirstOrDefaultAsync();
 
 			if (device == null && !string.IsNullOrWhiteSpace(payloadImei))
 			{
 				device = await _dbContext.Devices
-					.FirstOrDefaultAsync(d => d.DeviceIdentifier == payloadImei || d.Imei == payloadImei);
+					.Where(d => (d.DeviceIdentifier == payloadImei || d.Imei == payloadImei) && d.IsActive)
+					.OrderByDescending(d => d.UpdatedAt)
+					.FirstOrDefaultAsync();
 			}
 
 			if (device == null)

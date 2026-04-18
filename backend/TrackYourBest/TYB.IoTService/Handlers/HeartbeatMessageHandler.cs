@@ -70,7 +70,9 @@ namespace TYB.IoTService.Handlers
 			}
 
 			var device = await _dbContext.Devices
-				.FirstOrDefaultAsync(d => d.DeviceIdentifier == deviceId);
+				.Where(d => d.DeviceIdentifier == deviceId && d.IsActive)
+				.OrderByDescending(d => d.UpdatedAt)
+				.FirstOrDefaultAsync();
 
 			if (device == null)
 			{
@@ -79,7 +81,9 @@ namespace TYB.IoTService.Handlers
 				{
 					deviceId = fallbackFromPayload;
 					device = await _dbContext.Devices
-						.FirstOrDefaultAsync(d => d.DeviceIdentifier == deviceId);
+						.Where(d => d.DeviceIdentifier == deviceId && d.IsActive)
+						.OrderByDescending(d => d.UpdatedAt)
+						.FirstOrDefaultAsync();
 				}
 			}
 

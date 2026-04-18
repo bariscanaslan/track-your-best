@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { driversApi, usersApi, vehiclesApi } from "../../../../../utils/api";
 import "../../admin.css";
 
+type DriverListItem = { id: string; vehicleId?: string | null };
+
 type DriverDetail = {
   id: string;
   organizationId?: string | null;
@@ -57,6 +59,7 @@ export default function AdminDriverEditPage() {
 
   const [driver, setDriver] = useState<DriverDetail | null>(null);
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
+  const [busyVehicles, setBusyVehicles] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,10 +118,23 @@ export default function AdminDriverEditPage() {
     fetchDriver();
     const fetchVehicles = async () => {
       try {
-        const res = await fetch(vehiclesApi.listAll(apiBase), { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
-        setVehicles(Array.isArray(data) ? data : []);
+        const [vehRes, drvRes] = await Promise.allSettled([
+          fetch(vehiclesApi.listAll(apiBase), { credentials: "include" }),
+          fetch(driversApi.listAll(apiBase), { credentials: "include" }),
+        ]);
+        if (vehRes.status === "fulfilled" && vehRes.value.ok) {
+          const data = await vehRes.value.json();
+          setVehicles(Array.isArray(data) ? data : []);
+        }
+        if (drvRes.status === "fulfilled" && drvRes.value.ok) {
+          const data: DriverListItem[] = await drvRes.value.json();
+          const busy = new Set(
+            (Array.isArray(data) ? data : [])
+              .filter((d) => d.vehicleId && d.id !== driverId)
+              .map((d) => String(d.vehicleId))
+          );
+          setBusyVehicles(busy);
+        }
       } catch { setVehicles([]); }
     };
     fetchVehicles();
@@ -238,7 +254,15 @@ export default function AdminDriverEditPage() {
                 <div className="adm-field-label">Vehicle</div>
                 <select className="adm-select" value={driverForm.vehicleId} onChange={handleDriverChange("vehicleId")}>
                   <option value="">-- no vehicle --</option>
-                  {vehicles.map((v) => <option key={v.id} value={v.id}>{v.vehicleName}</option>)}
+                  {vehicles.map((v) => {
+                    const isCurrent = v.id === driverForm.vehicleId;
+                    if (busyVehicles.has(v.id) && !isCurrent) return null;
+                    return (
+                      <option key={v.id} value={v.id}>
+                        {v.vehicleName}{isCurrent ? " (current)" : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               </label>
               <label className="adm-field">

@@ -1,6 +1,7 @@
 namespace TYB.ApiService.Infrastructure.DTOs.Core
 {
 	public record DriverInfoDto(
+		Guid? DriverId,
 		Guid? OrganizationId,
 		Guid? UserId,
 		Guid? VehicleId,

@@ -102,6 +102,13 @@ export const etaApi = {
   byTrip: (tripId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/eta/trip/${tripId}`,
 };
 
+export const driverScoresApi = {
+  summary: (organizationId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/DriverScores/summary?organizationId=${encodeURIComponent(organizationId)}`,
+  byDriver: (driverId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/DriverScores/driver/${encodeURIComponent(driverId)}`,
+};
+
 export const anomaliesApi = {
   list: (organizationId, baseUrl = getApiBaseUrl()) =>
     `${baseUrl}/api/anomaly?organizationId=${encodeURIComponent(organizationId)}`,

@@ -212,6 +212,7 @@ namespace TYB.ApiService.Infrastructure.Data
 			{
 				entity.HasNoKey();
 				entity.ToView(null);
+				entity.Property(d => d.DriverId).HasColumnName("driver_id");
 				entity.Property(d => d.OrganizationId).HasColumnName("organization_id");
 				entity.Property(d => d.UserId).HasColumnName("user_id");
 				entity.Property(d => d.VehicleId).HasColumnName("vehicle_id");
@@ -337,6 +338,7 @@ namespace TYB.ApiService.Infrastructure.Data
 				entity.Property(t => t.HarshBrakingCount).HasColumnName("harsh_braking_count");
 				entity.Property(t => t.Notes).HasColumnName("notes");
 				entity.Property(t => t.PauseCount).HasColumnName("pause_count");
+				entity.Property(t => t.AnomalyChecked).HasColumnName("anomaly_checked").HasDefaultValue(false);
 				entity.Property(t => t.CreatedAt).HasColumnName("created_at");
 				entity.Property(t => t.UpdatedAt).HasColumnName("updated_at");
 			});

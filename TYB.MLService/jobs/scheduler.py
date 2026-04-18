@@ -48,15 +48,15 @@ class JobScheduler:
         logger.info(f"✅ Driver Scoring Job eklendi (interval: {JOB_INTERVALS['driver_scoring']}s)")
 
         # ETA Prediction Job (DEVRE DIŞI - test için)
-        # self.scheduler.add_job(
-        #     eta_prediction_job_handler,
-        #     trigger=IntervalTrigger(seconds=JOB_INTERVALS['eta_prediction']),
-        #     id='eta_prediction_job',
-        #     name='ETA Prediction',
-        #     coalesce=True,
-        #     max_instances=1
-        # )
-        # logger.info(f"✅ ETA Prediction Job eklendi (interval: {JOB_INTERVALS['eta_prediction']}s)")
+        self.scheduler.add_job(
+            eta_prediction_job_handler,
+            trigger=IntervalTrigger(seconds=JOB_INTERVALS['eta_prediction']),
+            id='eta_prediction_job',
+            name='ETA Prediction',
+            coalesce=True,
+            max_instances=1
+         )
+        logger.info(f"✅ ETA Prediction Job eklendi (interval: {JOB_INTERVALS['eta_prediction']}s)")
 
         # Scheduler'ı başlat
         self.scheduler.start()
