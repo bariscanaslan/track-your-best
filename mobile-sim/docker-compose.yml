@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8899:8899"
+    env_file: ./backend/.env
+    environment:
+      # Override so CORS accepts requests from the frontend container port
+      FRONTEND_ORIGIN: http://localhost:4242
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the JS bundle — must match where the browser reaches the backend
+        VITE_API_URL: http://localhost:8899
+    ports:
+      - "4242:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

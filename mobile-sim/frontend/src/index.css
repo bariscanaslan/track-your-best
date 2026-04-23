@@ -1,0 +1,275 @@
+/* ─── Reset & base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0f172a;
+  --surface:   #1e293b;
+  --border:    #334155;
+  --text:      #f1f5f9;
+  --muted:     #94a3b8;
+  --accent:    #3b82f6;
+  --accent-h:  #2563eb;
+  --danger:    #ef4444;
+  --danger-h:  #dc2626;
+  --green:     #10b981;
+  --radius:    12px;
+  --gap:       16px;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Layout helpers ────────────────────────────────────────────────────────── */
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page.center {
+  align-items: center;
+  justify-content: center;
+  padding: var(--gap);
+}
+
+.content {
+  flex: 1;
+  padding: var(--gap);
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ─── Top bar ───────────────────────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px var(--gap);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+/* ─── Login card ────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.logo-block {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.logo-text {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+
+.logo-sub {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* ─── Form ──────────────────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  padding: 12px 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--muted); }
+
+/* ─── Buttons ───────────────────────────────────────────────────────────────── */
+.btn {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 20px;
+  transition: background 0.15s, opacity 0.15s;
+  width: 100%;
+}
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn--large {
+  padding: 16px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+}
+
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: var(--danger-h); }
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px 0;
+}
+
+.btn-link:hover { text-decoration: underline; }
+
+/* ─── Device list ───────────────────────────────────────────────────────────── */
+.section-heading {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.device-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+
+.device-card:hover { border-color: var(--accent); }
+.device-card--active { border-color: var(--accent); background: #1e3a5f; }
+
+.device-card__name { font-weight: 600; font-size: 1rem; }
+.device-card__id   { font-size: 0.72rem; color: var(--muted); font-family: monospace; word-break: break-all; }
+
+/* ─── Tracking panel ────────────────────────────────────────────────────────── */
+.tracking-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.selected-badge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  text-align: center;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.status-dot {
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 10px;
+  width: 10px;
+}
+
+.status-label { font-size: 0.9rem; }
+
+.coords-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coord-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.coord-label { font-size: 0.8rem; color: var(--muted); }
+.coord-value { font-family: monospace; font-size: 1rem; font-weight: 600; }
+.coord-accuracy { font-size: 0.75rem; color: var(--muted); text-align: right; }
+
+/* ─── Misc ──────────────────────────────────────────────────────────────────── */
+.error-msg {
+  background: #450a0a;
+  border: 1px solid #991b1b;
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.875rem;
+  padding: 10px 14px;
+}
+
+.muted { color: var(--muted); font-size: 0.9rem; }
+
+.disclaimer {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.change-device {
+  text-align: center;
+  display: block;
+  width: 100%;
+}

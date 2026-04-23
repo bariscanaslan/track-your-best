@@ -50,8 +50,6 @@ const char* DEVICE_SECRET_1 = "1fff2d3f2f1c2f164130518daf32191ba2f743d7b85ff8f27
 const char* DEVICE_ID_2 = "tyb02";
 const char* DEVICE_SECRET_2 = "1eb6bcfec8402afee74a52df0884e6a5a561d6b034eb3f043d73583a1c09ef01";
 
-// Organization BMA Teknik Servis: a8f6ddc9-fabe-4c1f-8a4a-71673be127c4
-
 const char* DEVICE_ID_4 = "tyb04";
 const char* DEVICE_SECRET_4 = "f2da9ad8bb5f8fd8301ba346492698f1d3886a57a1cf3d33f0a43efbc9948721";
 
