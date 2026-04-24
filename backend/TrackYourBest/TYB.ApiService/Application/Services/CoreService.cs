@@ -12,6 +12,17 @@ namespace TYB.ApiService.Application.Services
 	{
 		private readonly TybDbContext _dbContext;
 
+		private static string? NormalizeOptionalString(string? value)
+		{
+			if (value is null)
+			{
+				return null;
+			}
+
+			var trimmed = value.Trim();
+			return trimmed.Length == 0 ? null : trimmed;
+		}
+
 		// Date time UTC conversion
 		private static DateTime? EnsureUtc(DateTime? value)
 		{
@@ -636,8 +647,8 @@ namespace TYB.ApiService.Application.Services
 					Username = request.Username.Trim(),
 					Email = request.Email.Trim(),
 					FullName = request.FullName.Trim(),
-					Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
-					AvatarUrl = string.IsNullOrWhiteSpace(request.AvatarUrl) ? null : request.AvatarUrl.Trim(),
+					Phone = NormalizeOptionalString(request.Phone),
+					AvatarUrl = NormalizeOptionalString(request.AvatarUrl),
 					Role = UserRole.Driver,
 					IsActive = true,
 					PasswordHash = BCrypt.Net.BCrypt.HashPassword("Tyb.1905"),
@@ -1161,8 +1172,8 @@ namespace TYB.ApiService.Application.Services
 				Username = request.Username.Trim(),
 				Email = request.Email.Trim(),
 				FullName = request.FullName?.Trim() ?? string.Empty,
-				Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
-				AvatarUrl = string.IsNullOrWhiteSpace(request.AvatarUrl) ? null : request.AvatarUrl.Trim(),
+				Phone = NormalizeOptionalString(request.Phone),
+				AvatarUrl = NormalizeOptionalString(request.AvatarUrl),
 				Role = ParseRole(request.Role),
 				IsActive = request.IsActive ?? true,
 				PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
@@ -1187,11 +1198,15 @@ namespace TYB.ApiService.Application.Services
 
 			if (entity is null) return null;
 
-			if (!string.IsNullOrWhiteSpace(request.Username)) entity.Username = request.Username.Trim();
-			if (!string.IsNullOrWhiteSpace(request.FullName)) entity.FullName = request.FullName;
-			if (!string.IsNullOrWhiteSpace(request.Email)) entity.Email = request.Email;
-			if (!string.IsNullOrWhiteSpace(request.Phone)) entity.Phone = request.Phone;
-			entity.AvatarUrl = request.AvatarUrl ?? entity.AvatarUrl;
+			var username = NormalizeOptionalString(request.Username);
+			var fullName = NormalizeOptionalString(request.FullName);
+			var email = NormalizeOptionalString(request.Email);
+
+			if (username is not null) entity.Username = username;
+			if (fullName is not null) entity.FullName = fullName;
+			if (email is not null) entity.Email = email;
+			if (request.Phone is not null) entity.Phone = NormalizeOptionalString(request.Phone);
+			if (request.AvatarUrl is not null) entity.AvatarUrl = NormalizeOptionalString(request.AvatarUrl);
 
 			if (request.OrganizationId.HasValue) entity.OrganizationId = request.OrganizationId;
 			if (!string.IsNullOrWhiteSpace(request.Role)) entity.Role = ParseRole(request.Role);

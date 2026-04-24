@@ -5,6 +5,9 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import AvatarUploadField from "@/app/components/forms/AvatarUploadField";
+import { useStagedImage } from "@/app/hooks/useStagedImage";
+import { uploadProfileImage } from "@/app/utils/media";
 import { driversApi, usersApi, vehiclesApi } from "../../../../../utils/api";
 import { useAuth } from "../../../../../context/AuthContext";
 import "../../fleet-manager.css";
@@ -90,6 +93,7 @@ export default function FleetManagerDriverEditPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { file: avatarFile, previewUrl: avatarPreviewUrl, fileName: avatarFileName, hasStagedFile, stageFile, clearStagedFile } = useStagedImage();
   const [userForm, setUserForm] = useState({
     fullName: "",
     email: "",
@@ -112,6 +116,11 @@ export default function FleetManagerDriverEditPage() {
     setUserForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
+  const handleRemovePhoto = () => {
+    clearStagedFile();
+    setUserForm((prev) => ({ ...prev, avatarUrl: "" }));
+  };
+
   const handleDriverChange = (field: keyof typeof driverForm) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
     setDriverForm((prev) => ({ ...prev, [field]: value }));
@@ -131,6 +140,7 @@ export default function FleetManagerDriverEditPage() {
         throw new Error("Failed to load driver.");
       }
       const data = (await res.json()) as DriverDetail;
+      clearStagedFile();
       setDriver(data);
       setUserForm({
         fullName: data.fullName ?? "",
@@ -209,6 +219,10 @@ export default function FleetManagerDriverEditPage() {
     setError(null);
     try {
       if (driver.userId) {
+        const avatarUrl = avatarFile
+          ? (await uploadProfileImage(avatarFile, apiBase)).relativeUrl
+          : userForm.avatarUrl.trim();
+
         const userRes = await fetch(usersApi.update(driver.userId, apiBase), {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -216,8 +230,8 @@ export default function FleetManagerDriverEditPage() {
           body: JSON.stringify({
             fullName: userForm.fullName.trim() || null,
             email: userForm.email.trim() || null,
-            phone: userForm.phone.trim() || null,
-            avatarUrl: userForm.avatarUrl.trim() || null,
+            phone: userForm.phone.trim(),
+            avatarUrl,
           }),
         });
         if (!userRes.ok) {
@@ -249,6 +263,7 @@ export default function FleetManagerDriverEditPage() {
         throw new Error(detail || "Driver update failed.");
       }
 
+      clearStagedFile();
       await fetchDriver();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Save failed.";
@@ -291,13 +306,19 @@ export default function FleetManagerDriverEditPage() {
             <div className="fm-card-header">
               <div className="fm-card-title">User Details</div>
             </div>
-            <div className="fm-edit-avatar">
-              <img
-                src={userForm.avatarUrl || "/tyb-logo.png"}
-                alt={userForm.fullName || "User avatar"}
-                className="fm-avatar-lg"
-              />
-            </div>
+            <AvatarUploadField
+              apiBase={apiBase}
+              theme="fm"
+              value={userForm.avatarUrl}
+              stagedPreviewUrl={avatarPreviewUrl}
+              stagedFileName={avatarFileName}
+              hasStagedFile={hasStagedFile}
+              onFileSelect={stageFile}
+              onClearSelection={clearStagedFile}
+              onRemovePhoto={handleRemovePhoto}
+              previewAlt={userForm.fullName || "User avatar"}
+              disabled={saving || isLoading}
+            />
             <div className="fm-section-sub">This section updates the driver’s user profile.</div>
             <div className="fm-form">
               <label className="fm-field">
@@ -311,10 +332,6 @@ export default function FleetManagerDriverEditPage() {
               <label className="fm-field">
                 <div className="fm-field-label">Phone</div>
                 <input placeholder="phone" value={userForm.phone} onChange={handleUserChange("phone")} />
-              </label>
-              <label className="fm-field">
-                <div className="fm-field-label">Avatar URL</div>
-                <input placeholder="avatar_url" value={userForm.avatarUrl} onChange={handleUserChange("avatarUrl")} />
               </label>
             </div>
             <div className="fm-note">

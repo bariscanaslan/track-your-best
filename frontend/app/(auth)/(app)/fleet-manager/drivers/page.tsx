@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { resolveMediaUrl } from "@/app/utils/media";
 import { FaSearch, FaUndo } from "react-icons/fa";
 import { driversApi } from "../../../../utils/api";
 import { useAuth } from "../../../../context/AuthContext";
@@ -281,7 +282,7 @@ export default function FleetManagerDriversPage() {
             <div className="fm-list-top">
               <div className="fm-list-identity">
                 <img
-                  src={driver.avatarUrl || "/tyb-logo.png"}
+                  src={resolveMediaUrl(driver.avatarUrl, apiBase) || "/tyb-logo.png"}
                   alt={driver.fullName || "Driver"}
                   className="fm-avatar"
                 />

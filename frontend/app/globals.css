@@ -21,3 +21,7 @@ body {
   background: radial-gradient(circle at top, #111827, #020617);
   color: #e5e7eb;
 }
+
+a {
+  text-decoration: none !important;
+}

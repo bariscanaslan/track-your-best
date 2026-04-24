@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using TYB.ApiService.Application.Services;
+using TYB.ApiService.Authorization;
 using TYB.ApiService.Infrastructure.DTOs.Core;
 
 namespace TYB.ApiService.Controllers.Core
 {
 	[Route("api/[controller]")]
 	[ApiController]
+	[AnyRole]
 	public class OrganizationsController : ControllerBase
 	{
 		private readonly CoreService _coreService;

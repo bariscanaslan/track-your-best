@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import AvatarUploadField from "@/app/components/forms/AvatarUploadField";
+import { useStagedImage } from "@/app/hooks/useStagedImage";
+import { uploadProfileImage } from "@/app/utils/media";
 import { usersApi, organizationsApi } from "../../../../../utils/api";
 import "../../admin.css";
 
@@ -16,6 +19,7 @@ export default function AdminUserCreatePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orgs, setOrgs] = useState<OrgOption[]>([]);
+  const { file: avatarFile, previewUrl: avatarPreviewUrl, fileName: avatarFileName, hasStagedFile, stageFile, clearStagedFile } = useStagedImage();
 
   const [form, setForm] = useState({
     organizationId: "",
@@ -31,6 +35,11 @@ export default function AdminUserCreatePage() {
   const handleChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = (e.target as HTMLInputElement).type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value;
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleRemovePhoto = () => {
+    clearStagedFile();
+    setForm((prev) => ({ ...prev, avatarUrl: "" }));
   };
 
   useEffect(() => {
@@ -49,6 +58,10 @@ export default function AdminUserCreatePage() {
     setSaving(true);
     setError(null);
     try {
+      const avatarUrl = avatarFile
+        ? (await uploadProfileImage(avatarFile, apiBase)).relativeUrl
+        : form.avatarUrl.trim();
+
       const res = await fetch(usersApi.create(apiBase), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,9 +71,9 @@ export default function AdminUserCreatePage() {
           username: form.username.trim(),
           email: form.email.trim(),
           fullName: form.fullName.trim(),
-          phone: form.phone.trim() || null,
+          phone: form.phone.trim(),
           role: form.role,
-          avatarUrl: form.avatarUrl.trim() || null,
+          avatarUrl,
           isActive: form.isActive,
         }),
       });
@@ -100,9 +113,19 @@ export default function AdminUserCreatePage() {
       <div className="adm-edit-grid">
         <section className="adm-card">
           <div className="adm-card-header"><div className="adm-card-title">Identity</div></div>
-          <div className="adm-edit-avatar">
-            <img src={form.avatarUrl || "/tyb-logo.png"} alt="Avatar" className="adm-avatar-lg" />
-          </div>
+          <AvatarUploadField
+            apiBase={apiBase}
+            theme="adm"
+            value={form.avatarUrl}
+            stagedPreviewUrl={avatarPreviewUrl}
+            stagedFileName={avatarFileName}
+            hasStagedFile={hasStagedFile}
+            onFileSelect={stageFile}
+            onClearSelection={clearStagedFile}
+            onRemovePhoto={handleRemovePhoto}
+            previewAlt={form.fullName || "User avatar"}
+            disabled={saving}
+          />
           <div className="adm-form">
             <label className="adm-field">
               <div className="adm-field-label">Full name</div>
@@ -119,10 +142,6 @@ export default function AdminUserCreatePage() {
             <label className="adm-field">
               <div className="adm-field-label">Phone</div>
               <input placeholder="phone" value={form.phone} onChange={handleChange("phone")} />
-            </label>
-            <label className="adm-field">
-              <div className="adm-field-label">Avatar URL</div>
-              <input placeholder="avatar_url" value={form.avatarUrl} onChange={handleChange("avatarUrl")} />
             </label>
           </div>
         </section>

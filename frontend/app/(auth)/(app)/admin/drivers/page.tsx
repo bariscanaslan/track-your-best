@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { resolveMediaUrl } from "@/app/utils/media";
 import { FaSearch, FaUndo } from "react-icons/fa";
 import { driversApi } from "../../../../utils/api";
 import "../admin.css";
@@ -187,7 +188,7 @@ export default function AdminDriversPage() {
             <div className="adm-list-top">
               <div className="adm-list-identity">
                 <img
-                  src={driver.avatarUrl || "/tyb-logo.png"}
+                  src={resolveMediaUrl(driver.avatarUrl, apiBase) || "/tyb-logo.png"}
                   alt={driver.fullName || "Driver"}
                   className="adm-avatar"
                 />

@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using TYB.ApiService.Application.Services.Routing;
+using TYB.ApiService.Authorization;
 using TYB.ApiService.Infrastructure.DTOs.Spatial;
 
 namespace TYB.ApiService.Controllers.Spatial
 {
 	[Route("api/geocoding")]
 	[ApiController]
+	[AnyRole]
 	public class GeocodingController : ControllerBase
 	{
 		private readonly NominatimService _nominatimService;

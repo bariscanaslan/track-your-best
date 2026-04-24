@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import AvatarUploadField from "@/app/components/forms/AvatarUploadField";
+import { useStagedImage } from "@/app/hooks/useStagedImage";
+import { uploadProfileImage } from "@/app/utils/media";
 import { usersApi, organizationsApi } from "../../../../../utils/api";
 import "../../admin.css";
 
@@ -45,6 +48,7 @@ export default function AdminUserEditPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { file: avatarFile, previewUrl: avatarPreviewUrl, fileName: avatarFileName, hasStagedFile, stageFile, clearStagedFile } = useStagedImage();
 
   const [form, setForm] = useState({
     organizationId: "",
@@ -62,6 +66,11 @@ export default function AdminUserEditPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleRemovePhoto = () => {
+    clearStagedFile();
+    setForm((prev) => ({ ...prev, avatarUrl: "" }));
+  };
+
   const fetchUser = async () => {
     if (!userId) return;
     setIsLoading(true);
@@ -70,6 +79,7 @@ export default function AdminUserEditPage() {
       const res = await fetch(usersApi.getById(userId, apiBase), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to load user.");
       const data: UserDetail = await res.json();
+      clearStagedFile();
       setUser(data);
       setForm({
         organizationId: data.organizationId ?? "",
@@ -104,6 +114,10 @@ export default function AdminUserEditPage() {
     setSaving(true);
     setError(null);
     try {
+      const avatarUrl = avatarFile
+        ? (await uploadProfileImage(avatarFile, apiBase)).relativeUrl
+        : form.avatarUrl.trim();
+
       const res = await fetch(usersApi.update(user.id, apiBase), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -113,9 +127,9 @@ export default function AdminUserEditPage() {
           username: form.username.trim() || null,
           fullName: form.fullName.trim() || null,
           email: form.email.trim() || null,
-          phone: form.phone.trim() || null,
+          phone: form.phone.trim(),
           role: form.role,
-          avatarUrl: form.avatarUrl.trim() || null,
+          avatarUrl,
           isActive: form.isActive,
         }),
       });
@@ -123,6 +137,7 @@ export default function AdminUserEditPage() {
         const detail = await res.text();
         throw new Error(detail || "Update failed.");
       }
+      clearStagedFile();
       await fetchUser();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed.");
@@ -158,9 +173,19 @@ export default function AdminUserEditPage() {
         <div className="adm-edit-grid">
           <section className="adm-card">
             <div className="adm-card-header"><div className="adm-card-title">Identity</div></div>
-            <div className="adm-edit-avatar">
-              <img src={form.avatarUrl || "/tyb-logo.png"} alt="Avatar" className="adm-avatar-lg" />
-            </div>
+            <AvatarUploadField
+              apiBase={apiBase}
+              theme="adm"
+              value={form.avatarUrl}
+              stagedPreviewUrl={avatarPreviewUrl}
+              stagedFileName={avatarFileName}
+              hasStagedFile={hasStagedFile}
+              onFileSelect={stageFile}
+              onClearSelection={clearStagedFile}
+              onRemovePhoto={handleRemovePhoto}
+              previewAlt={form.fullName || "User avatar"}
+              disabled={saving || isLoading}
+            />
             <div className="adm-section-sub">
               Created: {formatDateTime(user.createdAt)} • Updated: {formatDateTime(user.updatedAt)} • Last login: {formatDateTime(user.lastLogin)}
               {user.createdByName && <> • Created by: {user.createdByName}</>}
@@ -181,10 +206,6 @@ export default function AdminUserEditPage() {
               <label className="adm-field">
                 <div className="adm-field-label">Phone</div>
                 <input placeholder="phone" value={form.phone} onChange={handleChange("phone")} />
-              </label>
-              <label className="adm-field">
-                <div className="adm-field-label">Avatar URL</div>
-                <input placeholder="avatar_url" value={form.avatarUrl} onChange={handleChange("avatarUrl")} />
               </label>
             </div>
           </section>

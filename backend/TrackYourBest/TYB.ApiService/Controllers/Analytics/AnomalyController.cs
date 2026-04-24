@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TYB.ApiService.Authorization;
 using TYB.ApiService.Infrastructure.Data;
 using TYB.ApiService.Infrastructure.DTOs.Analytics;
 
@@ -8,6 +9,7 @@ namespace TYB.ApiService.Controllers.Analytics
 {
 	[Route("api/[controller]")]
 	[ApiController]
+	[AnyRole]
 	public class AnomalyController : ControllerBase
 	{
 		private readonly TybDbContext _dbContext;
@@ -36,6 +38,16 @@ namespace TYB.ApiService.Controllers.Analytics
 					(a, d) => new { Anomaly = a, Device = d }
 				)
 				.Where(x => x.Device.OrganizationId == organizationId)
+				.GroupJoin(
+					_dbContext.Trips.AsNoTracking(),
+					x => x.Anomaly.TripId,
+					t => t.Id,
+					(x, trips) => new { x.Anomaly, x.Device, Trips = trips }
+				)
+				.SelectMany(
+					x => x.Trips.DefaultIfEmpty(),
+					(x, trip) => new { x.Anomaly, x.Device, Trip = trip }
+				)
 				.OrderByDescending(x => x.Anomaly.DetectedAt)
 				.ToListAsync(ct);
 
@@ -47,6 +59,7 @@ namespace TYB.ApiService.Controllers.Analytics
 				{
 					Id = a.Id,
 					TripId = a.TripId,
+					TripName = x.Trip?.TripName,
 					DeviceId = a.DeviceId,
 					AnomalyType = a.AnomalyType,
 					Severity = a.Severity,

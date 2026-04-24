@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import AvatarUploadField from "@/app/components/forms/AvatarUploadField";
+import { useStagedImage } from "@/app/hooks/useStagedImage";
+import { uploadProfileImage } from "@/app/utils/media";
 import { driversApi, vehiclesApi, organizationsApi } from "../../../../../utils/api";
 import "../../admin.css";
 
@@ -24,6 +27,7 @@ export default function AdminDriverCreatePage() {
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
   const [orgs, setOrgs] = useState<OrgOption[]>([]);
   const [busyVehicles, setBusyVehicles] = useState<Set<string>>(new Set());
+  const { file: avatarFile, previewUrl: avatarPreviewUrl, fileName: avatarFileName, hasStagedFile, stageFile, clearStagedFile } = useStagedImage();
 
   const [userForm, setUserForm] = useState({
     username: "",
@@ -48,6 +52,11 @@ export default function AdminDriverCreatePage() {
 
   const handleUserChange = (field: keyof typeof userForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleRemovePhoto = () => {
+    clearStagedFile();
+    setUserForm((prev) => ({ ...prev, avatarUrl: "" }));
   };
 
   const handleDriverChange = (field: keyof typeof driverForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -85,6 +94,10 @@ export default function AdminDriverCreatePage() {
     setSaving(true);
     setError(null);
     try {
+      const avatarUrl = avatarFile
+        ? (await uploadProfileImage(avatarFile, apiBase)).relativeUrl
+        : userForm.avatarUrl.trim();
+
       const res = await fetch(driversApi.create(apiBase), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,8 +107,8 @@ export default function AdminDriverCreatePage() {
           username: userForm.username.trim(),
           fullName: userForm.fullName.trim(),
           email: userForm.email.trim(),
-          phone: userForm.phone.trim() || null,
-          avatarUrl: userForm.avatarUrl.trim() || null,
+          phone: userForm.phone.trim(),
+          avatarUrl,
           vehicleId: driverForm.vehicleId || null,
           licenseNumber: driverForm.licenseNumber.trim(),
           licenseType: driverForm.licenseType.trim() || null,
@@ -143,9 +156,19 @@ export default function AdminDriverCreatePage() {
       <div className="adm-edit-grid">
         <section className="adm-card">
           <div className="adm-card-header"><div className="adm-card-title">User Details</div></div>
-          <div className="adm-edit-avatar">
-            <img src={userForm.avatarUrl || "/tyb-logo.png"} alt="Avatar" className="adm-avatar-lg" />
-          </div>
+          <AvatarUploadField
+            apiBase={apiBase}
+            theme="adm"
+            value={userForm.avatarUrl}
+            stagedPreviewUrl={avatarPreviewUrl}
+            stagedFileName={avatarFileName}
+            hasStagedFile={hasStagedFile}
+            onFileSelect={stageFile}
+            onClearSelection={clearStagedFile}
+            onRemovePhoto={handleRemovePhoto}
+            previewAlt={userForm.fullName || "Driver avatar"}
+            disabled={saving}
+          />
           <div className="adm-section-sub">User will be created with role `driver`.</div>
           <div className="adm-form">
             <label className="adm-field">
@@ -163,10 +186,6 @@ export default function AdminDriverCreatePage() {
             <label className="adm-field">
               <div className="adm-field-label">Phone</div>
               <input placeholder="Enter the phone number" value={userForm.phone} onChange={handleUserChange("phone")} />
-            </label>
-            <label className="adm-field">
-              <div className="adm-field-label">Avatar URL</div>
-              <input placeholder="Enter the url of the avatar image" value={userForm.avatarUrl} onChange={handleUserChange("avatarUrl")} />
             </label>
           </div>
         </section>

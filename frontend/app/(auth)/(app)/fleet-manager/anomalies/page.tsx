@@ -15,6 +15,7 @@ const AnomalyMiniMap = dynamic(
 type AnomalyRow = {
   id: string;
   tripId: string;
+  tripName: string | null;
   deviceId: string;
   anomalyType: string | null;
   severity: string | null;
@@ -296,10 +297,10 @@ export default function AnomalyAnalysisPage() {
                     </div>
                     <div className="fm-list-card">
                       <div className="fm-list-card-title">Trip Reference</div>
-                      <div className="fm-list-card-value" style={{ fontSize: 11, fontFamily: "monospace" }}>
-                        {anomaly.tripId.slice(0, 8)}…
+                      <div className="fm-list-card-value">
+                        {anomaly.tripName ?? "Unnamed Trip"}
                       </div>
-                      <div className="fm-list-card-sub">Trip ID</div>
+                      <div className="fm-list-card-sub">Trip Name</div>
                     </div>
                   </div>
                 </div>

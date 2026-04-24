@@ -1,22 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { ROLE_HOME, ROLE_FORBIDDEN_PREFIXES } from "./lib/roles";
 
 const PUBLIC_PATHS = ["/login"];
 const TOKEN_COOKIE = "tyb_token";
-
-const ROLE_HOME: Record<string, string> = {
-  admin: "/admin",
-  viewer: "/admin",
-  fleet_manager: "/fleet-manager",
-  driver: "/driver",
-};
-
-const ROLE_FORBIDDEN_PREFIXES: Record<string, string[]> = {
-  admin:         ["/driver", "/fleet-manager"],
-  viewer:        ["/driver", "/fleet-manager"],
-  fleet_manager: ["/admin", "/driver"],
-  driver:        ["/admin", "/fleet-manager"],
-};
 
 interface TokenPayload {
   role?: string;

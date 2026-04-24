@@ -4,6 +4,7 @@ namespace TYB.ApiService.Infrastructure.DTOs.Analytics
 	{
 		public Guid Id { get; set; }
 		public Guid TripId { get; set; }
+		public string? TripName { get; set; }
 		public Guid DeviceId { get; set; }
 		public string? AnomalyType { get; set; }
 		public string? Severity { get; set; }

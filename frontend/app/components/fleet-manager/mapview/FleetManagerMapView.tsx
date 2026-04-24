@@ -11,7 +11,6 @@ import MapCanvas from "../../MapCanvas";
 
 import VehicleInformationSidecard from "../mapview/sidecards/VehicleInformationSidecard";
 import TripsSidecard from "../mapview/sidecards/TripsSidecard";
-import StatisticsSidecard from "../mapview/sidecards/StatisticsSidecard";
 import HistorySidecard from "../mapview/sidecards/HistorySidecard";
 
 import { DeviceInfo } from "../mapview/data/deviceInfoData";
@@ -36,7 +35,7 @@ export default function FleetManagerMapView() {
 
   const [error, setError] = useState<string | null>(null);
 
-  const [activePanel, setActivePanel] = useState<"trips" | "statistics" | "vehicle" | "history" | null>(null);
+  const [activePanel, setActivePanel] = useState<"trips" | "vehicle" | "history" | null>(null);
 
   const [routeMode, setRouteMode] = useState(false);
   const [routePath, setRoutePath] = useState<Array<[number, number]>>([]);
@@ -800,7 +799,7 @@ export default function FleetManagerMapView() {
     }
   };
 
-  const handleTogglePanel = (panel: "trips" | "statistics" | "vehicle" | "history") => {
+  const handleTogglePanel = (panel: "trips" | "vehicle" | "history") => {
     if (selectedLocation && (panel === "vehicle" || panel === "trips" || panel === "history")) {
       fetchActiveTrip(selectedLocation.vehicleId);
       fetchPastTrips(selectedLocation.vehicleId);
@@ -932,14 +931,6 @@ export default function FleetManagerMapView() {
         onShowActiveTripRoute={() => applyTripRouteToMap(activeTrip)}
         onCancelActiveTrip={handleCancelActiveTrip}
         onClearRoute={clearAllVisibleRoutes}
-        onClose={() => setActivePanel(null)}
-      />
-
-      <StatisticsSidecard
-        isOpen={activePanel === "statistics"}
-        routePointCount={renderedRoutePaths.reduce((sum, path) => sum + path.length, 0)}
-        hasApprovedRoute={hasApprovedRoute}
-        activeTripStatus={activeTrip?.status ?? null}
         onClose={() => setActivePanel(null)}
       />
 

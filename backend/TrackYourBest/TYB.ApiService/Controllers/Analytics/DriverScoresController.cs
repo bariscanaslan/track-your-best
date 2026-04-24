@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TYB.ApiService.Authorization;
 using TYB.ApiService.Infrastructure.Data;
 using TYB.ApiService.Infrastructure.DTOs.Analytics;
 
@@ -7,6 +8,7 @@ namespace TYB.ApiService.Controllers.Analytics
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AnyRole]
     public class DriverScoresController : ControllerBase
     {
         private readonly TybDbContext _dbContext;

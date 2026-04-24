@@ -7,7 +7,8 @@
       "Bash(find /c/Users/baris/Desktop/TYB/source-code/tyb/backend/TrackYourBest/TYB.ApiService -type f -name \"*.cs\" | xargs grep -l \"IsActive\" 2>/dev/null | head -10)",
       "Bash(grep -E \"\\(frontend|src\\)$\")",
       "Bash(dotnet restore:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(xargs grep *)"
     ]
   }
 }

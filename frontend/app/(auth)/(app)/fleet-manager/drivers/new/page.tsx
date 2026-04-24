@@ -5,6 +5,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import AvatarUploadField from "@/app/components/forms/AvatarUploadField";
+import { useStagedImage } from "@/app/hooks/useStagedImage";
+import { uploadProfileImage } from "@/app/utils/media";
 import { driversApi, vehiclesApi } from "../../../../../utils/api";
 import { useAuth } from "../../../../../context/AuthContext";
 import "../../fleet-manager.css";
@@ -36,6 +39,7 @@ export default function FleetManagerDriverCreatePage() {
   const [busyVehicles, setBusyVehicles] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { file: avatarFile, previewUrl: avatarPreviewUrl, fileName: avatarFileName, hasStagedFile, stageFile, clearStagedFile } = useStagedImage();
 
   const [userForm, setUserForm] = useState({
     username: "",
@@ -59,6 +63,11 @@ export default function FleetManagerDriverCreatePage() {
 
   const handleUserChange = (field: keyof typeof userForm) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleRemovePhoto = () => {
+    clearStagedFile();
+    setUserForm((prev) => ({ ...prev, avatarUrl: "" }));
   };
 
   const handleDriverChange = (field: keyof typeof driverForm) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +124,9 @@ export default function FleetManagerDriverCreatePage() {
     setError(null);
     try {
       const safeTrim = (value: string | undefined | null) => (value ?? "").trim();
+      const avatarUrl = avatarFile
+        ? (await uploadProfileImage(avatarFile, apiBase)).relativeUrl
+        : safeTrim(userForm.avatarUrl);
 
       const driverRes = await fetch(driversApi.create(apiBase), {
         method: "POST",
@@ -125,8 +137,8 @@ export default function FleetManagerDriverCreatePage() {
           username: safeTrim(userForm.username),
           fullName: safeTrim(userForm.fullName),
           email: safeTrim(userForm.email),
-          phone: safeTrim(userForm.phone) || null,
-          avatarUrl: safeTrim(userForm.avatarUrl) || null,
+          phone: safeTrim(userForm.phone),
+          avatarUrl,
           vehicleId: safeTrim(driverForm.vehicleId) || null,
           licenseNumber: safeTrim(driverForm.licenseNumber),
           licenseType: safeTrim(driverForm.licenseType) || null,
@@ -183,13 +195,19 @@ export default function FleetManagerDriverCreatePage() {
           <div className="fm-card-header">
             <div className="fm-card-title">User Details</div>
           </div>
-          <div className="fm-edit-avatar">
-            <img
-              src={userForm.avatarUrl || "/tyb-logo.png"}
-              alt={userForm.fullName || "User avatar"}
-              className="fm-avatar-lg"
-            />
-          </div>
+          <AvatarUploadField
+            apiBase={apiBase}
+            theme="fm"
+            value={userForm.avatarUrl}
+            stagedPreviewUrl={avatarPreviewUrl}
+            stagedFileName={avatarFileName}
+            hasStagedFile={hasStagedFile}
+            onFileSelect={stageFile}
+            onClearSelection={clearStagedFile}
+            onRemovePhoto={handleRemovePhoto}
+            previewAlt={userForm.fullName || "User avatar"}
+            disabled={saving}
+          />
           <div className="fm-section-sub">
             User will be created with password `Tyb.1905.` and role `driver`.
           </div>
@@ -209,10 +227,6 @@ export default function FleetManagerDriverCreatePage() {
             <label className="fm-field">
               <div className="fm-field-label">Phone</div>
               <input placeholder="phone" value={userForm.phone} onChange={handleUserChange("phone")} />
-            </label>
-            <label className="fm-field">
-              <div className="fm-field-label">Avatar URL</div>
-              <input placeholder="avatar_url" value={userForm.avatarUrl} onChange={handleUserChange("avatarUrl")} />
             </label>
           </div>
         </section>

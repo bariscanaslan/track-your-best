@@ -3,6 +3,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { TybRole } from "../../lib/roles";
 
 export interface AuthUser {
   id: string;
@@ -10,7 +11,7 @@ export interface AuthUser {
   username: string;
   email: string;
   fullName: string;
-  role: "admin" | "viewer" | "fleet_manager" | "driver";
+  role: TybRole;
   avatarUrl?: string;
 }
 

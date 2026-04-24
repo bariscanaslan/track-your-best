@@ -4,18 +4,12 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, AuthUser } from "../context/AuthContext";
-
-const ROLE_ROUTES: Record<AuthUser["role"], string> = {
-  admin: "/admin",
-  viewer: "/admin",
-  fleet_manager: "/fleet-manager",
-  driver: "/driver",
-};
+import { useAuth } from "../context/AuthContext";
+import { ROLE_HOME, TybRole } from "../../lib/roles";
 
 interface Props {
   children: React.ReactNode;
-  allowedRoles?: AuthUser["role"][];
+  allowedRoles?: TybRole[];
   navbar?: React.ReactNode;
 }
 
@@ -65,7 +59,7 @@ export default function ProtectedRoute({ children, allowedRoles, navbar }: Props
     }
 
     if (!isRoleAllowed && user) {
-      router.replace(ROLE_ROUTES[user.role]);
+      router.replace(ROLE_HOME[user.role]);
     }
   }, [isAuthenticated, isRoleAllowed, loading, router, user]);
 

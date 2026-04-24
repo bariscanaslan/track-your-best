@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using TYB.ApiService.Application.Services;
+using TYB.ApiService.Authorization;
 
 namespace TYB.ApiService.Controllers.Spatial
 {
 	[Route("api/gps")]
 	[ApiController]
+	[AnyRole]
 	public class GpsController : ControllerBase
 	{
 		private readonly SpatialService _spatialService;

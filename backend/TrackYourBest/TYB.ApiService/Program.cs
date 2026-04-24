@@ -45,6 +45,7 @@ builder.Services.AddDbContext<TybDbContext>(options =>
 );
 
 builder.Services.AddScoped<CoreService>();
+builder.Services.AddScoped<ProfileImageStorageService>();
 builder.Services.AddScoped<SpatialService>();
 builder.Services.AddScoped<TripsService>();
 builder.Services.AddScoped<TripRouteDeviationMonitorService>();
@@ -128,6 +129,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseCors("LocalDev");
 app.UseAuthentication();
 app.UseAuthorization();

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { resolveMediaUrl } from "@/app/utils/media";
 import { FaSearch, FaUndo } from "react-icons/fa";
 import { usersApi } from "../../../../utils/api";
 import "../admin.css";
@@ -138,7 +139,11 @@ export default function AdminUsersPage() {
           <div key={user.id} className="adm-list-row">
             <div className="adm-list-top">
               <div className="adm-list-identity">
-                <img src={user.avatarUrl || "/tyb-logo.png"} alt={user.fullName || "User"} className="adm-avatar" />
+                <img
+                  src={resolveMediaUrl(user.avatarUrl, apiBase) || "/tyb-logo.png"}
+                  alt={user.fullName || "User"}
+                  className="adm-avatar"
+                />
                 <div>
                   <div className="adm-list-title-row">
                     <div className="adm-list-title">{user.fullName || user.username || "-"}</div>

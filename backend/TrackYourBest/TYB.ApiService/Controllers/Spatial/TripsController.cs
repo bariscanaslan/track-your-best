@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Sprache;
 using TYB.ApiService.Application.Services;
+using TYB.ApiService.Authorization;
 using TYB.ApiService.Infrastructure.DTOs.Spatial;
 
 namespace TYB.ApiService.Controllers.Spatial
 {
 	[Route("api/trips")]
 	[ApiController]
+	[AnyRole]
 	public class TripsController : ControllerBase
 	{
 		private readonly TripsService _tripsService;
