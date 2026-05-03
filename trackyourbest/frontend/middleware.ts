@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ROLE_HOME, ROLE_FORBIDDEN_PREFIXES } from "./lib/roles";
+import { ROLE_HOME, ROLE_FORBIDDEN_PREFIXES, ROLES, type TybRole } from "./lib/roles";
+
+function isKnownRole(role: string | null | undefined): role is TybRole {
+  return role != null && (Object.values(ROLES) as string[]).includes(role);
+}
 
 const PUBLIC_PATHS = ["/login"];
 const TOKEN_COOKIE = "tyb_token";
@@ -48,6 +52,7 @@ export function middleware(request: NextRequest) {
   const payload = rawToken ? decodeToken(rawToken) : null;
   const isAuthenticated = payload !== null;
   const role = payload?.role ?? null;
+  const typedRole = isKnownRole(role) ? role : null;
 
   // ── Unauthenticated ──────────────────────────────────────────────────────
   if (!isAuthenticated) {
@@ -58,7 +63,7 @@ export function middleware(request: NextRequest) {
   }
 
   // ── Authenticated ────────────────────────────────────────────────────────
-  const home = role ? (ROLE_HOME[role] ?? "/login") : "/login";
+  const home = typedRole ? (ROLE_HOME[typedRole] ?? "/login") : "/login";
 
   // On / → send to their home page
   if (pathname === "/") {
@@ -74,8 +79,8 @@ export function middleware(request: NextRequest) {
   }
 
   // On a forbidden section → send to their home page
-  if (role) {
-    const forbidden = ROLE_FORBIDDEN_PREFIXES[role] ?? [];
+  if (typedRole) {
+    const forbidden = ROLE_FORBIDDEN_PREFIXES[typedRole] ?? [];
     const isForbidden = forbidden.some(
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
     );
