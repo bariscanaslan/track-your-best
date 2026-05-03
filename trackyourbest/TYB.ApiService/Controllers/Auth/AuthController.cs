@@ -100,8 +100,9 @@ namespace TYB.ApiService.Controllers.Auth
 			return new CookieOptions
 			{
 				HttpOnly = true,
-				Secure = false, // Set to true in production (HTTPS)
+				Secure = true,
 				SameSite = SameSiteMode.Lax,
+				Domain = ".trackyourbest.net",
 				Expires = expires,
 				Path = "/"
 			};
