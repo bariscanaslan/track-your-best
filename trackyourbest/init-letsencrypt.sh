@@ -17,12 +17,9 @@ STAGING=0                          # set to 1 to test against Let's Encrypt stag
 # ── 1. Create dummy self-signed certs so nginx can start ─────────────────────
 echo "Creating dummy certificates so nginx can start..."
 for domain in "${DOMAINS[@]}"; do
-    mkdir -p "$(docker volume inspect tyb_certbot_certs --format '{{.Mountpoint}}')/live/$domain" 2>/dev/null || true
-
-    docker compose run --rm --entrypoint "openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-        -keyout /etc/letsencrypt/live/$domain/privkey.pem \
-        -out    /etc/letsencrypt/live/$domain/fullchain.pem \
-        -subj   '/CN=localhost'" certbot
+    docker compose run --rm --entrypoint \
+        "sh -c 'mkdir -p /etc/letsencrypt/live/$domain && openssl req -x509 -nodes -newkey rsa:2048 -days 1 -keyout /etc/letsencrypt/live/$domain/privkey.pem -out /etc/letsencrypt/live/$domain/fullchain.pem -subj /CN=localhost'" \
+        certbot
 done
 
 # ── 2. Start nginx with the dummy certs ──────────────────────────────────────
