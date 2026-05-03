@@ -1,166 +1,40 @@
-.claude/
+# her şeyi ignore et
+*
 
+# sadece bunları dahil et
+!.gitignore
+!README.md
+!trackyourbest/
+!trackyourbest/**
 
-# IDE / Editor
-.vs/
-.idea/
-.vscode/
+# explicitly ignore unwanted dirs
+simulations/
+database/
+esp32-sim/
+mobile-sim/
+backend/
+
+models_bin
+
+# trackyourbest altında git'e gitmemesi gerekenler
+trackyourbest/**/node_modules/
+trackyourbest/**/.next/
+trackyourbest/**/bin/
+trackyourbest/**/obj/
+trackyourbest/**/.env
+trackyourbest/**/.env.*
+trackyourbest/**/.venv/
+trackyourbest/**/venv/
+trackyourbest/**/__pycache__/
+trackyourbest/**/*.pyc
+trackyourbest/**/*.log
+trackyourbest/**/.vs/
+trackyourbest/**/.idea/
+trackyourbest/**/.vscode/
+
+# OS / editor
+.DS_Store
+Thumbs.db
 *.user
 *.suo
-*.userosscache
-*.sln.docstates
-
-# OS
-Thumbs.db
-.DS_Store
-
-# Logs
-*.log
-
-# .NET build outputs
-**/bin/
-**/obj/
-
-# Frontend / Node
-frontend/node_modules/
-frontend/.next/
-
-# Environment files
-**/.env
-**/.env.local
-**/.venv
-.venv
-<<<<<<< HEAD
-esp32-sim/.venv
-
-# ============================================
-# TYB MLService - Git Ignore File
-# ============================================
-
-# ============================================
-# PYTHON
-# ============================================
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-
-# Virtual Environments
-venv/
-env/
-ENV/
-.venv
-.env.local
-.virtualenv
-
-# Distribution / packaging
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Unit test / coverage
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb
-
-# pyenv
-.python-version
-
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# ============================================
-# MACHINE LEARNING MODELS & DATA
-# ============================================
-# ML Models (Large binary files - use Git LFS or cloud storage)
-TYB.MLService/models_bin/*.pkl
-TYB.MLService/models_bin/*.onnx
-TYB.MLService/models_bin/*.h5
-TYB.MLService/models_bin/*.pt
-TYB.MLService/models_bin/*.pth
-TYB.MLService/models_bin/*.joblib
-
-# EXCEPTION: Keep model metadata
-TYB.MLService/!models_bin/model_meta.json
-TYB.MLService/!models_bin/.gitkeep
-
-# Training Data (Large CSV files)
-TYB.MLService/data/*.csv
-TYB.MLService/data/*.xlsx
-TYB.MLService/data/*.json
-TYB.MLService/data/*.parquet
-
-# EXCEPTION: Keep sample/test data
-!data/sample_*.csv
-!data/.gitkeep
-
-# Temporary ML files
-*.npy
-*.npz
-TYB.MLService/checkpoints/
-TYB.MLService/logs/
-TYB.MLService/runs/
-TYB.MLService/tensorboard/
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-
-# ============================================
-# TEMPORARY FILES
-# ============================================
-TYB.MLService/tmp/
-TYB.MLService/temp/
-
-# ============================================
-# PROJECT SPECIFIC
-# ============================================
-# Output files
-
-TYB.MLService/outputs/
-TYB.MLService/results/
-TYB.MLService/cache/
-TYB.MLService/downloads/
-=======
-esp32-sim/.venv
->>>>>>> 7d8ba62135f76ced29d12f5862064e8e92309e9f
+*.tmp

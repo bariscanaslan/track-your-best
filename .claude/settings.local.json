@@ -7,7 +7,13 @@
       "Bash(find /c/Users/baris/Desktop/TYB/source-code/tyb/backend/TrackYourBest/TYB.ApiService -type f -name \"*.cs\" | xargs grep -l \"IsActive\" 2>/dev/null | head -10)",
       "Bash(grep -E \"\\(frontend|src\\)$\")",
       "Bash(dotnet restore:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(xargs grep *)",
+      "Bash(grep -v \"^.*\\\\\\\\\\(obj\\\\|bin\\\\|node_modules\\\\\\).*$\")",
+      "Bash(grep -E \"\\\\.\\(json|js|ts|md\\)$\")",
+      "Bash(grep -v \"^.*\\\\\\\\.\\(dll|exe|pdb|runtimeconfig|deps|staticwebassets\\).*$\")",
+      "Bash(grep -oP '\\\\$\\\\{[A-Z_]+[^}]*\\\\}' \"C:/Users/baris/Desktop/TYB/source-code/tyb/trackyourbest/docker-compose.yml\")",
+      "Bash(grep -o '\\\\${[A-Z_]*' \"C:/Users/baris/Desktop/TYB/source-code/tyb/trackyourbest/docker-compose.yml\")"
     ]
   }
 }
