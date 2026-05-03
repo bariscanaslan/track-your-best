@@ -54,12 +54,23 @@ builder.Services.AddSingleton<GpsSpeedCalculator>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<TripRouteDeviationWorker>();
 
-builder.Services.AddHttpClient<OsrmService>(client =>
+builder.Services.AddHttpClient<OsrmService>((serviceProvider, client) =>
 {
-	var baseUrl = builder.Configuration["TYB_OSRM_BASE_URL"]
-		?? throw new InvalidOperationException("TYB_OSRM_BASE_URL is missing in environment variables.");
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
 
-	client.BaseAddress = new Uri(baseUrl);
+    var baseUrl = config["TYB_OSRM_BASE_URL"]
+        ?? throw new InvalidOperationException("TYB_OSRM_BASE_URL is missing.");
+
+    client.BaseAddress = new Uri(baseUrl);
+
+    var clientId = config["CF_ACCESS_CLIENT_ID"];
+    var clientSecret = config["CF_ACCESS_CLIENT_SECRET"];
+
+    if (!string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret))
+    {
+        client.DefaultRequestHeaders.Add("CF-Access-Client-Id", clientId);
+        client.DefaultRequestHeaders.Add("CF-Access-Client-Secret", clientSecret);
+    }
 });
 
 builder.Services.AddHttpClient<NominatimService>(client =>
