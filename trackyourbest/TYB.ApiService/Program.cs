@@ -141,7 +141,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseCors("LocalDev");
 app.UseAuthentication();
