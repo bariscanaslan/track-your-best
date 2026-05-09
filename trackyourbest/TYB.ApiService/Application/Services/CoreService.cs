@@ -623,16 +623,14 @@ namespace TYB.ApiService.Application.Services
 			CancellationToken cancellationToken
 		)
 		{
+			if (request.OrganizationId is null)
+				throw new InvalidOperationException("Organization is required.");
+
 			var now = DateTime.UtcNow;
 			Guid? userId = request.UserId;
 
 			if (!userId.HasValue)
 			{
-				if (request.OrganizationId is null)
-				{
-					throw new InvalidOperationException("OrganizationId is required to create a user.");
-				}
-
 				if (string.IsNullOrWhiteSpace(request.Username)
 					|| string.IsNullOrWhiteSpace(request.Email)
 					|| string.IsNullOrWhiteSpace(request.FullName))

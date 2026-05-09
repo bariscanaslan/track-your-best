@@ -44,14 +44,16 @@ namespace TYB.ApiService.Controllers.Core
 			CancellationToken cancellationToken
 		)
 		{
+			if (request.OrganizationId is null)
+				return BadRequest("Organization is required.");
+
 			if (request.UserId is null)
 			{
 				if (string.IsNullOrWhiteSpace(request.Username)
 					|| string.IsNullOrWhiteSpace(request.Email)
-					|| string.IsNullOrWhiteSpace(request.FullName)
-					|| request.OrganizationId is null)
+					|| string.IsNullOrWhiteSpace(request.FullName))
 				{
-					return BadRequest("Username, Email, FullName, and OrganizationId are required to create a user.");
+					return BadRequest("Username, Email, and FullName are required to create a user.");
 				}
 			}
 

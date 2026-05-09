@@ -91,6 +91,10 @@ export default function AdminDriverCreatePage() {
   }, []);
 
   const handleSave = async () => {
+    if (!driverForm.organizationId) {
+      setError("Please select an organization.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -194,9 +198,9 @@ export default function AdminDriverCreatePage() {
           <div className="adm-card-header"><div className="adm-card-title">Driver Details</div></div>
           <div className="adm-form">
             <label className="adm-field">
-              <div className="adm-field-label">Organization</div>
-              <select className="adm-select" value={driverForm.organizationId} onChange={handleDriverChange("organizationId")}>
-                <option value="">-- none --</option>
+              <div className="adm-field-label">Organization <span style={{ color: "var(--adm-danger, #ef4444)" }}>*</span></div>
+              <select className="adm-select" value={driverForm.organizationId} onChange={handleDriverChange("organizationId")} required>
+                <option value="">-- select an organization --</option>
                 {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
               </select>
             </label>
