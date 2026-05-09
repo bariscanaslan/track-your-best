@@ -35,7 +35,7 @@ namespace TYB.ApiService.Controllers.Analytics
 				.FirstOrDefaultAsync(ct);
 
 			if (prediction is null)
-				return NotFound();
+				return NoContent();
 
 			var dto = new EtaPredictionDto
 			{

@@ -175,7 +175,7 @@ def get_pending_trips(session):
     cutoff_naive = cutoff.replace(tzinfo=None)
 
     pending = session.query(Trip).filter(
-        Trip.status == 'ongoing',
+        Trip.status.in_(['ongoing', 'paused']),
         Trip.created_at >= cutoff_naive
     ).all()
 
