@@ -13,7 +13,9 @@
       "Bash(grep -E \"\\\\.\\(json|js|ts|md\\)$\")",
       "Bash(grep -v \"^.*\\\\\\\\.\\(dll|exe|pdb|runtimeconfig|deps|staticwebassets\\).*$\")",
       "Bash(grep -oP '\\\\$\\\\{[A-Z_]+[^}]*\\\\}' \"C:/Users/baris/Desktop/TYB/source-code/tyb/trackyourbest/docker-compose.yml\")",
-      "Bash(grep -o '\\\\${[A-Z_]*' \"C:/Users/baris/Desktop/TYB/source-code/tyb/trackyourbest/docker-compose.yml\")"
+      "Bash(grep -o '\\\\${[A-Z_]*' \"C:/Users/baris/Desktop/TYB/source-code/tyb/trackyourbest/docker-compose.yml\")",
+      "Bash(Remove-Item -Path \"C:\\\\Users\\\\baris\\\\Desktop\\\\TYB\\\\source-code\\\\tyb\\\\trackyourbest\\\\frontend\\\\app\\\\\\(auth\\)\\\\\\(app\\)\\\\admin\\\\system-events\\\\page.tsx\" -Force)",
+      "Bash(Remove-Item -Path \"C:\\\\Users\\\\baris\\\\Desktop\\\\TYB\\\\source-code\\\\tyb\\\\trackyourbest\\\\frontend\\\\app\\\\\\(auth\\)\\\\\\(app\\)\\\\admin\\\\system-events\" -Force)"
     ]
   }
 }

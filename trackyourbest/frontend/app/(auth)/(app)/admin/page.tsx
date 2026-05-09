@@ -52,12 +52,6 @@ const navCards = [
     sub: "Inspect trip sessions and logs",
     icon: "📋",
   },
-  {
-    href: "/admin/system-events",
-    title: "System Events",
-    sub: "System-wide event log",
-    icon: "⚡",
-  },
 ];
 
 export default function AdminDashboardPage() {

@@ -94,10 +94,6 @@ export const sessionsApi = {
   list: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/sessions`,
 };
 
-export const systemEventsApi = {
-  list: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/system-events`,
-};
-
 export const etaApi = {
   byTrip: (tripId, baseUrl = getApiBaseUrl()) => `${baseUrl}/api/eta/trip/${tripId}`,
 };
@@ -139,6 +135,5 @@ export const api = {
   vehicles: vehiclesApi,
   trips: tripsApi,
   sessions: sessionsApi,
-  systemEvents: systemEventsApi,
   geocoding: geocodingApi,
 };

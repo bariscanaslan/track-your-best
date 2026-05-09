@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FiCpu, FiHome, FiUsers, FiTruck, FiActivity, FiLogOut } from "react-icons/fi";
+import { FiCpu, FiHome, FiUsers, FiTruck, FiLogOut } from "react-icons/fi";
 import { FaBuilding, FaCar, FaUserTie } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 
@@ -24,8 +24,6 @@ const navItems: NavItem[] = [
   { href: "/admin/vehicles", label: "Vehicles", icon: FaCar },
   { href: "/admin/drivers", label: "Drivers", icon: FaUserTie },
   { href: "/admin/trips", label: "Trips", icon: FiTruck },
-
-  { href: "/admin/system-events", label: "Events", icon: FiActivity },
 ];
 
 export default function AdminNavbar() {
