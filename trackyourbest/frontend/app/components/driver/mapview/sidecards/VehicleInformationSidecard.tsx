@@ -7,6 +7,7 @@ import { DriverInfo } from "../data/driverInfoData";
 import { MapDeviceLocation } from "../data/gpsDataInfo";
 import { VehicleInfo } from "../data/vehicleInfoData";
 import { formatToGMT3 } from "../dateUtils";
+import { resolveMediaUrl } from "../../../../utils/media";
 
 type MapSidecardProps = {
   selectedLocation: MapDeviceLocation | null;
@@ -91,10 +92,10 @@ export default function MapSidecard({
             </div>
             <div className="map-sidecard-row">
               <span className="map-sidecard-label">Image</span>
-              {driverInformation?.avatarUrl ? (
+              {resolveMediaUrl(driverInformation?.avatarUrl) ? (
                 <img
-                  src={driverInformation.avatarUrl}
-                  alt={driverInformation.fullName ?? "Driver"}
+                  src={resolveMediaUrl(driverInformation?.avatarUrl)}
+                  alt={driverInformation?.fullName ?? "Driver"}
                   className="map-sidecard-avatar"
                 />
               ) : (
