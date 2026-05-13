@@ -3,7 +3,7 @@
 "use client";
 
 import { EtaPrediction, TripSummary } from "../data/tripInfoData";
-import { humanStatus } from "../../../../../utils/tripStatus";
+import { humanStatus } from "../../../../utils/tripStatus";
 import {
   FaBan,
   FaCheck,

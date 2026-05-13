@@ -3,7 +3,7 @@
 "use client";
 
 import { TripSummary } from "../data/tripInfoData";
-import { humanStatus } from "../../../../../utils/tripStatus";
+import { humanStatus } from "../../../../utils/tripStatus";
 
 type HistorySidecardProps = {
   isOpen: boolean;
