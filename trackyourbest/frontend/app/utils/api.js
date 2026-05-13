@@ -114,6 +114,7 @@ export const authApi = {
   login: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/auth/login`,
   me: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/auth/me`,
   logout: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/auth/logout`,
+  changePassword: (baseUrl = getApiBaseUrl()) => `${baseUrl}/api/auth/change-password`,
 };
 
 export const geocodingApi = {

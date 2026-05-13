@@ -110,11 +110,6 @@ function formatDateTime(value: string) {
   });
 }
 
-function reliabilityLabel(score: number): string {
-  if (score >= 0.85) return "High";
-  if (score >= 0.6)  return "Moderate";
-  return "Low";
-}
 
 const PAGE_SIZE = 6;
 
@@ -220,9 +215,6 @@ export default function AnomalyAnalysisPage() {
         <div className="fm-list">
           {pagedRows.map((anomaly) => {
             const summary = buildSummary(anomaly.anomalyType, anomaly.flags);
-            const reliability = anomaly.confidenceScore != null
-              ? reliabilityLabel(anomaly.confidenceScore)
-              : null;
 
             return (
               <div key={anomaly.id} className="fm-anomaly-row">
@@ -275,15 +267,6 @@ export default function AnomalyAnalysisPage() {
 
                   {/* Simplified meta */}
                   <div className="fm-anomaly-meta">
-                    {reliability && (
-                      <div className="fm-list-card">
-                        <div className="fm-list-card-title">Detection Reliability</div>
-                        <div className="fm-list-card-value">{reliability}</div>
-                        <div className="fm-list-card-sub">
-                          {(anomaly.confidenceScore! * 100).toFixed(0)}% confidence
-                        </div>
-                      </div>
-                    )}
                     <div className="fm-list-card">
                       <div className="fm-list-card-title">Event Location</div>
                       <div className="fm-list-card-value">

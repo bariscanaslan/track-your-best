@@ -86,6 +86,33 @@ namespace TYB.ApiService.Controllers.Auth
 		}
 
 		/// <summary>
+		/// Changes the authenticated user's own password after verifying the current one.
+		/// </summary>
+		[HttpPost("change-password")]
+		[Authorize]
+		public async Task<IActionResult> ChangePassword(
+			[FromBody] ChangePasswordRequest request,
+			CancellationToken ct
+		)
+		{
+			if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+				return BadRequest(new { message = "Old and new passwords are required." });
+
+			var sub = User.FindFirstValue(ClaimTypes.NameIdentifier)
+				?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+			if (!Guid.TryParse(sub, out var userId))
+				return Unauthorized(new { message = "Invalid token." });
+
+			var (success, error) = await _authService.ChangePasswordAsync(userId, request.OldPassword, request.NewPassword, ct);
+
+			if (!success)
+				return BadRequest(new { message = error });
+
+			return Ok(new { message = "Password changed successfully." });
+		}
+
+		/// <summary>
 		/// Clears the JWT cookie, effectively logging the user out.
 		/// </summary>
 		[HttpPost("logout")]

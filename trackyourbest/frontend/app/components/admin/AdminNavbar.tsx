@@ -3,10 +3,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { FiCpu, FiHome, FiUsers, FiTruck, FiLogOut } from "react-icons/fi";
+import { FiCpu, FiHome, FiUsers, FiTruck, FiLogOut, FiLock } from "react-icons/fi";
 import { FaBuilding, FaCar, FaUserTie } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
+import ChangePasswordModal from "../ChangePasswordModal";
 
 import "../../components/Navbar.css";
 
@@ -30,6 +32,7 @@ export default function AdminNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -42,40 +45,53 @@ export default function AdminNavbar() {
   };
 
   return (
-    <nav className="tyb-navbar">
-      <div className="tyb-navbar-inner">
-        <div className="tyb-navbar-left">
-          <img src="/tyb-logo.png" alt="Track Your Best Logo" className="tyb-navbar-logo" />
-          <span className="tyb-navbar-brand-text">Track Your Best</span>
-        </div>
+    <>
+      <nav className="tyb-navbar">
+        <div className="tyb-navbar-inner">
+          <div className="tyb-navbar-left">
+            <img src="/tyb-logo.png" alt="Track Your Best Logo" className="tyb-navbar-logo" />
+            <span className="tyb-navbar-brand-text">Track Your Best</span>
+          </div>
 
-        <div className="tyb-navbar-buttons">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`tyb-nav-button ${isActive(item.href) ? "is-active" : ""}`}
-              >
-                <span className="tyb-nav-icon">
-                  <Icon size={18} />
-                </span>
-                <span className="tyb-nav-label">{item.label}</span>
-              </Link>
-            );
-          })}
-          <button
-            type="button"
-            className="tyb-nav-button tyb-nav-button-logout"
-            onClick={handleLogout}
-            aria-label="Logout"
-          >
-            <span className="tyb-nav-icon"><FiLogOut size={18} /></span>
-            <span className="tyb-nav-label">Logout</span>
-          </button>
+          <div className="tyb-navbar-buttons">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`tyb-nav-button ${isActive(item.href) ? "is-active" : ""}`}
+                >
+                  <span className="tyb-nav-icon">
+                    <Icon size={18} />
+                  </span>
+                  <span className="tyb-nav-label">{item.label}</span>
+                </Link>
+              );
+            })}
+            <button
+              type="button"
+              className="tyb-nav-button"
+              onClick={() => setShowChangePassword(true)}
+              aria-label="Change Password"
+            >
+              <span className="tyb-nav-icon"><FiLock size={18} /></span>
+              <span className="tyb-nav-label">Password</span>
+            </button>
+            <button
+              type="button"
+              className="tyb-nav-button tyb-nav-button-logout"
+              onClick={handleLogout}
+              aria-label="Logout"
+            >
+              <span className="tyb-nav-icon"><FiLogOut size={18} /></span>
+              <span className="tyb-nav-label">Logout</span>
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
+    </>
   );
 }

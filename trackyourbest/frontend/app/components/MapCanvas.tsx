@@ -15,20 +15,20 @@ const CENTER: [number, number] = [41.02496, 28.958999];
 
 const pulsingIcon: DivIcon = L.divIcon({
   className: "pulsing-marker",
-  iconSize: [28, 28],
-  iconAnchor: [12, 12],
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
 });
 
 const selectedVehicleIcon: DivIcon = L.divIcon({
   className: "pulsing-marker is-selected",
-  iconSize: [32, 32],
-  iconAnchor: [14, 14],
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
 });
 
 const destinationIcon: DivIcon = L.divIcon({
   className: "route-destination-marker",
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
 });
 
 const filteredStartIcon: DivIcon = L.divIcon({

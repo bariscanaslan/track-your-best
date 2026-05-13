@@ -3,6 +3,7 @@
 "use client";
 
 import { TripSummary } from "../data/tripInfoData";
+import { humanStatus } from "../../../../../utils/tripStatus";
 
 type HistorySidecardProps = {
   isOpen: boolean;
@@ -73,7 +74,12 @@ export default function HistorySidecard({
               className="map-sidecard-input"
               type="datetime-local"
               value={filterStart}
-              onChange={(event) => onFilterStartChange(event.target.value)}
+              max={filterEnd || undefined}
+              onChange={(event) => {
+                const next = event.target.value;
+                onFilterStartChange(next);
+                if (filterEnd && next && filterEnd < next) onFilterEndChange("");
+              }}
             />
           </div>
           <div className="map-sidecard-field">
@@ -85,6 +91,7 @@ export default function HistorySidecard({
               className="map-sidecard-input"
               type="datetime-local"
               value={filterEnd}
+              min={filterStart || undefined}
               onChange={(event) => onFilterEndChange(event.target.value)}
             />
           </div>
@@ -119,7 +126,7 @@ export default function HistorySidecard({
               <div className="map-sidecard-row is-tight">
                 <span className="map-sidecard-label">{trip.tripName ?? trip.id}</span>
                 <span className="map-sidecard-value">
-                  {(trip.status ?? "Unknown").toLowerCase()} · {new Date(trip.startTime).toLocaleDateString()}
+                  {humanStatus(trip.status)} · {new Date(trip.startTime).toLocaleDateString()}
                 </span>
               </div>
               <div className="map-sidecard-row is-tight">

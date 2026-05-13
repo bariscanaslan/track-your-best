@@ -3,6 +3,7 @@
 "use client";
 
 import { EtaPrediction, TripSummary } from "../data/tripInfoData";
+import { humanStatus } from "../../../../../utils/tripStatus";
 import {
   FaBan,
   FaCheck,
@@ -145,7 +146,7 @@ export default function TripsSidecard({
               <div className="map-sidecard-stats">
                 <div className="map-sidecard-stat">
                   <span className="map-sidecard-label">Status</span>
-                  <span className="map-sidecard-value">{activeTrip.status ?? "Unknown"}</span>
+                  <span className="map-sidecard-value">{humanStatus(activeTrip.status)}</span>
                 </div>
                 <div className="map-sidecard-stat">
                   <span className="map-sidecard-label">Pause Count</span>

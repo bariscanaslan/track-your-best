@@ -35,7 +35,7 @@ namespace TYB.ApiService.Application.Services
 			var user = await _dbContext.Users
 				.AsNoTracking()
 				.FirstOrDefaultAsync(
-					u => u.Email.ToLower() == loginLower || u.Username == loginLower,
+					u => u.Email.ToLower() == loginLower || u.Username.ToLower() == loginLower,
 					ct
 				);
 
@@ -56,6 +56,37 @@ namespace TYB.ApiService.Application.Services
 				);
 
 			return (MapToDto(user), null);
+		}
+
+		public async Task<(bool success, string? error)> ChangePasswordAsync(
+			Guid userId,
+			string oldPassword,
+			string newPassword,
+			CancellationToken ct
+		)
+		{
+			var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+
+			if (user is null)
+				return (false, "User not found.");
+
+			if (!BCrypt.Net.BCrypt.Verify(oldPassword, user.PasswordHash))
+				return (false, "Current password is incorrect.");
+
+			if (newPassword.Length < 8)
+				return (false, "New password must be at least 8 characters.");
+
+			if (!System.Text.RegularExpressions.Regex.IsMatch(newPassword, @"[A-Z]") ||
+				!System.Text.RegularExpressions.Regex.IsMatch(newPassword, @"[a-z]") ||
+				!System.Text.RegularExpressions.Regex.IsMatch(newPassword, @"[0-9]") ||
+				!System.Text.RegularExpressions.Regex.IsMatch(newPassword, @"[^A-Za-z0-9]"))
+				return (false, "New password must contain uppercase, lowercase, a digit, and a special character.");
+
+			user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+			user.UpdatedAt = DateTime.UtcNow;
+			await _dbContext.SaveChangesAsync(ct);
+
+			return (true, null);
 		}
 
 		public string GenerateToken(AuthUserDto user)
