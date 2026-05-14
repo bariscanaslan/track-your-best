@@ -797,3 +797,105 @@
     justify-content: flex-start;
   }
 }
+
+@media (max-width: 640px) {
+  /* ── Footer: compact strip on mobile ─────────────────────── */
+  .map-footer {
+    bottom: 10px;
+    width: calc(100% - 20px);
+  }
+
+  .map-footer-inner {
+    padding: 10px 14px;
+    min-height: 0;
+    gap: 6px;
+  }
+
+  .map-footer-title-text,
+  .map-footer-title-subtext {
+    display: none;
+  }
+
+  .driver-stats-row {
+    margin-top: 0;
+    gap: 6px;
+  }
+
+  .driver-speed-card {
+    padding: 5px 8px;
+    gap: 6px;
+    border-radius: 10px;
+  }
+
+  .driver-speed-card-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+  }
+
+  .driver-speed-card-value {
+    font-size: 14px;
+  }
+
+  .driver-speed-card-label {
+    font-size: 9px;
+  }
+
+  .map-footer-actions {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .map-footer-action,
+  .map-footer-action-red {
+    padding: 7px 11px;
+    font-size: 12px;
+    gap: 5px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+
+  /* ── Sidecard: bottom sheet on mobile ────────────────────── */
+  .map-sidecard {
+    top: auto !important;
+    bottom: 0;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0;
+    max-height: 72vh;
+    border-radius: 20px 20px 0 0;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.20);
+    transform: translateY(110%);
+    z-index: 1201;
+    padding: 8px 16px 16px;
+  }
+
+  .map-sidecard::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: #dde3ed;
+    margin: 0 auto 12px;
+    flex-shrink: 0;
+  }
+
+  .map-sidecard.is-left {
+    left: 0 !important;
+    right: 0 !important;
+    border-right: none;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.20);
+    transform: translateY(110%);
+  }
+
+  .map-sidecard.is-open {
+    transform: translateY(0);
+  }
+}
