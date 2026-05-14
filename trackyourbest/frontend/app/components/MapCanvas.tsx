@@ -15,20 +15,20 @@ const CENTER: [number, number] = [41.02496, 28.958999];
 
 const pulsingIcon: DivIcon = L.divIcon({
   className: "pulsing-marker",
-  iconSize: [34, 34],
-  iconAnchor: [17, 17],
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
 });
 
 const selectedVehicleIcon: DivIcon = L.divIcon({
   className: "pulsing-marker is-selected",
-  iconSize: [34, 34],
-  iconAnchor: [17, 17],
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
 });
 
 const destinationIcon: DivIcon = L.divIcon({
   className: "route-destination-marker",
-  iconSize: [22, 22],
-  iconAnchor: [11, 11],
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
 });
 
 const filteredStartIcon: DivIcon = L.divIcon({
@@ -224,39 +224,6 @@ function SelectedVehicleFollower({
   return null;
 }
 
-function AllMarkersFollower({ locations }: { locations: MapDeviceLocation[] }) {
-  const map = useMap();
-  const hasFitRef = useRef(false);
-  const lastFitRef = useRef(0);
-
-  useEffect(() => {
-    if (locations.length === 0) return;
-
-    const points = locations.map((l): [number, number] => [l.latitude, l.longitude]);
-    const bounds = L.latLngBounds(points);
-    if (!bounds.isValid()) return;
-
-    const now = Date.now();
-
-    if (!hasFitRef.current) {
-      map.flyToBounds(bounds, { padding: [60, 60], maxZoom: 16, animate: true, duration: 0.9 });
-      hasFitRef.current = true;
-      lastFitRef.current = now;
-      return;
-    }
-
-    if (now - lastFitRef.current < 450) return;
-
-    const someOutOfView = points.some((p) => !map.getBounds().pad(0.1).contains(p));
-    if (!someOutOfView) return;
-
-    map.flyToBounds(bounds, { padding: [60, 60], maxZoom: 16, animate: true, duration: 0.8 });
-    lastFitRef.current = now;
-  }, [map, locations]);
-
-  return null;
-}
-
 type MapCanvasProps = {
   deviceLocations: MapDeviceLocation[];
   selectedVehicleId: string | null;
@@ -355,15 +322,12 @@ export default function MapCanvas({
       />
       <MapInitialBounds points={initialBoundsPoints} />
       <MapFocusFollower focusPoint={focusPoint} focusZoom={focusZoom} />
-      {shouldFollowSelected && selectedVehicleId && (
+      {shouldFollowSelected && (
         <SelectedVehicleFollower
           selectedVehicleId={selectedVehicleId}
           trackedPoint={trackedSelectedPoint}
           followZoom={selectedFollowZoom}
         />
-      )}
-      {shouldFollowSelected && !selectedVehicleId && deviceLocations.length > 0 && (
-        <AllMarkersFollower locations={deviceLocations} />
       )}
 
       <ZoomControl position="bottomleft" />
