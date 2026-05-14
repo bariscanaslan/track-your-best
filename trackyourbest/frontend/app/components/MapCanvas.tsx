@@ -21,8 +21,8 @@ const pulsingIcon: DivIcon = L.divIcon({
 
 const selectedVehicleIcon: DivIcon = L.divIcon({
   className: "pulsing-marker is-selected",
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
 });
 
 const destinationIcon: DivIcon = L.divIcon({
@@ -42,6 +42,16 @@ const filteredEndIcon: DivIcon = L.divIcon({
   iconSize: [22, 22],
   iconAnchor: [11, 11],
 });
+
+const MARKER_MIN_ZOOM = 8;
+
+function ZoomWatcher({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+  const map = useMap();
+  useMapEvents({
+    zoomend: () => onZoomChange(map.getZoom()),
+  });
+  return null;
+}
 
 function MapClickCloser({
   onClose,
@@ -263,6 +273,7 @@ export default function MapCanvas({
   onMapClick,
   onMapBackgroundClick,
 }: MapCanvasProps) {
+  const [currentZoom, setCurrentZoom] = useState(16);
   const [selectedAnimatedPoint, setSelectedAnimatedPoint] = useState<{
     vehicleId: string;
     point: [number, number];
@@ -314,6 +325,7 @@ export default function MapCanvas({
       zoomControl={false}
       style={{ height: "100%", width: "100%" }}
     >
+      <ZoomWatcher onZoomChange={setCurrentZoom} />
       <MapClickCloser
         onClose={onClosePanel}
         routeMode={routeMode}
@@ -349,11 +361,11 @@ export default function MapCanvas({
         />
       ))}
 
-      {destinationPoints.map((point, index) => (
+      {currentZoom >= MARKER_MIN_ZOOM && destinationPoints.map((point, index) => (
         <Marker key={`goal-${index}-${point[0]}-${point[1]}`} position={point} icon={destinationIcon} />
       ))}
 
-      {filteredStartPoint && (
+      {currentZoom >= MARKER_MIN_ZOOM && filteredStartPoint && (
         <Marker
           key={`filtered-start-${filteredStartPoint[0]}-${filteredStartPoint[1]}`}
           position={filteredStartPoint}
@@ -361,7 +373,7 @@ export default function MapCanvas({
         />
       )}
 
-      {filteredEndPoint && (
+      {currentZoom >= MARKER_MIN_ZOOM && filteredEndPoint && (
         <Marker
           key={`filtered-end-${filteredEndPoint[0]}-${filteredEndPoint[1]}`}
           position={filteredEndPoint}
@@ -369,7 +381,7 @@ export default function MapCanvas({
         />
       )}
 
-      {deviceLocations.map((location) => {
+      {currentZoom >= MARKER_MIN_ZOOM && deviceLocations.map((location) => {
         const locationKey = location.vehicleId ?? location.deviceId;
         return (
           <AnimatedVehicleMarker

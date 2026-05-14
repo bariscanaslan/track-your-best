@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { FiMap, FiLogOut, FiLock } from "react-icons/fi";
+import { FiMap, FiLogOut, FiLock, FiMenu, FiX } from "react-icons/fi";
 import { FaMapMarkedAlt } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import ChangePasswordModal from "../ChangePasswordModal";
@@ -27,6 +27,7 @@ export default function DriverNavbar() {
   const router = useRouter();
   const { logout } = useAuth();
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const mapStyleKey = "tyb.mapStyle";
   const resolveStoredStyle = (value: string | null) => {
     if (value === "satellite" || value === "light" || value === "colorful") {
@@ -137,6 +138,64 @@ export default function DriverNavbar() {
               <span className="tyb-nav-icon"><FiLogOut size={18} /></span>
               <span className="tyb-nav-label">Logout</span>
             </button>
+          </div>
+
+          <div className="tyb-hamburger-wrapper">
+            {menuOpen && (
+              <div className="tyb-hamburger-overlay" onClick={() => setMenuOpen(false)} />
+            )}
+            <button
+              type="button"
+              className="tyb-hamburger-btn"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Menu"
+            >
+              {menuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+            </button>
+            {menuOpen && (
+              <div className="tyb-hamburger-menu">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`tyb-hamburger-menu-item ${isActive(item.href) ? "is-active" : ""}`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Icon size={16} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+                {isMapRoute && (
+                  <button
+                    type="button"
+                    className="tyb-hamburger-menu-item"
+                    onClick={() => { handleToggleStyle(); setMenuOpen(false); }}
+                  >
+                    <FaMapMarkedAlt size={16} />
+                    {labelByStyle[mapStyle]}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="tyb-hamburger-menu-item"
+                  onClick={() => { setShowChangePassword(true); setMenuOpen(false); }}
+                >
+                  <FiLock size={16} />
+                  Password
+                </button>
+                <button
+                  type="button"
+                  className="tyb-hamburger-menu-item is-logout"
+                  onClick={async () => { await logout(); router.replace("/login"); }}
+                >
+                  <FiLogOut size={16} />
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </nav>

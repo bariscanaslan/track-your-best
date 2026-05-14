@@ -91,8 +91,8 @@
 /* ── Markers ───────────────────────────────────────────────── */
 .pulsing-marker {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 24px;
+  height: 24px;
   color: #ffffff !important;
   filter: drop-shadow(0 6px 14px rgba(6, 16, 38, 0.45));
 }
@@ -100,7 +100,7 @@
 .pulsing-marker::before {
   content: "";
   position: absolute;
-  inset: 7px;
+  inset: 5px;
   border-radius: 9999px;
   background: radial-gradient(circle at 40% 40%, #ffffff 0%, #ffffff 35%, #0ea5e9 60%, #0b4f85 100%);
   box-shadow:
