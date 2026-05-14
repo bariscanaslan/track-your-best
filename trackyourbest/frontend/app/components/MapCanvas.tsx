@@ -224,6 +224,39 @@ function SelectedVehicleFollower({
   return null;
 }
 
+function AllMarkersFollower({ locations }: { locations: MapDeviceLocation[] }) {
+  const map = useMap();
+  const hasFitRef = useRef(false);
+  const lastFitRef = useRef(0);
+
+  useEffect(() => {
+    if (locations.length === 0) return;
+
+    const points = locations.map((l): [number, number] => [l.latitude, l.longitude]);
+    const bounds = L.latLngBounds(points);
+    if (!bounds.isValid()) return;
+
+    const now = Date.now();
+
+    if (!hasFitRef.current) {
+      map.flyToBounds(bounds, { padding: [60, 60], maxZoom: 16, animate: true, duration: 0.9 });
+      hasFitRef.current = true;
+      lastFitRef.current = now;
+      return;
+    }
+
+    if (now - lastFitRef.current < 450) return;
+
+    const someOutOfView = points.some((p) => !map.getBounds().pad(0.1).contains(p));
+    if (!someOutOfView) return;
+
+    map.flyToBounds(bounds, { padding: [60, 60], maxZoom: 16, animate: true, duration: 0.8 });
+    lastFitRef.current = now;
+  }, [map, locations]);
+
+  return null;
+}
+
 type MapCanvasProps = {
   deviceLocations: MapDeviceLocation[];
   selectedVehicleId: string | null;
@@ -322,12 +355,15 @@ export default function MapCanvas({
       />
       <MapInitialBounds points={initialBoundsPoints} />
       <MapFocusFollower focusPoint={focusPoint} focusZoom={focusZoom} />
-      {shouldFollowSelected && (
+      {shouldFollowSelected && selectedVehicleId && (
         <SelectedVehicleFollower
           selectedVehicleId={selectedVehicleId}
           trackedPoint={trackedSelectedPoint}
           followZoom={selectedFollowZoom}
         />
+      )}
+      {shouldFollowSelected && !selectedVehicleId && deviceLocations.length > 0 && (
+        <AllMarkersFollower locations={deviceLocations} />
       )}
 
       <ZoomControl position="bottomleft" />
