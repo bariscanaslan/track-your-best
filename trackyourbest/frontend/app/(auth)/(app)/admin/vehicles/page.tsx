@@ -9,6 +9,7 @@ import "../admin.css";
 type VehicleRow = {
   id: string;
   organizationId?: string | null;
+  organizationName?: string | null;
   deviceId?: string | null;
   deviceName?: string | null;
   vehicleName: string;
@@ -143,6 +144,11 @@ export default function AdminVehiclesPage() {
               </div>
             </div>
             <div className="adm-list-details">
+              <div className="adm-list-card">
+                <div className="adm-list-card-title">Organization</div>
+                <div className="adm-list-card-value">{vehicle.organizationName || "-"}</div>
+                <div className="adm-list-card-sub">{vehicle.organizationId ? vehicle.organizationId.slice(0, 8) + "..." : "-"}</div>
+              </div>
               <div className="adm-list-card">
                 <div className="adm-list-card-title">Device</div>
                 <div className="adm-list-card-value">{vehicle.deviceName || "-"}</div>

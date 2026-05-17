@@ -6,10 +6,11 @@ import { useEffect, useState } from "react";
 import AvatarUploadField from "@/app/components/forms/AvatarUploadField";
 import { useStagedImage } from "@/app/hooks/useStagedImage";
 import { uploadProfileImage } from "@/app/utils/media";
-import { driversApi, usersApi, vehiclesApi } from "../../../../../utils/api";
+import { driversApi, organizationsApi, usersApi, vehiclesApi } from "../../../../../utils/api";
 import "../../admin.css";
 
 type DriverListItem = { id: string; vehicleId?: string | null };
+type OrgOption = { id: string; name: string };
 
 type DriverDetail = {
   id: string;
@@ -33,7 +34,7 @@ type DriverDetail = {
   lastLogin?: string | null;
 };
 
-type VehicleOption = { id: string; vehicleName: string };
+type VehicleOption = { id: string; vehicleName: string; organizationId?: string | null };
 
 const toDateInput = (value?: string | null) => {
   if (!value) return "";
@@ -61,6 +62,7 @@ export default function AdminDriverEditPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [driver, setDriver] = useState<DriverDetail | null>(null);
+  const [orgs, setOrgs] = useState<OrgOption[]>([]);
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
   const [busyVehicles, setBusyVehicles] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +72,7 @@ export default function AdminDriverEditPage() {
 
   const [userForm, setUserForm] = useState({ fullName: "", email: "", phone: "", avatarUrl: "" });
   const [driverForm, setDriverForm] = useState({
+    organizationId: "",
     vehicleId: "",
     licenseNumber: "",
     licenseType: "",
@@ -107,6 +110,7 @@ export default function AdminDriverEditPage() {
       setDriver(data);
       setUserForm({ fullName: data.fullName ?? "", email: data.email ?? "", phone: data.phone ?? "", avatarUrl: data.avatarUrl ?? "" });
       setDriverForm({
+        organizationId: data.organizationId ?? "",
         vehicleId: data.vehicleId ?? "",
         licenseNumber: data.licenseNumber ?? "",
         licenseType: data.licenseType ?? "",
@@ -126,11 +130,12 @@ export default function AdminDriverEditPage() {
 
   useEffect(() => {
     fetchDriver();
-    const fetchVehicles = async () => {
+    const fetchFormData = async () => {
       try {
-        const [vehRes, drvRes] = await Promise.allSettled([
+        const [vehRes, drvRes, orgRes] = await Promise.allSettled([
           fetch(vehiclesApi.listAll(apiBase), { credentials: "include" }),
           fetch(driversApi.listAll(apiBase), { credentials: "include" }),
+          fetch(organizationsApi.list(apiBase), { credentials: "include" }),
         ]);
         if (vehRes.status === "fulfilled" && vehRes.value.ok) {
           const data = await vehRes.value.json();
@@ -145,9 +150,13 @@ export default function AdminDriverEditPage() {
           );
           setBusyVehicles(busy);
         }
+        if (orgRes.status === "fulfilled" && orgRes.value.ok) {
+          const data = await orgRes.value.json();
+          setOrgs(Array.isArray(data) ? data : []);
+        }
       } catch { setVehicles([]); }
     };
-    fetchVehicles();
+    fetchFormData();
   }, [driverId]);
 
   const handleSave = async () => {
@@ -182,7 +191,7 @@ export default function AdminDriverEditPage() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          organizationId: driver.organizationId ?? null,
+          organizationId: driverForm.organizationId || null,
           userId: driver.userId ?? null,
           vehicleId: driverForm.vehicleId || null,
           licenseNumber: driverForm.licenseNumber.trim(),
@@ -272,18 +281,40 @@ export default function AdminDriverEditPage() {
             <div className="adm-card-header"><div className="adm-card-title">Driver Details</div></div>
             <div className="adm-form">
               <label className="adm-field">
+                <div className="adm-field-label">Organization</div>
+                <select
+                  className="adm-select"
+                  value={driverForm.organizationId}
+                  onChange={(e) => {
+                    const newOrgId = e.target.value;
+                    setDriverForm((prev) => ({
+                      ...prev,
+                      organizationId: newOrgId,
+                      vehicleId: prev.vehicleId && vehicles.find((v) => v.id === prev.vehicleId)?.organizationId === newOrgId ? prev.vehicleId : "",
+                    }));
+                  }}
+                >
+                  <option value="">-- no organization --</option>
+                  {orgs.map((o) => (
+                    <option key={o.id} value={o.id}>{o.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="adm-field">
                 <div className="adm-field-label">Vehicle</div>
                 <select className="adm-select" value={driverForm.vehicleId} onChange={handleDriverChange("vehicleId")}>
                   <option value="">-- no vehicle --</option>
-                  {vehicles.map((v) => {
-                    const isCurrent = v.id === driverForm.vehicleId;
-                    if (busyVehicles.has(v.id) && !isCurrent) return null;
-                    return (
-                      <option key={v.id} value={v.id}>
-                        {v.vehicleName}{isCurrent ? " (current)" : ""}
-                      </option>
-                    );
-                  })}
+                  {vehicles
+                    .filter((v) => !driverForm.organizationId || v.organizationId === driverForm.organizationId)
+                    .map((v) => {
+                      const isCurrent = v.id === driverForm.vehicleId;
+                      if (busyVehicles.has(v.id) && !isCurrent) return null;
+                      return (
+                        <option key={v.id} value={v.id}>
+                          {v.vehicleName}{isCurrent ? " (current)" : ""}
+                        </option>
+                      );
+                    })}
                 </select>
               </label>
               <label className="adm-field">

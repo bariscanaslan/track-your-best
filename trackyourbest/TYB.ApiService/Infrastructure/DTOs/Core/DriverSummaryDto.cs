@@ -3,6 +3,8 @@ namespace TYB.ApiService.Infrastructure.DTOs.Core
 	public class DriverSummaryDto
 	{
 		public Guid Id { get; set; }
+		public Guid? OrganizationId { get; set; }
+		public string? OrganizationName { get; set; }
 		public Guid? VehicleId { get; set; }
 		public string? VehicleName { get; set; }
 		public Guid? UserId { get; set; }

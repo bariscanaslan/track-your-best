@@ -4,6 +4,7 @@ namespace TYB.ApiService.Infrastructure.DTOs.Core
 	{
 		public Guid Id { get; set; }
 		public Guid? OrganizationId { get; set; }
+		public string? OrganizationName { get; set; }
 		public Guid? DeviceId { get; set; }
 		public string? DeviceName { get; set; }
 		public string VehicleName { get; set; } = string.Empty;

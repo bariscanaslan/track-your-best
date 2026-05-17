@@ -547,10 +547,14 @@ namespace TYB.ApiService.Application.Services
 				from user in userJoin.DefaultIfEmpty()
 				join vehicle in _dbContext.Vehicles.AsNoTracking() on driver.VehicleId equals vehicle.Id into vehicleJoin
 				from vehicle in vehicleJoin.DefaultIfEmpty()
+				join org in _dbContext.Organizations.AsNoTracking() on driver.OrganizationId equals org.Id into orgJoin
+				from org in orgJoin.DefaultIfEmpty()
 				orderby driver.LicenseNumber
 				select new DriverSummaryDto
 				{
 					Id = driver.Id,
+					OrganizationId = driver.OrganizationId,
+					OrganizationName = org != null ? org.Name : null,
 					VehicleId = driver.VehicleId,
 					VehicleName = vehicle != null ? vehicle.VehicleName : null,
 					UserId = driver.UserId,
@@ -593,9 +597,13 @@ namespace TYB.ApiService.Application.Services
 				from user in userJoin.DefaultIfEmpty()
 				join vehicle in _dbContext.Vehicles.AsNoTracking() on driver.VehicleId equals vehicle.Id into vehicleJoin
 				from vehicle in vehicleJoin.DefaultIfEmpty()
+				join org in _dbContext.Organizations.AsNoTracking() on driver.OrganizationId equals org.Id into orgJoin
+				from org in orgJoin.DefaultIfEmpty()
 				select new DriverSummaryDto
 				{
 					Id = driver.Id,
+					OrganizationId = driver.OrganizationId,
+					OrganizationName = org != null ? org.Name : null,
 					VehicleId = driver.VehicleId,
 					VehicleName = vehicle != null ? vehicle.VehicleName : null,
 					UserId = driver.UserId,
@@ -772,11 +780,14 @@ namespace TYB.ApiService.Application.Services
 				from vehicle in vehiclesQuery
 				join device in _dbContext.Devices.AsNoTracking() on vehicle.DeviceId equals device.Id into deviceJoin
 				from device in deviceJoin.DefaultIfEmpty()
+				join org in _dbContext.Organizations.AsNoTracking() on vehicle.OrganizationId equals org.Id into orgJoin
+				from org in orgJoin.DefaultIfEmpty()
 				orderby vehicle.VehicleName
 				select new VehicleSummaryDto
 				{
 					Id = vehicle.Id,
 					OrganizationId = vehicle.OrganizationId,
+					OrganizationName = org != null ? org.Name : null,
 					DeviceId = vehicle.DeviceId,
 					DeviceName = device != null ? device.DeviceName : null,
 					VehicleName = vehicle.VehicleName,
@@ -814,10 +825,13 @@ namespace TYB.ApiService.Application.Services
 				from vehicle in vehiclesQuery
 				join device in _dbContext.Devices.AsNoTracking() on vehicle.DeviceId equals device.Id into deviceJoin
 				from device in deviceJoin.DefaultIfEmpty()
+				join org in _dbContext.Organizations.AsNoTracking() on vehicle.OrganizationId equals org.Id into orgJoin
+				from org in orgJoin.DefaultIfEmpty()
 				select new VehicleSummaryDto
 				{
 					Id = vehicle.Id,
 					OrganizationId = vehicle.OrganizationId,
+					OrganizationName = org != null ? org.Name : null,
 					DeviceId = vehicle.DeviceId,
 					DeviceName = device != null ? device.DeviceName : null,
 					VehicleName = vehicle.VehicleName,

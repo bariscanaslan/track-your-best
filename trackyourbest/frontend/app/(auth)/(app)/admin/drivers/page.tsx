@@ -10,6 +10,7 @@ import "../admin.css";
 type DriverRow = {
   id: string;
   organizationId?: string | null;
+  organizationName?: string | null;
   vehicleId?: string | null;
   vehicleName?: string | null;
   licenseNumber: string;
@@ -229,6 +230,13 @@ export default function AdminDriversPage() {
             </div>
 
             <div className="adm-list-details">
+              <div className="adm-list-card">
+                <div className="adm-list-card-title">Organization</div>
+                <div className="adm-list-card-value">{driver.organizationName || "-"}</div>
+                <div className="adm-list-card-sub">
+                  {driver.organizationId ? driver.organizationId.slice(0, 8) + "..." : "-"}
+                </div>
+              </div>
               <div className="adm-list-card">
                 <div className="adm-list-card-title">Vehicle</div>
                 <div className="adm-list-card-value">{driver.vehicleName || "-"}</div>
