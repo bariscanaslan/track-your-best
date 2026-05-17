@@ -2,13 +2,11 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 
 import FleetManagerMapFooter from "./FleetManagerMapFooter";
-
 import MapCanvas from "../../MapCanvas";
-
 import VehicleInformationSidecard from "../mapview/sidecards/VehicleInformationSidecard";
 import TripsSidecard from "../mapview/sidecards/TripsSidecard";
 import HistorySidecard from "../mapview/sidecards/HistorySidecard";
@@ -23,6 +21,15 @@ import { EtaPrediction } from "./data/tripInfoData";
 
 import "../../../components/MapView.css";
 
+// Single discriminated union replaces the previous four separate route-path states.
+// Only one route is ever active at a time; setting a new kind automatically discards the old one.
+type DisplayedRoute =
+  | { kind: "active-trip"; path: [number, number][] }
+  | { kind: "past-trip";   path: [number, number][] }
+  | { kind: "planned";     path: [number, number][] }
+  | { kind: "filtered";    path: [number, number][]; startPt: [number, number]; endPt: [number, number] }
+  | null;
+
 export default function FleetManagerMapView() {
   const ACTIVE_TRIP_REFRESH_MS = 5000;
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -32,30 +39,22 @@ export default function FleetManagerMapView() {
 
   const [deviceLocations, setDeviceLocations] = useState<MapDeviceLocation[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<MapDeviceLocation | null>(null);
-
   const [error, setError] = useState<string | null>(null);
-
   const [activePanel, setActivePanel] = useState<"trips" | "vehicle" | "history" | null>(null);
-
   const [routeMode, setRouteMode] = useState(false);
-  const [routePath, setRoutePath] = useState<Array<[number, number]>>([]);
-  const [activeTripRoutePath, setActiveTripRoutePath] = useState<Array<[number, number]>>([]);
-  const [visibleTripRoutes, setVisibleTripRoutes] = useState<Array<Array<[number, number]>>>([]);
-  const [filteredRoutePath, setFilteredRoutePath] = useState<Array<[number, number]>>([]);
 
-  const [destinationPoint, setDestinationPoint] = useState<[number, number] | null>(null);
+  // --- Single route state ---
+  const [displayedRoute, setDisplayedRoute] = useState<DisplayedRoute>(null);
+
   const [pendingTrip, setPendingTrip] = useState<TripPlanPayload | null>(null);
-
   const [isRouting, setIsRouting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [hasApprovedRoute, setHasApprovedRoute] = useState(false);
-
   const [routeError, setRouteError] = useState<string | null>(null);
 
   const [activeTrip, setActiveTrip] = useState<TripSummary | null>(null);
   const [activeTripError, setActiveTripError] = useState<string | null>(null);
   const [isLoadingActiveTrip, setIsLoadingActiveTrip] = useState(false);
-  const [shouldShowActiveTripRoute, setShouldShowActiveTripRoute] = useState(false);
   const [eta, setEta] = useState<EtaPrediction | null>(null);
   const [pastTrips, setPastTrips] = useState<TripSummary[]>([]);
   const [pastTripsError, setPastTripsError] = useState<string | null>(null);
@@ -64,20 +63,16 @@ export default function FleetManagerMapView() {
   const [tripName, setTripName] = useState("");
   const [startAddressInput, setStartAddressInput] = useState("");
   const [endAddressInput, setEndAddressInput] = useState("");
-
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [isResolvingStart, setIsResolvingStart] = useState(false);
   const [isResolvingEnd, setIsResolvingEnd] = useState(false);
-
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
-  
+
   const [deviceInformation, setDeviceInformation] = useState<DeviceInfo | null>(null);
   const [vehicleInformation, setVehicleInformation] = useState<VehicleInfo | null>(null);
   const [driverInformation, setDriverInformation] = useState<DriverInfo | null>(null);
-
   const [informationError, setInformationError] = useState<string | null>(null);
   const [isLoadingInformation, setIsLoadingInformation] = useState(false);
-
   const [driverError, setDriverError] = useState<string | null>(null);
   const [isLoadingDriver, setIsLoadingDriver] = useState(false);
   const [driverScore, setDriverScore] = useState<number | null>(null);
@@ -90,72 +85,58 @@ export default function FleetManagerMapView() {
   const [mapStyle, setMapStyle] = useState<"satellite" | "light" | "colorful">("colorful");
 
   const selectedLocationRef = useRef<MapDeviceLocation | null>(null);
+  // Ref (not state) — toggling it must not trigger re-renders; it only gates the activeTrip effect.
+  const pinToActiveTripRef = useRef(false);
 
+  // ── Error helpers ──────────────────────────────────────────────────────────
   type FetchErrorCode = "NOT_FOUND" | "FORBIDDEN" | "UNAUTHORIZED" | "SERVER_ERROR" | "UNKNOWN";
-
-  interface FetchError {
-    code: FetchErrorCode;
-    message: string;
-  }
+  interface FetchError { code: FetchErrorCode; message: string; }
 
   const resolveHttpError = (status: number, context: string): FetchError => {
     switch (status) {
-      case 401:
-        return { code: "UNAUTHORIZED", message: `${context}: Session expired, please log in again.` };
-      case 403:
-        return { code: "FORBIDDEN", message: `${context}: You do not have permission to access this resource.` };
-      case 404:
-        return { code: "NOT_FOUND", message: `${context}: Record not found.` };
-      case 500:
-      case 502:
-      case 503:
+      case 401: return { code: "UNAUTHORIZED", message: `${context}: Session expired, please log in again.` };
+      case 403: return { code: "FORBIDDEN",    message: `${context}: You do not have permission to access this resource.` };
+      case 404: return { code: "NOT_FOUND",    message: `${context}: Record not found.` };
+      case 500: case 502: case 503:
         return { code: "SERVER_ERROR", message: `${context}: Server error, please try again later.` };
-      default:
-        return { code: "UNKNOWN", message: `${context}: An unexpected error occurred (${status}).` };
+      default:  return { code: "UNKNOWN",      message: `${context}: An unexpected error occurred (${status}).` };
     }
   };
 
-  const routeKey = (path: Array<[number, number]>) =>
-    `${path.length}-${path[0]?.[0]}-${path[0]?.[1]}-${path[path.length - 1]?.[0]}-${path[path.length - 1]?.[1]}`;
+  // ── Map style ──────────────────────────────────────────────────────────────
   const mapStyleKey = "tyb.mapStyle";
-
   const resolveStoredStyle = (value: string | null) => {
-    if (value === "satellite" || value === "light" || value === "colorful") {
-      return value;
-    }
+    if (value === "satellite" || value === "light" || value === "colorful") return value;
     return "colorful";
   };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const stored = resolveStoredStyle(window.localStorage.getItem(mapStyleKey));
     setMapStyle(stored);
-
     const handleStyleEvent = (event: Event) => {
       const next = resolveStoredStyle((event as CustomEvent).detail as string | null);
       setMapStyle(next);
       window.localStorage.setItem(mapStyleKey, next);
     };
-
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== mapStyleKey) return;
       setMapStyle(resolveStoredStyle(event.newValue));
     };
-
     window.addEventListener("tyb:map-style", handleStyleEvent as EventListener);
     window.addEventListener("storage", handleStorage);
-
     return () => {
       window.removeEventListener("tyb:map-style", handleStyleEvent as EventListener);
       window.removeEventListener("storage", handleStorage);
     };
   }, []);
 
+  // ── Sync selectedLocation ref ──────────────────────────────────────────────
   useEffect(() => {
     selectedLocationRef.current = selectedLocation;
   }, [selectedLocation]);
 
+  // ── Trip name → pendingTrip sync ───────────────────────────────────────────
   useEffect(() => {
     if (!pendingTrip) return;
     const nextName = tripName.trim() || null;
@@ -163,6 +144,7 @@ export default function FleetManagerMapView() {
     setPendingTrip((prev) => (prev ? { ...prev, tripName: nextName } : prev));
   }, [tripName, pendingTrip]);
 
+  // ── GPS polling ────────────────────────────────────────────────────────────
   useEffect(() => {
     let isMounted = true;
     let inFlight = false;
@@ -177,20 +159,9 @@ export default function FleetManagerMapView() {
           credentials: "include",
           cache: "no-store",
         });
-
-        if (res.status === 401) {
-          setError("Session expired, please log in again.");
-          return;
-        }
-        if (res.status === 403) {
-          setError("You do not have permission to access GPS data.");
-          return;
-        }
-        if (!res.ok) {
-          const { message } = resolveHttpError(res.status, "GPS");
-          setError(message);
-          return;
-        }
+        if (res.status === 401) { setError("Session expired, please log in again."); return; }
+        if (res.status === 403) { setError("You do not have permission to access GPS data."); return; }
+        if (!res.ok) { const { message } = resolveHttpError(res.status, "GPS"); setError(message); return; }
 
         const data: MapDeviceLocation[] = await res.json();
         if (!isMounted || !Array.isArray(data)) return;
@@ -198,7 +169,7 @@ export default function FleetManagerMapView() {
         const validLocations = data.filter((item) => {
           if (typeof item.latitude !== "number" || typeof item.longitude !== "number") return false;
           if (item.latitude === 0 && item.longitude === 0) return false;
-          if (item.latitude < -90 || item.latitude > 90) return false;
+          if (item.latitude < -90  || item.latitude > 90)  return false;
           if (item.longitude < -180 || item.longitude > 180) return false;
           return true;
         });
@@ -223,13 +194,10 @@ export default function FleetManagerMapView() {
 
     fetchGps();
     const interval = setInterval(fetchGps, 5000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+    return () => { isMounted = false; clearInterval(interval); };
   }, [API_URL]);
 
+  // ── Geocoding ──────────────────────────────────────────────────────────────
   type GeocodeResult = { displayName: string; openAddress: string; latitude: number; longitude: number };
 
   useEffect(() => {
@@ -238,44 +206,25 @@ export default function FleetManagerMapView() {
       setStartAddressInput("");
       return;
     }
-
     let isMounted = true;
     const resolveStartAddress = async () => {
       setIsResolvingStart(true);
       try {
         const res = await fetch(
           geocodingApi.reverse(selectedLocation.latitude, selectedLocation.longitude, API_BASE),
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }
+          { method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include" }
         );
-
-        if (!res.ok) {
-          throw new Error("Start address lookup failed.");
-        }
-
+        if (!res.ok) throw new Error("Start address lookup failed.");
         const data = (await res.json()) as GeocodeResult;
-        const openAddress = data?.openAddress || data?.displayName || "";
-        if (isMounted) {
-          setStartAddressInput(openAddress);
-        }
+        if (isMounted) setStartAddressInput(data?.openAddress || data?.displayName || "");
       } catch {
-        if (isMounted) {
-          setStartAddressInput("");
-        }
+        if (isMounted) setStartAddressInput("");
       } finally {
-        if (isMounted) {
-          setIsResolvingStart(false);
-        }
+        if (isMounted) setIsResolvingStart(false);
       }
     };
-
     resolveStartAddress();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [API_BASE, selectedLocation?.latitude, selectedLocation?.longitude]);
 
   const geocodeAddress = async (query: string): Promise<GeocodeResult> => {
@@ -284,33 +233,22 @@ export default function FleetManagerMapView() {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
     });
-
-    if (res.status === 404) {
-      throw new Error("Address not found.");
-    }
-    if (!res.ok) {
-      throw new Error("Address lookup failed.");
-    }
-
+    if (res.status === 404) throw new Error("Address not found.");
+    if (!res.ok) throw new Error("Address lookup failed.");
     const data = (await res.json()) as GeocodeResult;
-    if (typeof data?.latitude !== "number" || typeof data?.longitude !== "number") {
+    if (typeof data?.latitude !== "number" || typeof data?.longitude !== "number")
       throw new Error("Address lookup failed.");
-    }
-
     return data;
   };
 
+  // ── Trip planning ──────────────────────────────────────────────────────────
   const planTrip = async (options: {
     start: [number, number];
     end: [number, number];
     startAddress?: string | null;
     endAddress?: string | null;
   }) => {
-    if (!selectedLocation?.vehicleId) {
-      setRouteError("Select a device with a vehicle first.");
-      return;
-    }
-
+    if (!selectedLocation?.vehicleId) { setRouteError("Select a device with a vehicle first."); return; }
     if (isRouting) return;
 
     setIsRouting(true);
@@ -329,7 +267,6 @@ export default function FleetManagerMapView() {
     };
 
     try {
-      setDestinationPoint(options.end);
       setPendingTrip(payload);
       const res = await fetch(tripsApi.plan(API_BASE), {
         method: "POST",
@@ -337,19 +274,12 @@ export default function FleetManagerMapView() {
         credentials: "include",
         body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        throw new Error("Route planning failed.");
-      }
-
-      const data: {
-        geometry: Array<[number, number]>;
-      } = await res.json();
-
+      if (!res.ok) throw new Error("Route planning failed.");
+      const data: { geometry: Array<[number, number]> } = await res.json();
       if (Array.isArray(data.geometry)) {
-        setRoutePath(data.geometry);
+        pinToActiveTripRef.current = false;
+        setDisplayedRoute({ kind: "planned", path: data.geometry });
       }
-
       setRouteMode(false);
     } catch {
       setRouteError("Route planning failed.");
@@ -370,9 +300,7 @@ export default function FleetManagerMapView() {
       if (!res.ok) return;
       const data = (await res.json()) as GeocodeResult;
       const openAddress = data?.openAddress || data?.displayName || "";
-      if (openAddress) {
-        setEndAddressInput(openAddress);
-      }
+      if (openAddress) setEndAddressInput(openAddress);
     } catch {
       // Ignore reverse-geocode failures for manual map clicks.
     } finally {
@@ -381,55 +309,35 @@ export default function FleetManagerMapView() {
   };
 
   const handlePlanTrip = async (destination: [number, number]) => {
-    if (!selectedLocation?.vehicleId) {
-      setRouteError("Select a device with a vehicle first.");
-      return;
-    }
-
+    if (!selectedLocation?.vehicleId) { setRouteError("Select a device with a vehicle first."); return; }
     const startPoint: [number, number] = [selectedLocation.latitude, selectedLocation.longitude];
     resolveEndAddress(destination);
     await planTrip({ start: startPoint, end: destination });
   };
 
   const handlePlanTripByAddress = async () => {
-    if (!selectedLocation?.vehicleId) {
-      setRouteError("Select a device with a vehicle first.");
-      return;
-    }
-
+    if (!selectedLocation?.vehicleId) { setRouteError("Select a device with a vehicle first."); return; }
     const endQuery = endAddressInput.trim();
-    if (!endQuery) {
-      setGeocodeError("Enter the destination address.");
-      return;
-    }
-
+    if (!endQuery) { setGeocodeError("Enter the destination address."); return; }
     if (isGeocoding || isRouting) return;
 
     setIsGeocoding(true);
     setGeocodeError(null);
     setRouteError(null);
     setHasApprovedRoute(false);
-
     try {
       const endResult = await geocodeAddress(endQuery);
-
       const startPoint: [number, number] = [selectedLocation.latitude, selectedLocation.longitude];
       const endPoint: [number, number] = [endResult.latitude, endResult.longitude];
-
-      await planTrip({
-        start: startPoint,
-        end: endPoint,
-        startAddress: startAddressInput || null,
-        endAddress: null,
-      });
+      await planTrip({ start: startPoint, end: endPoint, startAddress: startAddressInput || null, endAddress: null });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Address lookup failed.";
-      setGeocodeError(message);
+      setGeocodeError(err instanceof Error ? err.message : "Address lookup failed.");
     } finally {
       setIsGeocoding(false);
     }
   };
 
+  // ── Active trip ────────────────────────────────────────────────────────────
   const fetchActiveTrip = async (vehicleId: string | null | undefined) => {
     if (!vehicleId || !API_BASE) return;
     setIsLoadingActiveTrip(true);
@@ -440,11 +348,13 @@ export default function FleetManagerMapView() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-
       if (res.status === 404) {
         setActiveTrip(null);
         setHasApprovedRoute(false);
-        setActiveTripRoutePath([]);
+        if (pinToActiveTripRef.current) {
+          pinToActiveTripRef.current = false;
+          setDisplayedRoute(null);
+        }
         return;
       }
       if (!res.ok) {
@@ -452,67 +362,70 @@ export default function FleetManagerMapView() {
         setActiveTripError(message);
         return;
       }
-
       const data: TripSummary | null = await res.json();
-
       if (data === null) {
         setActiveTrip(null);
         setHasApprovedRoute(false);
-        setActiveTripRoutePath([]);
+        if (pinToActiveTripRef.current) {
+          pinToActiveTripRef.current = false;
+          setDisplayedRoute(null);
+        }
         return;
       }
-
       setActiveTrip(data);
       setHasApprovedRoute(true);
     } catch {
       setActiveTripError("Connection error: Unable to retrieve active trip.");
       setActiveTrip(null);
-      setActiveTripRoutePath([]);
     } finally {
       setIsLoadingActiveTrip(false);
     }
   };
 
+  // Keeps the "active-trip" display in sync as polling updates activeTrip.
+  // The ref gate means past-trip / planned / filtered routes are never touched by this effect.
+  useEffect(() => {
+    if (!pinToActiveTripRef.current) return;
+    if (!activeTrip?.geometry || activeTrip.geometry.length < 2) {
+      setDisplayedRoute(null);
+      return;
+    }
+    setDisplayedRoute({
+      kind: "active-trip",
+      path: activeTrip.geometry.map((point) => [point[0], point[1]] as [number, number]),
+    });
+  }, [activeTrip]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── ETA ────────────────────────────────────────────────────────────────────
   const fetchEta = async (tripId: string) => {
     if (!API_BASE) return;
     try {
-      const res = await fetch(etaApi.byTrip(tripId, API_BASE), {
-        credentials: "include",
-      });
-      if (res.ok) {
-        setEta(await res.json());
-      } else {
-        setEta(null);
-      }
+      const res = await fetch(etaApi.byTrip(tripId, API_BASE), { credentials: "include" });
+      if (res.ok) setEta(await res.json());
+      else setEta(null);
     } catch {
       setEta(null);
     }
   };
 
   useEffect(() => {
-    if (!activeTrip?.id) {
-      setEta(null);
-      return;
-    }
+    if (!activeTrip?.id) { setEta(null); return; }
     fetchEta(activeTrip.id);
     const interval = setInterval(() => fetchEta(activeTrip.id), ACTIVE_TRIP_REFRESH_MS);
     return () => clearInterval(interval);
   }, [activeTrip?.id]);
 
+  // ── Active trip polling ────────────────────────────────────────────────────
   useEffect(() => {
-    if (!selectedLocation?.vehicleId || !API_BASE) {
-      return;
-    }
-
+    if (!selectedLocation?.vehicleId || !API_BASE) return;
     fetchActiveTrip(selectedLocation.vehicleId);
-
     const interval = setInterval(() => {
       fetchActiveTrip(selectedLocation.vehicleId);
     }, ACTIVE_TRIP_REFRESH_MS);
-
     return () => clearInterval(interval);
   }, [API_BASE, selectedLocation?.vehicleId]);
 
+  // ── Past trips ─────────────────────────────────────────────────────────────
   const fetchPastTrips = async (vehicleId: string | null | undefined) => {
     if (!vehicleId || !API_BASE) return;
     setIsLoadingPastTrips(true);
@@ -523,17 +436,12 @@ export default function FleetManagerMapView() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-
-      if (res.status === 404) {
-        setPastTrips([]);
-        return;
-      }
+      if (res.status === 404) { setPastTrips([]); return; }
       if (!res.ok) {
         const { message } = resolveHttpError(res.status, "Past trips");
         setPastTripsError(message);
         return;
       }
-
       const data: TripSummary[] = await res.json();
       setPastTrips(Array.isArray(data) ? data : []);
     } catch {
@@ -544,55 +452,39 @@ export default function FleetManagerMapView() {
     }
   };
 
+  // ── Vehicle / device / driver info ─────────────────────────────────────────
   const fetchVehicleAndDeviceInformation = async (location: MapDeviceLocation) => {
     if (!API_BASE) return;
     setIsLoadingInformation(true);
     setInformationError(null);
     try {
       const deviceRequest = fetch(devicesApi.information(location.deviceId, API_BASE), {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include",
       });
       const vehicleRequest = location.vehicleId
         ? fetch(vehiclesApi.information(location.vehicleId, API_BASE), {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include",
           })
         : Promise.resolve(null);
 
       const [deviceRes, vehicleRes] = await Promise.all([deviceRequest, vehicleRequest]);
 
-      if (deviceRes.status === 404) {
-        setInformationError("Device not found.");
-        return;
-      }
-      if (!deviceRes.ok) {
-        const { message } = resolveHttpError(deviceRes.status, "Device information");
-        setInformationError(message);
-        return;
-      }
+      if (deviceRes.status === 404) { setInformationError("Device not found."); return; }
+      if (!deviceRes.ok) { const { message } = resolveHttpError(deviceRes.status, "Device information"); setInformationError(message); return; }
 
       if (vehicleRes) {
         if (vehicleRes.status === 404) {
-          const deviceData = await deviceRes.json();
-          setDeviceInformation(deviceData ?? null);
+          setDeviceInformation((await deviceRes.json()) ?? null);
           setVehicleInformation(null);
           return;
         }
-        if (!vehicleRes.ok) {
-          const { message } = resolveHttpError(vehicleRes.status, "Vehicle information");
-          setInformationError(message);
-          return;
-        }
+        if (!vehicleRes.ok) { const { message } = resolveHttpError(vehicleRes.status, "Vehicle information"); setInformationError(message); return; }
       }
 
       const [deviceData, vehicleData] = await Promise.all([
         deviceRes.json(),
         vehicleRes ? vehicleRes.json() : Promise.resolve(null),
       ]);
-
       setDeviceInformation(deviceData ?? null);
       setVehicleInformation(vehicleData ?? null);
     } catch {
@@ -611,30 +503,16 @@ export default function FleetManagerMapView() {
     setDriverScore(null);
     try {
       const res = await fetch(driversApi.infoByVehicle(vehicleId, API_BASE), {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include",
       });
-
-      if (res.status === 404) {
-        setDriverInformation(null);
-        return;
-      }
-      if (!res.ok) {
-        const { message } = resolveHttpError(res.status, "Driver information");
-        setDriverError(message);
-        return;
-      }
-
+      if (res.status === 404) { setDriverInformation(null); return; }
+      if (!res.ok) { const { message } = resolveHttpError(res.status, "Driver information"); setDriverError(message); return; }
       const data: DriverInfo | null = await res.json();
       setDriverInformation(data ?? null);
-
       if (data?.driverId) {
         try {
           const scoreRes = await fetch(driverScoresApi.byDriver(data.driverId, API_BASE), {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include",
           });
           if (scoreRes.ok) {
             const scoreData = await scoreRes.json();
@@ -652,37 +530,18 @@ export default function FleetManagerMapView() {
     }
   };
 
+  // ── Route helpers ──────────────────────────────────────────────────────────
   const applyTripRouteToMap = (trip: TripSummary | null, pinToActiveTrip = false) => {
     if (!trip?.geometry || trip.geometry.length < 2) {
       setRouteError("Trip route geometry is not available.");
       return;
     }
-
-    const nextPath = trip.geometry.map((point) => [point[0], point[1]] as [number, number]);
-    setActiveTripRoutePath(nextPath);
-    // Only sync with the polling interval when explicitly showing the live active trip.
-    // Past trips must freeze the route — setting this true would let the 5-second poll
-    // overwrite the past trip's geometry with the current trip's route.
-    setShouldShowActiveTripRoute(pinToActiveTrip);
+    const path = trip.geometry.map((point) => [point[0], point[1]] as [number, number]);
+    pinToActiveTripRef.current = pinToActiveTrip;
+    setDisplayedRoute(pinToActiveTrip ? { kind: "active-trip", path } : { kind: "past-trip", path });
     setRouteMode(false);
     setRouteError(null);
   };
-
-  useEffect(() => {
-    if (!shouldShowActiveTripRoute) {
-      return;
-    }
-
-    if (!activeTrip?.geometry || activeTrip.geometry.length < 2) {
-      setActiveTripRoutePath([]);
-      return;
-    }
-
-    setActiveTripRoutePath(
-      activeTrip.geometry.map((point) => [point[0], point[1]] as [number, number])
-    );
-    setRouteError(null);
-  }, [activeTrip, shouldShowActiveTripRoute]);
 
   const handleFilterRoute = async () => {
     if (!API_BASE) return;
@@ -696,68 +555,49 @@ export default function FleetManagerMapView() {
       const vehicleId = selectedLocation.vehicleId;
       const startIso = new Date(filterStart).toISOString();
       const endIso = new Date(filterEnd).toISOString();
-      const res = await fetch(
-        gpsApi.routeByVehicle(vehicleId, startIso, endIso, API_BASE),
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error("Filter route fetch failed.");
-      }
-
+      const res = await fetch(gpsApi.routeByVehicle(vehicleId, startIso, endIso, API_BASE), {
+        method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include",
+      });
+      if (!res.ok) throw new Error("Filter route fetch failed.");
       const data: GpsRoutePoint[] = await res.json();
       const path = Array.isArray(data)
         ? data
-            .filter((point) => typeof point.latitude === "number" && typeof point.longitude === "number")
-            .map((point) => [point.latitude, point.longitude] as [number, number])
+            .filter((p) => typeof p.latitude === "number" && typeof p.longitude === "number")
+            .map((p) => [p.latitude, p.longitude] as [number, number])
         : [];
-      setFilteredRoutePath(path);
+      if (path.length > 1) {
+        pinToActiveTripRef.current = false;
+        setDisplayedRoute({ kind: "filtered", path, startPt: path[0], endPt: path[path.length - 1] });
+      }
     } catch {
       setFilterError("Filter route fetch failed.");
-      setFilteredRoutePath([]);
     } finally {
       setIsFiltering(false);
     }
   };
 
   const handleClearFilter = () => {
-    setFilteredRoutePath([]);
+    if (displayedRoute?.kind === "filtered") setDisplayedRoute(null);
     setFilterStart("");
     setFilterEnd("");
     setFilterError(null);
   };
 
   const handleCancelActiveTrip = async () => {
-    if (!selectedLocation?.vehicleId) return;
-    if (isLoadingActiveTrip) return;
-
+    if (!selectedLocation?.vehicleId || isLoadingActiveTrip) return;
     setIsLoadingActiveTrip(true);
     setActiveTripError(null);
-
     try {
-      const res = await fetch(
-        tripsApi.cancelByVehicle(selectedLocation.vehicleId, API_BASE),
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error("Route cancel failed.");
-      }
+      const res = await fetch(tripsApi.cancelByVehicle(selectedLocation.vehicleId, API_BASE), {
+        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+      });
+      if (!res.ok) throw new Error("Route cancel failed.");
       await res.json();
       setActiveTrip(null);
       setHasApprovedRoute(false);
-      setActiveTripRoutePath([]);
-      setRoutePath([]);
-      setVisibleTripRoutes([]);
-      setDestinationPoint(null);
+      pinToActiveTripRef.current = false;
+      setDisplayedRoute(null);
+      setPendingTrip(null);
       fetchPastTrips(selectedLocation.vehicleId);
     } catch {
       setActiveTripError("Route cancel failed.");
@@ -767,19 +607,15 @@ export default function FleetManagerMapView() {
   };
 
   const handleApproveTrip = async () => {
-    if (!pendingTrip || routePath.length === 0) {
+    if (!pendingTrip || displayedRoute?.kind !== "planned" || displayedRoute.path.length < 2) {
       setRouteError("Plan a route before approving.");
       return;
     }
-    if (!tripName.trim()) {
-      setRouteError("Trip name is required before approval.");
-      return;
-    }
+    if (!tripName.trim()) { setRouteError("Trip name is required before approval."); return; }
     if (isApproving || hasApprovedRoute) return;
 
     setIsApproving(true);
     setRouteError(null);
-
     try {
       const res = await fetch(tripsApi.approve(API_BASE), {
         method: "POST",
@@ -787,13 +623,9 @@ export default function FleetManagerMapView() {
         credentials: "include",
         body: JSON.stringify(pendingTrip),
       });
-
-      if (!res.ok) {
-        throw new Error("Route approval failed.");
-      }
-
+      if (!res.ok) throw new Error("Route approval failed.");
       setHasApprovedRoute(true);
-      setShouldShowActiveTripRoute(true);
+      pinToActiveTripRef.current = true;
       fetchActiveTrip(pendingTrip.vehicleId);
     } catch {
       setRouteError("Route approval failed.");
@@ -803,7 +635,7 @@ export default function FleetManagerMapView() {
   };
 
   const handleTogglePanel = (panel: "trips" | "vehicle" | "history") => {
-    if (selectedLocation && (panel === "vehicle" || panel === "trips" || panel === "history")) {
+    if (selectedLocation) {
       fetchActiveTrip(selectedLocation.vehicleId);
       fetchPastTrips(selectedLocation.vehicleId);
       if (panel === "vehicle") {
@@ -815,15 +647,12 @@ export default function FleetManagerMapView() {
   };
 
   const clearAllVisibleRoutes = () => {
-    setRoutePath([]);
-    setActiveTripRoutePath([]);
-    setVisibleTripRoutes([]);
-    setShouldShowActiveTripRoute(false);
-    setDestinationPoint(null);
+    pinToActiveTripRef.current = false;
+    setDisplayedRoute(null);
+    setRouteMode(false);
     setPendingTrip(null);
     setHasApprovedRoute(false);
     setRouteError(null);
-    setFilteredRoutePath([]);
     setGeocodeError(null);
     setEndAddressInput("");
     setIsResolvingEnd(false);
@@ -834,8 +663,8 @@ export default function FleetManagerMapView() {
     setActivePanel((prev) => (prev === "vehicle" ? null : prev));
     setActiveTrip(null);
     setActiveTripError(null);
-    setActiveTripRoutePath([]);
-    setShouldShowActiveTripRoute(false);
+    pinToActiveTripRef.current = false;
+    setDisplayedRoute(null);
     setPastTrips([]);
     setPastTripsError(null);
     setIsLoadingActiveTrip(false);
@@ -848,35 +677,28 @@ export default function FleetManagerMapView() {
     setDriverError(null);
     setIsLoadingDriver(false);
     setDriverScore(null);
-    setFilteredRoutePath([]);
     setFilterError(null);
     setStartAddressInput("");
     setEndAddressInput("");
     setGeocodeError(null);
   };
 
-  const renderedRoutePaths = [
-    ...(activeTripRoutePath.length > 1 ? [activeTripRoutePath] : []),
-    ...visibleTripRoutes,
-    ...(routePath.length > 1 ? [routePath] : []),
-    ...(filteredRoutePath.length > 1 ? [filteredRoutePath] : []),
-  ];
+  // ── Derived render data (memoised) ─────────────────────────────────────────
+  // GPS polling fires setDeviceLocations every 5 s. Without useMemo these would
+  // rebuild and hand new array references to MapCanvas on every GPS tick, causing
+  // all Polylines to re-diff even when no route changed.
+  const renderedRoutePaths = useMemo<Array<[number, number][]>>(() => {
+    if (!displayedRoute || displayedRoute.path.length < 2) return [];
+    return [displayedRoute.path];
+  }, [displayedRoute]);
 
-  const filteredStartPoint =
-    filteredRoutePath.length > 1 ? filteredRoutePath[0] : null;
-  const filteredEndPoint =
-    filteredRoutePath.length > 1
-      ? filteredRoutePath[filteredRoutePath.length - 1]
-      : null;
-  const renderedDestinationPoints = renderedRoutePaths
-    .filter((path) => path.length > 1)
-    .map((path) => path[path.length - 1])
-    .filter((point, index, arr) => {
-      const key = `${point[0]}-${point[1]}`;
-      return arr.findIndex((p) => `${p[0]}-${p[1]}` === key) === index;
-    });
+  const filteredStartPoint = displayedRoute?.kind === "filtered" ? displayedRoute.startPt : null;
+  const filteredEndPoint   = displayedRoute?.kind === "filtered" ? displayedRoute.endPt   : null;
 
-  const FooterComponent = FleetManagerMapFooter;
+  const renderedDestinationPoints = useMemo<Array<[number, number]>>(() => {
+    if (!displayedRoute || displayedRoute.path.length < 2) return [];
+    return [displayedRoute.path[displayedRoute.path.length - 1]];
+  }, [displayedRoute]);
 
   return (
     <main className="map-page" style={{ height: "100vh", width: "100%" }}>
@@ -885,6 +707,7 @@ export default function FleetManagerMapView() {
         deviceLocations={deviceLocations}
         selectedVehicleId={selectedLocation?.vehicleId ?? selectedLocation?.deviceId ?? null}
         routePaths={renderedRoutePaths}
+        routeDisplayKey={displayedRoute?.kind}
         destinationPoints={renderedDestinationPoints}
         filteredStartPoint={filteredStartPoint}
         filteredEndPoint={filteredEndPoint}
@@ -895,7 +718,7 @@ export default function FleetManagerMapView() {
         onMarkerClick={(location) => {
           setSelectedLocation(location);
           setActivePanel("vehicle");
-          setShouldShowActiveTripRoute(true);
+          pinToActiveTripRef.current = true;
           fetchActiveTrip(location.vehicleId);
           fetchPastTrips(location.vehicleId);
           fetchVehicleAndDeviceInformation(location);
@@ -975,7 +798,7 @@ export default function FleetManagerMapView() {
         onClose={() => setActivePanel(null)}
       />
 
-      <FooterComponent
+      <FleetManagerMapFooter
         activePanel={activePanel}
         hasSelection={selectedLocation !== null}
         onTogglePanel={handleTogglePanel}

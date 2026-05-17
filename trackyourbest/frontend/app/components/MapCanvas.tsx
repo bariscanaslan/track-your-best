@@ -238,6 +238,10 @@ type MapCanvasProps = {
   deviceLocations: MapDeviceLocation[];
   selectedVehicleId: string | null;
   routePaths: Array<Array<[number, number]>>;
+  // Stable semantic key for the active route — used as the Polyline React key so
+  // same-kind updates (e.g. active-trip polling) update positions in-place instead
+  // of unmounting and remounting the Leaflet layer.
+  routeDisplayKey?: string;
   destinationPoints: Array<[number, number]>;
   filteredStartPoint: [number, number] | null;
   filteredEndPoint: [number, number] | null;
@@ -258,6 +262,7 @@ export default function MapCanvas({
   deviceLocations,
   selectedVehicleId,
   routePaths,
+  routeDisplayKey,
   destinationPoints,
   filteredStartPoint,
   filteredEndPoint,
@@ -348,7 +353,7 @@ export default function MapCanvas({
 
       {routePaths.map((path, index) => (
         <Polyline
-          key={`route-${index}-${path.length}`}
+          key={routeDisplayKey ?? `route-${index}`}
           positions={path}
           pathOptions={{
             color: routeColors[index % routeColors.length],
