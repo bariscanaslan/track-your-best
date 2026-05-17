@@ -59,6 +59,52 @@ namespace TYB.ApiService.Controllers.Analytics
         }
 
         /// <summary>
+        /// Returns per-trip driver scores with driver info and trip name for the given organization.
+        /// </summary>
+        [HttpGet("by-organization")]
+        public async Task<IActionResult> GetScoresByOrganization(
+            [FromQuery] Guid organizationId,
+            CancellationToken ct)
+        {
+            try
+            {
+                var result = await (
+                    from ds in _dbContext.DriverScores.AsNoTracking()
+                    join d in _dbContext.Drivers.AsNoTracking() on ds.DriverId equals d.Id
+                    join u in _dbContext.Users.AsNoTracking() on d.UserId equals u.Id into users
+                    from u in users.DefaultIfEmpty()
+                    join t in _dbContext.Trips.AsNoTracking() on ds.TripId equals t.Id into trips
+                    from t in trips.DefaultIfEmpty()
+                    where d.OrganizationId == organizationId
+                    orderby ds.CalculatedAt descending
+                    select new DriverTripScoreDto
+                    {
+                        ScoreId = ds.Id,
+                        DriverId = ds.DriverId,
+                        DriverName = u != null ? u.FullName : null,
+                        AvatarUrl = u != null ? u.AvatarUrl : null,
+                        TripId = ds.TripId,
+                        TripName = t != null ? t.TripName : null,
+                        OverallScore = ds.OverallScore,
+                        SpeedScore = ds.SpeedScore,
+                        AccelerationScore = ds.AccelerationScore,
+                        BrakingScore = ds.BrakingScore,
+                        CorneringScore = ds.CorneringScore,
+                        IdleTimeScore = ds.IdleTimeScore,
+                        CalculatedAt = ds.CalculatedAt,
+                    }
+                ).ToListAsync(ct);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching per-trip scores for organizationId: {OrganizationId}", organizationId);
+                return StatusCode(500, new { message = "Error fetching driver scores.", detail = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Returns average driver grading scores for the given organization.
         /// </summary>
         [HttpGet("summary")]

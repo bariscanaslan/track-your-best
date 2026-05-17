@@ -103,6 +103,8 @@ export const driverScoresApi = {
     `${baseUrl}/api/DriverScores/summary?organizationId=${encodeURIComponent(organizationId)}`,
   byDriver: (driverId, baseUrl = getApiBaseUrl()) =>
     `${baseUrl}/api/DriverScores/driver/${encodeURIComponent(driverId)}`,
+  byOrganization: (organizationId, baseUrl = getApiBaseUrl()) =>
+    `${baseUrl}/api/DriverScores/by-organization?organizationId=${encodeURIComponent(organizationId)}`,
 };
 
 export const anomaliesApi = {

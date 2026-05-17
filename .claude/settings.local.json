@@ -19,7 +19,9 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\baris\\\\Desktop\\\\TYB\\\\source-code\\\\tyb\" -Recurse -ErrorAction SilentlyContinue)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "PowerShell(head *)",
-      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\baris\\\\Desktop\\\\TYB\\\\source-code\\\\tyb\\\\trackyourbest\\\\frontend\" -Recurse -Filter \"*.tsx\" -o Name)"
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\baris\\\\Desktop\\\\TYB\\\\source-code\\\\tyb\\\\trackyourbest\\\\frontend\" -Recurse -Filter \"*.tsx\" -o Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\baris\\\\Desktop\\\\TYB\\\\source-code\\\\tyb\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
   }
 }

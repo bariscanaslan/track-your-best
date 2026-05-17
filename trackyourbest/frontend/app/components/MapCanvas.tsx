@@ -41,9 +41,9 @@ const filteredEndIcon: DivIcon = L.divIcon({
   className: "filtered-route-marker is-end",
   iconSize: [22, 22],
   iconAnchor: [11, 11],
-});
+}); 
 
-const MARKER_MIN_ZOOM = 12;
+const MARKER_MIN_ZOOM = 5;
 
 function ZoomWatcher({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
   const map = useMap();

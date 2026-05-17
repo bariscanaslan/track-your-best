@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { FiMap, FiCpu, FiLogOut, FiAlertTriangle, FiLock, FiMenu, FiX } from "react-icons/fi";
+import { FiMap, FiCpu, FiLogOut, FiAlertTriangle, FiLock, FiMenu, FiX, FiStar } from "react-icons/fi";
 import { FaMapMarkedAlt, FaCar, FaUserTie } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import ChangePasswordModal from "../ChangePasswordModal";
@@ -27,6 +27,7 @@ const navItemsByRole: Record<string, NavItem[]> = {
     { href: "/fleet-manager/vehicles", label: "Vehicles", icon: FaCar },
     { href: "/fleet-manager/drivers", label: "Drivers", icon: FaUserTie },
     { href: "/fleet-manager/anomalies", label: "Anomalies", icon: FiAlertTriangle },
+    { href: "/fleet-manager/driver-scores", label: "Driver Scores", icon: FiStar },
   ],
 };
 
