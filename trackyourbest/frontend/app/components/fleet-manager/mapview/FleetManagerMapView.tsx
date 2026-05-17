@@ -652,7 +652,7 @@ export default function FleetManagerMapView() {
     }
   };
 
-  const applyTripRouteToMap = (trip: TripSummary | null) => {
+  const applyTripRouteToMap = (trip: TripSummary | null, pinToActiveTrip = false) => {
     if (!trip?.geometry || trip.geometry.length < 2) {
       setRouteError("Trip route geometry is not available.");
       return;
@@ -660,7 +660,10 @@ export default function FleetManagerMapView() {
 
     const nextPath = trip.geometry.map((point) => [point[0], point[1]] as [number, number]);
     setActiveTripRoutePath(nextPath);
-    setShouldShowActiveTripRoute(true);
+    // Only sync with the polling interval when explicitly showing the live active trip.
+    // Past trips must freeze the route — setting this true would let the 5-second poll
+    // overwrite the past trip's geometry with the current trip's route.
+    setShouldShowActiveTripRoute(pinToActiveTrip);
     setRouteMode(false);
     setRouteError(null);
   };
@@ -928,7 +931,7 @@ export default function FleetManagerMapView() {
         eta={eta}
         onToggleRouteMode={() => setRouteMode((prev) => !prev)}
         onApproveRoute={handleApproveTrip}
-        onShowActiveTripRoute={() => applyTripRouteToMap(activeTrip)}
+        onShowActiveTripRoute={() => applyTripRouteToMap(activeTrip, true)}
         onCancelActiveTrip={handleCancelActiveTrip}
         onClearRoute={clearAllVisibleRoutes}
         onClose={() => setActivePanel(null)}
