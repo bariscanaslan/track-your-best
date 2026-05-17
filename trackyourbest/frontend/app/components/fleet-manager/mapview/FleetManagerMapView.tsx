@@ -81,6 +81,7 @@ export default function FleetManagerMapView() {
   const [filterEnd, setFilterEnd] = useState<string>("");
   const [isFiltering, setIsFiltering] = useState(false);
   const [filterError, setFilterError] = useState<string | null>(null);
+  const [loadingTripRouteId, setLoadingTripRouteId] = useState<string | null>(null);
 
   const [mapStyle, setMapStyle] = useState<"satellite" | "light" | "colorful">("colorful");
 
@@ -583,6 +584,52 @@ export default function FleetManagerMapView() {
     setFilterError(null);
   };
 
+  const fetchAndShowPastTripGpsRoute = async (trip: TripSummary) => {
+    const vehicleId = trip.vehicleId ?? selectedLocation?.vehicleId;
+
+    // No vehicleId or no time bounds — fall back to stored OSRM geometry
+    if (!vehicleId || !trip.startTime || !trip.endTime || !API_BASE) {
+      applyTripRouteToMap(trip);
+      return;
+    }
+
+    setLoadingTripRouteId(trip.id);
+    setRouteError(null);
+
+    try {
+      const startIso = new Date(trip.startTime).toISOString();
+      const endIso   = new Date(trip.endTime).toISOString();
+
+      const res = await fetch(gpsApi.routeByVehicle(vehicleId, startIso, endIso, API_BASE), {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("GPS route fetch failed.");
+
+      const data: GpsRoutePoint[] = await res.json();
+      const path = Array.isArray(data)
+        ? data
+            .filter((p) => typeof p.latitude === "number" && typeof p.longitude === "number")
+            .map((p) => [p.latitude, p.longitude] as [number, number])
+        : [];
+
+      if (path.length >= 2) {
+        pinToActiveTripRef.current = false;
+        setDisplayedRoute({ kind: "past-trip", path });
+      } else {
+        // No GPS points recorded for this trip — fall back to stored OSRM geometry
+        applyTripRouteToMap(trip);
+      }
+    } catch {
+      // Network / parse error — fall back gracefully
+      applyTripRouteToMap(trip);
+    } finally {
+      setLoadingTripRouteId(null);
+    }
+  };
+
   const handleCancelActiveTrip = async () => {
     if (!selectedLocation?.vehicleId || isLoadingActiveTrip) return;
     setIsLoadingActiveTrip(true);
@@ -774,9 +821,10 @@ export default function FleetManagerMapView() {
         pastTrips={pastTrips}
         pastTripsError={pastTripsError}
         onShowPastTripRoute={(tripId) => {
-          const trip = pastTrips.find((item) => item.id === tripId) ?? null;
-          applyTripRouteToMap(trip);
+          const trip = pastTrips.find((item) => item.id === tripId);
+          if (trip) fetchAndShowPastTripGpsRoute(trip);
         }}
+        loadingTripRouteId={loadingTripRouteId}
         filterStart={filterStart}
         filterEnd={filterEnd}
         isFiltering={isFiltering}

@@ -14,6 +14,7 @@ type HistorySidecardProps = {
   pastTrips: TripSummary[];
   pastTripsError: string | null;
   onShowPastTripRoute: (tripId: string) => void;
+  loadingTripRouteId?: string | null;
   filterStart: string;
   filterEnd: string;
   isFiltering: boolean;
@@ -34,6 +35,7 @@ export default function HistorySidecard({
   pastTrips,
   pastTripsError,
   onShowPastTripRoute,
+  loadingTripRouteId = null,
   filterStart,
   filterEnd,
   isFiltering,
@@ -137,8 +139,12 @@ export default function HistorySidecard({
                 <span className="map-sidecard-label">To</span>
                 <span className="map-sidecard-value">{trip.endAddress ?? "-"}</span>
               </div>
-              <button className="map-footer-action" onClick={() => onShowPastTripRoute(trip.id)}>
-                Show Trip
+              <button
+                className="map-footer-action"
+                onClick={() => onShowPastTripRoute(trip.id)}
+                disabled={loadingTripRouteId === trip.id}
+              >
+                {loadingTripRouteId === trip.id ? "Loading route..." : "Show Trip"}
               </button>
             </div>
           ))}

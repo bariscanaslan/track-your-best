@@ -52,6 +52,7 @@ function humanType(type: string | null): string {
   if (!type) return "Anomaly Detected";
   if (type === "device_health") return "Device Issue";
   if (type === "driver_behavior") return "Driver Behavior Alert";
+  if (type === "isolation_forest_anomaly") return "Critical Alert";
   return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
