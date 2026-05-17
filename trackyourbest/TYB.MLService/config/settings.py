@@ -25,6 +25,7 @@ DATABASE_URL = os.getenv(
 # OSRM SETTINGS (ETA için gerekli!)
 # =============================================
 OSRM_BASE_URL = os.getenv('OSRM_URL', 'http://localhost:5000')
+OSRM_API_KEY  = os.getenv('OSRM_API_KEY', '')
 
 # =============================================
 # TIMEZONE SETTINGS

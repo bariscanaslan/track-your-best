@@ -63,13 +63,10 @@ builder.Services.AddHttpClient<OsrmService>((serviceProvider, client) =>
 
     client.BaseAddress = new Uri(baseUrl);
 
-    var clientId = config["CF_ACCESS_CLIENT_ID"];
-    var clientSecret = config["CF_ACCESS_CLIENT_SECRET"];
-
-    if (!string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret))
+    var apiKey = config["TYB_OSRM_API_KEY"];
+    if (!string.IsNullOrEmpty(apiKey))
     {
-        client.DefaultRequestHeaders.Add("CF-Access-Client-Id", clientId);
-        client.DefaultRequestHeaders.Add("CF-Access-Client-Secret", clientSecret);
+        client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
     }
 });
 

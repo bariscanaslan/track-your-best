@@ -54,8 +54,7 @@ services:
       TYB_JWT_EXPIRY_HOURS: ${TYB_JWT_EXPIRY_HOURS:-8}
       # Routing
       TYB_OSRM_BASE_URL: ${TYB_OSRM_BASE_URL}
-      CF_ACCESS_CLIENT_ID: ${CF_ACCESS_CLIENT_ID:-}
-      CF_ACCESS_CLIENT_SECRET: ${CF_ACCESS_CLIENT_SECRET:-}
+      TYB_OSRM_API_KEY: ${TYB_OSRM_API_KEY}
       # Geocoding
       TYB_NOMINATIM_BASE_URL: ${TYB_NOMINATIM_BASE_URL}
       TYB_NOMINATIM_USER_AGENT: ${TYB_NOMINATIM_USER_AGENT}
@@ -98,6 +97,7 @@ services:
     environment:
       DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/trackyourbest"
       OSRM_URL: ${TYB_OSRM_BASE_URL}
+      OSRM_API_KEY: ${TYB_OSRM_API_KEY}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
 
   # ─────────────────────────────────────────────

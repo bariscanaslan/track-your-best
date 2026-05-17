@@ -6,16 +6,18 @@ Client for OpenStreetMap Routing Machine (OSRM)
 
 import requests
 import logging
-from config.settings import OSRM_BASE_URL
+from config.settings import OSRM_BASE_URL, OSRM_API_KEY
 
 logger = logging.getLogger(__name__)
 
 
 class OSRMClient:
     """Client for OSRM routing service"""
-    
-    def __init__(self, base_url=None):
+
+    def __init__(self, base_url=None, api_key=None):
         self.base_url = base_url or OSRM_BASE_URL
+        self.api_key = api_key or OSRM_API_KEY
+        self._headers = {"X-API-Key": self.api_key} if self.api_key else {}
         logger.info(f"OSRM Client initialized with base URL: {self.base_url}")
     
     def get_route(self, start_lon, start_lat, end_lon, end_lat):
@@ -49,7 +51,7 @@ class OSRMClient:
             }
             
             # Make request
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, headers=self._headers, timeout=10)
             response.raise_for_status()
             
             # Parse response
