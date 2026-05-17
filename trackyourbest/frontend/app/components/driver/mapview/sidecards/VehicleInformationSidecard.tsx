@@ -6,7 +6,6 @@ import { DeviceInfo } from "../data/deviceInfoData";
 import { DriverInfo } from "../data/driverInfoData";
 import { MapDeviceLocation } from "../data/gpsDataInfo";
 import { VehicleInfo } from "../data/vehicleInfoData";
-import { formatToGMT3 } from "../dateUtils";
 import { resolveMediaUrl } from "../../../../utils/media";
 
 type MapSidecardProps = {
@@ -138,7 +137,9 @@ export default function MapSidecard({
             <div className="map-sidecard-row">
               <span className="map-sidecard-label">Last Seen</span>
               <span className="map-sidecard-value">
-                {deviceInformation?.lastSeenAt ? "-" : "-"}
+                {deviceInformation?.lastSeenAt
+                  ? new Date(deviceInformation.lastSeenAt).toLocaleString()
+                  : "-"}
               </span>
             </div>
           </div>
