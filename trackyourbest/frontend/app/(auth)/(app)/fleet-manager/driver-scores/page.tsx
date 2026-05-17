@@ -280,24 +280,6 @@ export default function DriverScoresPage() {
                   <div className="fm-list-card-sub">Braking Score</div>
                 </div>
                 <div className="fm-list-card">
-                  <div className="fm-list-card-title">Cornering</div>
-                  <div className="fm-list-card-value">
-                    <span className={getGradeClassName(score.corneringScore)}>
-                      {formatGrade(score.corneringScore)}
-                    </span>
-                  </div>
-                  <div className="fm-list-card-sub">Cornering Score</div>
-                </div>
-                <div className="fm-list-card">
-                  <div className="fm-list-card-title">Idle Time</div>
-                  <div className="fm-list-card-value">
-                    <span className={getGradeClassName(score.idleTimeScore)}>
-                      {formatGrade(score.idleTimeScore)}
-                    </span>
-                  </div>
-                  <div className="fm-list-card-sub">Idle Score</div>
-                </div>
-                <div className="fm-list-card">
                   <div className="fm-list-card-title">Overall</div>
                   <div className="fm-list-card-value">
                     <span className={getGradeClassName(score.overallScore)}>

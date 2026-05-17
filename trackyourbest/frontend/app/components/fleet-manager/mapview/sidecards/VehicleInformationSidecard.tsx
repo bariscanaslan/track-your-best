@@ -153,7 +153,7 @@ export default function MapSidecard({
             <div className="map-sidecard-row">
               <span className="map-sidecard-label">Last Seen</span>
               <span className="map-sidecard-value">
-                {deviceInformation?.lastSeenAt ? formatToGMT3(deviceInformation.lastSeenAt) : "-"}
+                {deviceInformation?.lastSeenAt ? "-" : "-"}
               </span>
             </div>
           </div>

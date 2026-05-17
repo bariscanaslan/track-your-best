@@ -347,6 +347,96 @@
   cursor: not-allowed;
 }
 
+/* ── Footer hamburger (mobile only) ───────────────────────── */
+.map-footer-hamburger {
+  display: none;
+  position: relative;
+}
+
+.map-footer-hamburger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.map-footer-hamburger-btn.is-open {
+  background: #1e293b;
+}
+
+.map-footer-hamburger-label {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-footer-mobile-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 16px;
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.14),
+    0 0 0 1px rgba(148, 163, 184, 0.1);
+  backdrop-filter: blur(16px);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 10;
+}
+
+.map-footer-mobile-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.map-footer-mobile-item:hover {
+  background: #f1f5f9;
+}
+
+.map-footer-mobile-item.is-active {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.map-footer-mobile-item.is-danger {
+  color: #991b1b;
+}
+
+.map-footer-mobile-item.is-danger:hover {
+  background: #fef2f2;
+}
+
+.map-footer-mobile-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ── Route ─────────────────────────────────────────────────── */
 .map-route-error {
   position: fixed;
@@ -809,11 +899,29 @@
     padding: 10px 14px;
     min-height: 0;
     gap: 6px;
+    justify-content: space-between;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
   .map-footer-title-text,
   .map-footer-title-subtext {
     display: none;
+  }
+
+  /* Fleet manager footer: hide desktop actions, show hamburger */
+  .map-footer--fleet .map-footer-title {
+    display: none;
+  }
+
+  .map-footer--fleet .map-footer-actions {
+    display: none;
+  }
+
+  .map-footer--fleet .map-footer-hamburger {
+    display: block;
+    margin-left: auto;
   }
 
   .driver-stats-row {
@@ -839,20 +947,6 @@
 
   .driver-speed-card-label {
     font-size: 9px;
-  }
-
-  .map-footer-actions {
-    gap: 6px;
-    flex-wrap: nowrap;
-  }
-
-  .map-footer-action,
-  .map-footer-action-red {
-    padding: 7px 11px;
-    font-size: 12px;
-    gap: 5px;
-    border-radius: 10px;
-    white-space: nowrap;
   }
 
   /* ── Sidecard: bottom sheet on mobile ────────────────────── */

@@ -43,7 +43,7 @@ const filteredEndIcon: DivIcon = L.divIcon({
   iconAnchor: [11, 11],
 }); 
 
-const MARKER_MIN_ZOOM = 5;
+const MARKER_MIN_ZOOM = 8;
 
 function ZoomWatcher({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
   const map = useMap();
