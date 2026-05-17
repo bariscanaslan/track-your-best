@@ -518,6 +518,18 @@
     0 8px 18px rgba(3, 7, 18, 0.35);
 }
 
+.route-start-marker {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 40% 40%, #ffffff 0%, #ffffff 35%, #f59e0b 60%, #92400e 100%);
+  border: 2px solid rgba(15, 23, 42, 0.95);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 18px rgba(245, 158, 11, 0.75),
+    0 8px 18px rgba(3, 7, 18, 0.35);
+}
+
 .filtered-route-marker {
   width: 22px;
   height: 22px;

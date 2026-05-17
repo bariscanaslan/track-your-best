@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 
 import DriverMapFooter from "./DriverMapFooter";
@@ -20,6 +20,10 @@ import { EtaPrediction } from "./data/tripInfoData";
 
 import "../../../components/MapView.css";
 
+type DisplayedRoute =
+  | { kind: "active-trip"; path: [number, number][] }
+  | null;
+
 export default function DriverMapView() {
   const ACTIVE_TRIP_REFRESH_MS = 5000;
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -31,13 +35,12 @@ export default function DriverMapView() {
   const [selectedLocation, setSelectedLocation] = useState<MapDeviceLocation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activePanel, setActivePanel] = useState<"trips" | "vehicle" | null>(null);
-  const [visibleTripRoutes, setVisibleTripRoutes] = useState<Array<Array<[number, number]>>>([]);
+  const [displayedRoute, setDisplayedRoute] = useState<DisplayedRoute>(null);
   const [routeError, setRouteError] = useState<string | null>(null);
 
   const [activeTrip, setActiveTrip] = useState<TripSummary | null>(null);
   const [activeTripError, setActiveTripError] = useState<string | null>(null);
   const [isLoadingActiveTrip, setIsLoadingActiveTrip] = useState(false);
-  const [shouldShowActiveTripRoute, setShouldShowActiveTripRoute] = useState(true);
   const [eta, setEta] = useState<EtaPrediction | null>(null);
 
   const [deviceInformation, setDeviceInformation] = useState<DeviceInfo | null>(null);
@@ -58,6 +61,7 @@ export default function DriverMapView() {
   const [shouldInitialFocus, setShouldInitialFocus] = useState(true);
   const mapStyleKey = "tyb.mapStyle";
   const selectedLocationRef = useRef<MapDeviceLocation | null>(null);
+  const pinToActiveTripRef = useRef(true);
 
   type FetchErrorCode =
   | "NOT_FOUND"
@@ -230,6 +234,10 @@ export default function DriverMapView() {
       if (res.status === 404) {
         setActiveTrip(null);
         setActiveTripError(null);
+        if (pinToActiveTripRef.current) {
+          pinToActiveTripRef.current = false;
+          setDisplayedRoute(null);
+        }
         return;
       }
 
@@ -411,24 +419,23 @@ export default function DriverMapView() {
       setRouteError("Trip route geometry is not available.");
       return;
     }
-
-    const nextPath = trip.geometry.map((point) => [point[0], point[1]] as [number, number]);
-    setVisibleTripRoutes([nextPath]);
+    const path = trip.geometry.map((point) => [point[0], point[1]] as [number, number]);
+    pinToActiveTripRef.current = true;
+    setDisplayedRoute({ kind: "active-trip", path });
     setRouteError(null);
   };
 
   useEffect(() => {
-    if (!shouldShowActiveTripRoute) {
-      return;
-    }
-
+    if (!pinToActiveTripRef.current) return;
     if (!activeTrip?.geometry || activeTrip.geometry.length < 2) {
-      setVisibleTripRoutes([]);
+      setDisplayedRoute(null);
       return;
     }
-
-    applyTripRouteToMap(activeTrip);
-  }, [activeTrip, shouldShowActiveTripRoute]);
+    setDisplayedRoute({
+      kind: "active-trip",
+      path: activeTrip.geometry.map((point) => [point[0], point[1]] as [number, number]),
+    });
+  }, [activeTrip]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDriverDecision = async (decision: "accepted" | "rejected") => {
     if (!activeTrip?.id || !API_BASE) {
@@ -581,24 +588,33 @@ export default function DriverMapView() {
     setDriverInformation(null);
     setDriverError(null);
     setIsLoadingDriver(false);
-    setVisibleTripRoutes([]);
-    setShouldShowActiveTripRoute(true);
+    pinToActiveTripRef.current = true;
+    setDisplayedRoute(null);
     setDecisionNotes("");
   };
 
   const currentSpeedKmh = selectedLocation?.speed ? Number(selectedLocation.speed) : 0;
   const normalizedTripStatus = (activeTrip?.status ?? "").toLowerCase();
   const isTripOngoing = normalizedTripStatus === "ongoing";
-  const renderedDestinationPoints = visibleTripRoutes
-    .filter((path) => path.length > 1)
-    .map((path) => path[path.length - 1]);
+
+  const renderedRoutePaths = useMemo<Array<[number, number][]>>(() => {
+    if (!displayedRoute || displayedRoute.path.length < 2) return [];
+    return [displayedRoute.path];
+  }, [displayedRoute]);
+
+  const renderedDestinationPoints = useMemo<Array<[number, number]>>(() => {
+    if (!displayedRoute || displayedRoute.path.length < 2) return [];
+    return [displayedRoute.path[displayedRoute.path.length - 1]];
+  }, [displayedRoute]);
 
   return (
     <main className="map-page" style={{ height: "100vh", width: "100%" }}>
       <MapCanvas
         deviceLocations={deviceLocations}
         selectedVehicleId={selectedLocation?.vehicleId ?? selectedLocation?.deviceId ?? null}
-        routePaths={visibleTripRoutes}
+        routePaths={renderedRoutePaths}
+        routeDisplayKey={displayedRoute?.kind}
+        routeStartPoint={null}
         destinationPoints={renderedDestinationPoints}
         filteredStartPoint={null}
         filteredEndPoint={null}
@@ -616,14 +632,17 @@ export default function DriverMapView() {
         onMarkerClick={(location) => {
           setSelectedLocation(location);
           setActivePanel("vehicle");
-          setShouldShowActiveTripRoute(true);
+          pinToActiveTripRef.current = true;
           fetchActiveTrip(location.vehicleId);
           fetchVehicleAndDeviceInformation(location);
           fetchDriverInformation(location.vehicleId);
         }}
         onClosePanel={() => setActivePanel(null)}
         onMapClick={() => {}}
-        onMapBackgroundClick={() => setVisibleTripRoutes([])}
+        onMapBackgroundClick={() => {
+          pinToActiveTripRef.current = false;
+          setDisplayedRoute(null);
+        }}
       />
 
       <TripsSidecard
@@ -643,7 +662,6 @@ export default function DriverMapView() {
         onFinishTrip={() => handleDriverAction("finish")}
         onCancelTrip={() => handleDriverAction("cancel")}
         onShowActiveTripRoute={() => {
-          setShouldShowActiveTripRoute(true);
           applyTripRouteToMap(activeTrip);
         }}
         onClose={() => setActivePanel(null)}

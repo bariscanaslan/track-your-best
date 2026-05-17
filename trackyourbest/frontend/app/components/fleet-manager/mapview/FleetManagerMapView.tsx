@@ -694,6 +694,10 @@ export default function FleetManagerMapView() {
 
   const filteredStartPoint = displayedRoute?.kind === "filtered" ? displayedRoute.startPt : null;
   const filteredEndPoint   = displayedRoute?.kind === "filtered" ? displayedRoute.endPt   : null;
+  const routeStartPoint: [number, number] | null =
+    displayedRoute?.kind === "past-trip" && displayedRoute.path.length > 0
+      ? displayedRoute.path[0]
+      : null;
 
   const renderedDestinationPoints = useMemo<Array<[number, number]>>(() => {
     if (!displayedRoute || displayedRoute.path.length < 2) return [];
@@ -711,6 +715,7 @@ export default function FleetManagerMapView() {
         destinationPoints={renderedDestinationPoints}
         filteredStartPoint={filteredStartPoint}
         filteredEndPoint={filteredEndPoint}
+        routeStartPoint={routeStartPoint}
         tileStyle={mapStyle}
         routeMode={routeMode}
         markerTransitionMs={4200}

@@ -41,7 +41,13 @@ const filteredEndIcon: DivIcon = L.divIcon({
   className: "filtered-route-marker is-end",
   iconSize: [22, 22],
   iconAnchor: [11, 11],
-}); 
+});
+
+const routeStartIcon: DivIcon = L.divIcon({
+  className: "route-start-marker",
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+});
 
 const MARKER_MIN_ZOOM = 8;
 
@@ -245,6 +251,7 @@ type MapCanvasProps = {
   destinationPoints: Array<[number, number]>;
   filteredStartPoint: [number, number] | null;
   filteredEndPoint: [number, number] | null;
+  routeStartPoint?: [number, number] | null;
   tileStyle: "satellite" | "light" | "colorful";
   routeMode: boolean;
   focusPoint?: [number, number] | null;
@@ -266,6 +273,7 @@ export default function MapCanvas({
   destinationPoints,
   filteredStartPoint,
   filteredEndPoint,
+  routeStartPoint = null,
   tileStyle,
   routeMode,
   focusPoint = null,
@@ -369,6 +377,14 @@ export default function MapCanvas({
       {currentZoom >= MARKER_MIN_ZOOM && destinationPoints.map((point, index) => (
         <Marker key={`goal-${index}-${point[0]}-${point[1]}`} position={point} icon={destinationIcon} />
       ))}
+
+      {currentZoom >= MARKER_MIN_ZOOM && routeStartPoint && (
+        <Marker
+          key={`route-start-${routeStartPoint[0]}-${routeStartPoint[1]}`}
+          position={routeStartPoint}
+          icon={routeStartIcon}
+        />
+      )}
 
       {currentZoom >= MARKER_MIN_ZOOM && filteredStartPoint && (
         <Marker
