@@ -2,6 +2,16 @@
 
 TrackYourBest is an open-source smart fleet management platform for real-time vehicle tracking, IoT telemetry ingestion, route planning, predictive ETA, anomaly detection, and driver scoring.
 
+## Screenshots
+
+### Fleet Manager Map
+
+![Fleet Manager map panel](project-images/fm-panel.png)
+
+### Anomaly Monitoring
+
+![Anomaly monitoring dashboard](project-images/anomalies.png)
+
 ## System Overview
 
 TrackYourBest is built from four main runtime components that share one PostgreSQL/PostGIS database:
@@ -172,6 +182,11 @@ Before using the nginx and Certbot files:
 - ML model binaries are ignored via `models_bin/`.
 - Build caches such as `.next/`, `bin/`, `obj/`, `__pycache__/`, and `*.tsbuildinfo` are ignored.
 - Example credentials are placeholders only and must be changed before deployment.
+
+## Collaborators
+
+- [YigitAvar](https://github.com/YigitAvar)
+- [toprakkamburoglu](https://github.com/toprakkamburoglu)
 
 ## License
 
