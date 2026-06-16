@@ -1,0 +1,261 @@
+/* ============================
+   TRACK YOUR BEST – NAVBAR
+   ============================ */
+
+.tyb-navbar {
+  position: fixed;
+  z-index: 1200;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(960px, calc(100% - 32px));
+  pointer-events: none;
+}
+
+.tyb-navbar-inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  min-height: 60px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.20),
+    0 0 0 1px rgba(148, 163, 184, 0.10);
+  backdrop-filter: blur(14px);
+}
+
+.tyb-navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tyb-navbar-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;  
+}
+
+.tyb-navbar-brand-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .tyb-navbar-brand-text {
+    display: none;
+  }
+}
+
+.tyb-navbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tyb-map-style-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.tyb-map-style-button:hover {
+  background: rgba(15, 23, 42, 0.12);
+  border-color: rgba(148, 163, 184, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.15);
+}
+
+.tyb-map-style-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.tyb-map-style-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+}
+
+.tyb-nav-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.12s ease;
+}
+
+.tyb-nav-button:hover {
+  background: rgba(15, 23, 42, 0.04);
+  transform: translateY(-1px);
+}
+
+.tyb-nav-button.is-active {
+  background: rgba(15, 23, 42, 0.08);
+  color: #111827;
+}
+
+.tyb-nav-button-logout {
+  color: #b91c1c;
+}
+
+.tyb-nav-button-logout:hover {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.tyb-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tyb-nav-label {
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  white-space: nowrap;
+  transition:
+    max-width 0.2s ease,
+    opacity 0.18s ease,
+    margin-left 0.18s ease;
+}
+
+.tyb-nav-button:hover .tyb-nav-label,
+.tyb-nav-button.is-active .tyb-nav-label {
+  max-width: 80px;
+  opacity: 1;
+  margin-left: 4px;
+}
+
+@media (max-width: 640px) {
+  .tyb-nav-button {
+    padding-inline: 8px;
+  }
+
+  .tyb-nav-button:hover .tyb-nav-label,
+  .tyb-nav-button.is-active .tyb-nav-label {
+    max-width: 60px;
+  }
+}
+
+/* ── Hamburger (mobile) ─────────────────────────────────────── */
+.tyb-hamburger-wrapper {
+  position: relative;
+  display: none;
+}
+
+.tyb-hamburger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+
+.tyb-hamburger-btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.tyb-hamburger-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1199;
+}
+
+.tyb-hamburger-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 190px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 16px;
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(148, 163, 184, 0.10);
+  backdrop-filter: blur(14px);
+  padding: 6px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tyb-hamburger-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.tyb-hamburger-menu-item:hover,
+.tyb-hamburger-menu-item.is-active {
+  background: rgba(15, 23, 42, 0.06);
+  color: #111827;
+}
+
+.tyb-hamburger-menu-item.is-logout {
+  color: #b91c1c;
+}
+
+.tyb-hamburger-menu-item.is-logout:hover {
+  background: rgba(248, 113, 113, 0.10);
+}
+
+@media (max-width: 640px) {
+  .tyb-navbar-buttons {
+    display: none;
+  }
+
+  .tyb-hamburger-wrapper {
+    display: block;
+  }
+}

@@ -1,0 +1,30 @@
+# ============================================
+# TYB MLService - Python Dependencies
+# ============================================
+
+# Core ML Stack - LOCKED TO 1.8.0 (Model compatibility)
+scikit-learn==1.8.0
+numpy==1.26.4
+pandas==2.1.4
+scipy==1.14.0
+joblib==1.3.2
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+geoalchemy2==0.14.3
+shapely==2.0.2
+
+# Scheduling
+apscheduler==3.10.4
+
+# ONNX Runtime (for driver scoring)
+onnxruntime==1.17.1
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0
+pytz==2024.1
+
+# Logging
+python-json-logger==2.0.7

@@ -1,0 +1,45 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Node / Next.js
+**/node_modules/
+**/.next/
+**/out/
+**/.turbo/
+**/*.tsbuildinfo
+
+# .NET
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+
+# Python
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyi
+**/.pytest_cache/
+
+# Runtime data and private artifacts
+**/wwwroot/uploads/
+**/models_bin/
+**/*.log
+
+# IDE / editor
+**/.vs/
+**/.idea/
+**/.vscode/
+
+# OS / temporary files
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
